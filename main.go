@@ -28,10 +28,13 @@ func readArguments() (string, int, error) {
 }
 
 func run(filePath string, workers int) error {
-	tokens, err := scanpkg.ScanFile(filePath, workers)
+	scanner := scanpkg.CreateForkJoinScanner(workers)
+
+	tokens, err := scanner.ScanFile(filePath)
 	if err != nil {
 		return err
 	}
+
 	for _, t := range tokens {
 		fmt.Println(t.String())
 	}
