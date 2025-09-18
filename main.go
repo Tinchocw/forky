@@ -98,25 +98,30 @@ func scan(file *os.File, num_workers int) ([]Token, error) {
 			fin = int(file_size) - 1
 		}
 
+		if ini > fin {
+			ini = fin
+		}
+
 		go worker(i, ini, fin, file, result_chan)
 	}
 
-	parts := make([]WorkerResult, num_workers)
+	results := make([]WorkerResult, num_workers)
 
 	for range num_workers {
 		result := <-result_chan
 		if result.err != nil {
 			return nil, result.err
 		}
-		parts[result.id] = result
+		results[result.id] = result
 	}
 
-	fmt.Println("Parts tokens (ordered by worker id):")
-	for _, part := range parts {
-		fmt.Print(part.String())
+	merger := newMerger(results)
+	err = merger.merge()
+	if err != nil {
+		return nil, err
 	}
 
-	mergedTokens := []Token{}
+	mergedTokens := merger.tokens
 
 	// TODO: Merge tokens considering couldMergeStart and couldMergeEnd
 

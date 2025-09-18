@@ -130,6 +130,7 @@ const (
 var KEYWORDS = map[string]TokenType{
 	TRUE_KEYWORD:  TRUE,
 	FALSE_KEYWORD: FALSE,
+	NONE_KEYWORD:  NONE,
 }
 
 func isNumber(r rune) bool {

@@ -1,5 +1,7 @@
 package main
 
+// (No external imports required for scanner logic.)
+
 type scanner struct {
 	content       string
 	tokens        []Token
@@ -78,7 +80,17 @@ func (s *scanner) consumeWhile(condition func(rune) bool) {
 	}
 }
 
-// IGNORE
+func isAllDigits(str string) bool {
+	if len(str) == 0 {
+		return false
+	}
+	for _, r := range str {
+		if !isNumber(r) {
+			return false
+		}
+	}
+	return true
+}
 
 func (s *scanner) scan() error {
 	for !s.isAtEnd() {
@@ -116,14 +128,14 @@ func (s *scanner) scan() error {
 
 		case LESS_SYMBOL:
 			if s.matchRune(EQUAL_SYMBOL) {
-				s.addToken(MARK_EQUAL)
+				s.addToken(LESS_EQUAL)
 			} else {
 				s.addToken(LESS)
 			}
 
 		case GREATER_SYMBOL:
 			if s.matchRune(EQUAL_SYMBOL) {
-				s.addToken(MARK_EQUAL)
+				s.addToken(GREATER_EQUAL)
 			} else {
 				s.addToken(GREATER)
 			}
@@ -151,22 +163,25 @@ func (s *scanner) scan() error {
 		case END_QUOTE:
 			s.clearTokens()
 			s.addTokenWithValue(ENDED_LITERAL, s.content[:s.index-1])
+			s.canMergeStart = true
 
 		default:
 			start := s.index - 1
-
-			if isNumber(r) {
-				s.consumeWhile(isNumber)
-				s.addTokenWithValue(NUMBER, s.content[start:s.index])
-			} else if isLetter(r) {
+			if isAlphanumeric(r) {
 				s.consumeWhile(isAlphanumeric)
-				identifierStr := s.content[start:s.index]
+				lexeme := s.content[start:s.index]
 
-				if tokenType, ok := KEYWORDS[identifierStr]; ok {
-					s.addTokenWithValue(tokenType, identifierStr)
-				} else {
-					s.addTokenWithValue(IDENTIFIER, identifierStr)
+				if tokenType, ok := KEYWORDS[lexeme]; ok {
+					s.addTokenWithValue(tokenType, lexeme)
+					continue
 				}
+
+				if isAllDigits(lexeme) {
+					s.addTokenWithValue(NUMBER, lexeme)
+					continue
+				}
+
+				s.addTokenWithValue(IDENTIFIER, lexeme)
 			}
 		}
 	}
