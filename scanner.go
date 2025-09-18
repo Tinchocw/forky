@@ -1,5 +1,7 @@
 package main
 
+import "fmt"
+
 // (No external imports required for scanner logic.)
 
 type scanner struct {
@@ -119,6 +121,21 @@ func (s *scanner) scan() error {
 		case SLASH_SYMBOL:
 			s.addToken(SLASH)
 
+		case COMMA_SYMBOL:
+			s.addToken(COMMA)
+
+		case COLON_SYMBOL:
+			s.addToken(COLON)
+
+		case SEMICOLON_SYMBOL:
+			s.addToken(SEMICOLON)
+
+		case OPEN_PARENTHESIS_SYMBOL:
+			s.addToken(OPEN_PARENTHESIS)
+
+		case CLOSE_PARENTHESIS_SYMBOL:
+			s.addToken(CLOSE_PARENTHESIS)
+
 		case EQUAL_SYMBOL:
 			if s.matchRune(EQUAL_SYMBOL) {
 				s.addToken(EQUAL_EQUAL)
@@ -147,10 +164,10 @@ func (s *scanner) scan() error {
 				s.addToken(MARK)
 			}
 
-		case START_QUOTE:
+		case START_QUOTE_SYMBOL:
 			start := s.index
 
-			s.consumeWhile(func(r rune) bool { return r != END_QUOTE })
+			s.consumeWhile(func(r rune) bool { return r != END_QUOTE_SYMBOL })
 			literalStr := s.content[start:s.index]
 
 			if !s.isAtEnd() {
@@ -160,7 +177,7 @@ func (s *scanner) scan() error {
 				s.addTokenWithValue(STARTED_LITERAL, literalStr)
 			}
 
-		case END_QUOTE:
+		case END_QUOTE_SYMBOL:
 			s.clearTokens()
 			s.addTokenWithValue(ENDED_LITERAL, s.content[:s.index-1])
 			s.canMergeStart = true
@@ -182,6 +199,8 @@ func (s *scanner) scan() error {
 				}
 
 				s.addTokenWithValue(IDENTIFIER, lexeme)
+			} else {
+				return fmt.Errorf("unexpected character: %c", r)
 			}
 		}
 	}
