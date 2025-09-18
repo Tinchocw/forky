@@ -35,7 +35,9 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 			}
 		}
 		sc := createScanner(string(buf))
-		return sc.scan()
+		sg, err := sc.scan()
+		// fmt.Println("Scanned segment: \n", sg.String())
+		return sg, err
 	}
 
 	// 3. workers >= 2: proportional split based on worker allocation.
@@ -57,7 +59,7 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 		err error
 	}
 	leftCh := make(chan res, 1)
-	go func() { // fork left branch
+	func() { // fork left branch
 		sg, err := parallelScan(r, start, mid, leftWorkers)
 		leftCh <- res{sg, err}
 	}()
@@ -74,6 +76,7 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 	}
 
 	leftRes.sg.Merge(&rightSeg)
+	// fmt.Println("Merged segment: \n", leftRes.sg.String())
 	return leftRes.sg, nil
 }
 
@@ -115,4 +118,15 @@ func (f *ForkJoinScanner) ScanFile(filePath string) ([]common.Token, error) {
 
 func (f *ForkJoinScanner) ScanBytes(data []byte) ([]common.Token, error) {
 	return f.scan(bytesReader(data), int64(len(data)))
+}
+
+// ScanString scans an in-memory string using the configured number of workers.
+func (f *ForkJoinScanner) ScanString(src string) ([]common.Token, error) {
+	return f.ScanBytes([]byte(src))
+}
+
+// ScanString is a package-level helper to scan a string without manually creating a ForkJoinScanner.
+func ScanString(src string, workers int) ([]common.Token, error) {
+	sc := CreateForkJoinScanner(workers)
+	return sc.ScanString(src)
 }

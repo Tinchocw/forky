@@ -24,6 +24,8 @@ func NewSegment(content string) segment {
 
 func (s *segment) String() string {
 	b := fmt.Sprintf("Segment: tokens=%d canMergeStart=%v canMergeEnd=%v\n", len(s.Tokens), s.CouldMergeStart, s.CouldMergeEnd)
+	b += fmt.Sprintf("Content: '%s'\n", s.Content)
+	b += "Tokens:\n"
 	for _, t := range s.Tokens {
 		b += fmt.Sprintf("  %s\n", t.String())
 	}
@@ -146,7 +148,7 @@ func (current *segment) Merge(other *segment) {
 		case common.NUMBER, common.IDENTIFIER:
 			if other.firstToken().Typ == common.NUMBER || other.firstToken().Typ == common.IDENTIFIER {
 				if other.firstToken().Typ != current.lastToken().Typ {
-					current.firstToken().Typ = common.IDENTIFIER
+					current.lastToken().Typ = common.IDENTIFIER
 				}
 
 				current.lastToken().Value += other.consumeOne().Value

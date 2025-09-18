@@ -25,7 +25,7 @@ func createScanner(content string) scanner {
 }
 
 func (s *scanner) isAtStart() bool {
-	return s.index == 0
+	return s.index == 1 // Is at start if index is 1, as we have already advanced once
 }
 
 func (s *scanner) isAtEnd() bool {
