@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	scanpkg "github.com/Tinchocw/Interprete-concurrente/scanner"
 )
 
 func readArguments() (string, int, error) {
@@ -25,137 +27,16 @@ func readArguments() (string, int, error) {
 	return file_path, num_workers_int, nil
 }
 
-type WorkerResult struct {
-	id              int
-	couldMergeStart bool
-	couldMergeEnd   bool
-	tokens          []Token
-	content         string
-	err             error
-}
-
-// String implements fmt.Stringer to pretty-print a WorkerResult with indenting.
-func (wr WorkerResult) String() string {
-	out := fmt.Sprintf("Part %d\n", wr.id)
-	out += fmt.Sprintf("  couldMergeStart: %v\n", wr.couldMergeStart)
-	out += fmt.Sprintf("  couldMergeEnd:   %v\n", wr.couldMergeEnd)
-	out += "  Tokens:\n"
-	if len(wr.tokens) == 0 {
-		out += "    <no tokens>\n"
-		return out
-	}
-	for _, tok := range wr.tokens {
-		out += fmt.Sprintf("    %s\n", tok.String())
-	}
-	return out
-}
-
-func worker(id, ini, fin int, file *os.File, c chan WorkerResult) {
-	buf := make([]byte, fin-ini+1)
-
-	_, err := file.ReadAt(buf, int64(ini))
-	if err != nil {
-		c <- WorkerResult{id: id, content: "", err: err}
-		return
-	}
-
-	readContent := string(buf)
-
-	scanner := createScanner(readContent)
-	err = scanner.scan()
-
-	if err != nil {
-		c <- WorkerResult{id: id, err: err}
-		return
-	}
-
-	result := WorkerResult{
-		id:              id,
-		couldMergeStart: scanner.canMergeStart,
-		couldMergeEnd:   scanner.canMergeEnd,
-		tokens:          scanner.tokens,
-		content:         readContent,
-		err:             nil,
-	}
-
-	c <- result
-}
-
-func scan(file *os.File, num_workers int) ([]Token, error) {
-	file_size, err := getFileSize(file)
-	if err != nil {
-		return nil, err
-	}
-
-	part_size := (file_size + int64(num_workers) - 1) / int64(num_workers)
-	result_chan := make(chan WorkerResult, num_workers)
-
-	for i := range num_workers {
-		ini := i * int(part_size)
-		fin := (i+1)*int(part_size) - 1
-
-		if fin >= int(file_size) {
-			fin = int(file_size) - 1
-		}
-
-		if ini > fin {
-			ini = fin
-		}
-
-		go worker(i, ini, fin, file, result_chan)
-	}
-
-	results := make([]WorkerResult, num_workers)
-
-	for range num_workers {
-		result := <-result_chan
-		if result.err != nil {
-			return nil, result.err
-		}
-		results[result.id] = result
-	}
-
-	merger := newMerger(results)
-	err = merger.merge()
-	if err != nil {
-		return nil, err
-	}
-
-	mergedTokens := merger.tokens
-
-	// TODO: Merge tokens considering couldMergeStart and couldMergeEnd
-
-	return mergedTokens, nil
-}
-
-func run(file_path string, num_workers int) error {
-	file, err := os.Open(file_path)
+func run(filePath string, workers int) error {
+	tokens, err := scanpkg.ScanFile(filePath, workers)
 	if err != nil {
 		return err
 	}
-
-	defer file.Close()
-
-	tokens, err := scan(file, num_workers)
-	if err != nil {
-		return err
+	for _, t := range tokens {
+		fmt.Println(t.String())
 	}
-
-	fmt.Println(tokens)
-
-	// 2. Parse tokens
-	// 3. Execute AST
-
+	// TODO: Parse & execute
 	return nil
-}
-
-func getFileSize(file *os.File) (int64, error) {
-	file_info, err := file.Stat()
-	if err != nil {
-		return 0, err
-	}
-
-	return file_info.Size(), nil
 }
 
 func main() {

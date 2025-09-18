@@ -1,19 +1,14 @@
-package main
+package common
 
 import "fmt"
 
 type Token struct {
-	typ   TokenType
-	value string
+	Typ   TokenType
+	Value string
 }
 
-func NewToken(typ TokenType) Token {
-	return Token{typ: typ, value: ""}
-}
-
-func NewTokenWithValue(typ TokenType, value string) Token {
-	return Token{typ: typ, value: value}
-}
+func NewToken(typ TokenType) Token                        { return Token{Typ: typ, Value: ""} }
+func NewTokenWithValue(typ TokenType, value string) Token { return Token{Typ: typ, Value: value} }
 
 // valueCarrier indicates whether this token type should print and preserve its value.
 func (tt TokenType) valueCarrier() bool {
@@ -28,10 +23,10 @@ func (tt TokenType) valueCarrier() bool {
 // String implements fmt.Stringer for Token to allow pretty printing.
 // Format: TOKEN_TYPE(value). For literals we keep the original delimiters (e.g. "text').
 func (t Token) String() string {
-	if t.typ.valueCarrier() {
-		return fmt.Sprintf("%s(\"%s\")", t.typ.String(), t.value)
+	if t.Typ.valueCarrier() {
+		return fmt.Sprintf("%s(\"%s\")", t.Typ.String(), t.Value)
 	}
-	return t.typ.String()
+	return t.Typ.String()
 }
 
 type TokenType int
@@ -42,7 +37,7 @@ var tokenTypeNames = [...]string{
 	ASTERISK:          "ASTERISK",
 	SLASH:             "SLASH",
 	EQUAL:             "EQUAL",
-	MARK:              "MARK",
+	BANG:              "BANG",
 	LESS:              "LESS",
 	GREATER:           "GREATER",
 	OPEN_PARENTHESIS:  "OPEN_PARENTHESIS",
@@ -51,7 +46,7 @@ var tokenTypeNames = [...]string{
 	COLON:             "COLON",
 	SEMICOLON:         "SEMICOLON",
 	EQUAL_EQUAL:       "EQUAL_EQUAL",
-	MARK_EQUAL:        "MARK_EQUAL",
+	BANG_EQUAL:        "BANG_EQUAL",
 	LESS_EQUAL:        "LESS_EQUAL",
 	GREATER_EQUAL:     "GREATER_EQUAL",
 	NUMBER:            "NUMBER",
@@ -86,7 +81,7 @@ const (
 	ASTERISK
 	SLASH
 	EQUAL
-	MARK
+	BANG
 	LESS
 	GREATER
 	OPEN_PARENTHESIS
@@ -97,7 +92,7 @@ const (
 
 	// MULTI CHARACTER TOKENS
 	EQUAL_EQUAL
-	MARK_EQUAL
+	BANG_EQUAL
 	LESS_EQUAL
 	GREATER_EQUAL
 
@@ -133,7 +128,7 @@ const (
 	ASTERISK_SYMBOL          = '*'
 	SLASH_SYMBOL             = '/'
 	EQUAL_SYMBOL             = '='
-	MARK_SYMBOL              = '!'
+	BANG_SYMBOL              = '!'
 	LESS_SYMBOL              = '<'
 	GREATER_SYMBOL           = '>'
 	START_QUOTE_SYMBOL       = '"'
@@ -172,18 +167,30 @@ var KEYWORDS = map[string]TokenType{
 	VAR_KEYWORD:    VAR,
 }
 
-func isNumber(r rune) bool {
+var KEYWORDS_VALUES = map[TokenType]string{
+	TRUE:   TRUE_KEYWORD,
+	FALSE:  FALSE_KEYWORD,
+	NONE:   NONE_KEYWORD,
+	IF:     IF_KEYWORD,
+	ELSE:   ELSE_KEYWORD,
+	WHILE:  WHILE_KEYWORD,
+	FUNC:   FUNC_KEYWORD,
+	RETURN: RETURN_KEYWORD,
+	VAR:    VAR_KEYWORD,
+}
+
+func IsNumber(r rune) bool {
 	return r >= '0' && r <= '9'
 }
 
-func isLetter(r rune) bool {
+func IsLetter(r rune) bool {
 	return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || r == '_'
 }
 
-func isAlphanumeric(r rune) bool {
-	return isLetter(r) || isNumber(r)
+func IsAlphanumeric(r rune) bool {
+	return IsLetter(r) || IsNumber(r)
 }
 
-func isWhitespace(r rune) bool {
+func IsWhitespace(r rune) bool {
 	return r == ' ' || r == '\t' || r == '\n'
 }
