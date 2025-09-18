@@ -124,22 +124,22 @@ func (current *segment) Merge(other *segment) {
 	if other.CouldMergeStart {
 		switch current.lastToken().Typ {
 		case common.EQUAL:
-			if current.lastToken().Typ == common.EQUAL {
+			if other.firstToken().Typ == common.EQUAL {
 				current.lastToken().Typ = common.EQUAL_EQUAL
 				other.consumeOne()
 			}
 		case common.BANG:
-			if current.lastToken().Typ == common.EQUAL {
+			if other.firstToken().Typ == common.EQUAL {
 				current.lastToken().Typ = common.BANG_EQUAL
 				other.consumeOne()
 			}
 		case common.LESS:
-			if current.lastToken().Typ == common.EQUAL {
+			if other.firstToken().Typ == common.EQUAL {
 				current.lastToken().Typ = common.LESS_EQUAL
 				other.consumeOne()
 			}
 		case common.GREATER:
-			if current.lastToken().Typ == common.EQUAL {
+			if other.firstToken().Typ == common.EQUAL {
 				current.lastToken().Typ = common.GREATER_EQUAL
 				other.consumeOne()
 			}
