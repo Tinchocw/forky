@@ -158,13 +158,15 @@ func (current *segment) Merge(other *segment) {
 
 		if currentKeyword, ok := common.KEYWORDS_VALUES[current.lastToken().Typ]; ok {
 			if other.firstToken().Typ == common.NUMBER || other.firstToken().Typ == common.IDENTIFIER {
-				current.firstToken().Typ = common.IDENTIFIER
+				current.lastToken().Typ = common.IDENTIFIER
 				current.lastToken().Value = currentKeyword + other.consumeOne().Value
 			} else if otherKeyword, ok := common.KEYWORDS_VALUES[other.firstToken().Typ]; ok {
 				other.consumeOne()
-				current.firstToken().Typ = common.IDENTIFIER
+				current.lastToken().Typ = common.IDENTIFIER
 				current.lastToken().Value = currentKeyword + otherKeyword
 			}
+
+			// maybe handle the case of continuous keywords with operators or other stuff
 		}
 
 		// If after merging the last token is a keyword, update its type
