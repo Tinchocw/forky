@@ -1,0 +1,7 @@
+42 + 8 - 3 * 2 / 5 == 7
+10 != 11 <= 11 >= 11
+true false TRUE_VAR another_identifier _underscore123
+"Hola mundo' == "otra cosa'
+"literal sin cierre que continua
+termina aqui '
+12345pe mixed123ident "con espacios internos y números 123' fin
