@@ -1,6 +1,9 @@
 package common
 
-import "fmt"
+import (
+	"fmt"
+	"unicode"
+)
 
 type Token struct {
 	Typ   TokenType
@@ -237,7 +240,7 @@ func IsNumber(r rune) bool {
 }
 
 func IsLetter(r rune) bool {
-	return (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || r == '_'
+	return unicode.IsLetter(r) || r == '_'
 }
 
 func IsAlphanumeric(r rune) bool {

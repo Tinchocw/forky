@@ -2,6 +2,7 @@ package scanner
 
 import (
 	"fmt"
+	"unicode/utf8"
 
 	"github.com/Tinchocw/Interprete-concurrente/common"
 )
@@ -36,13 +37,14 @@ func (s *scanner) lookahead() rune {
 	if s.isAtEnd() {
 		panic("No more characters to lookahead")
 	}
-	return rune(s.content[s.index])
+	r, _ := utf8.DecodeRuneInString(s.content[s.index:])
+	return r
 }
 
 func (s *scanner) advance() rune {
-	lookahead := s.lookahead()
-	s.index++
-	return lookahead
+	r, size := utf8.DecodeRuneInString(s.content[s.index:])
+	s.index += size
+	return r
 }
 
 // If the next characters match the expected string, consume them and return true.
@@ -183,7 +185,7 @@ func (s *scanner) scan() (segment, error) {
 			s.canMergeStart = true
 
 		default:
-			start := s.index - 1
+			start := s.index - utf8.RuneLen(r)
 			if common.IsAlphanumeric(r) {
 				s.consumeWhile(common.IsAlphanumeric)
 				lexeme := s.content[start:s.index]

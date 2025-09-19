@@ -3,9 +3,12 @@ package scanner
 import (
 	"fmt"
 	"io"
+	"unicode/utf8"
 
 	"github.com/Tinchocw/Interprete-concurrente/common"
 )
+
+const windowSize = 4 // Number of runes to look ahead for merging segments
 
 type ForkyScanner struct{ numWorkers int }
 
@@ -45,8 +48,16 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 
 	// Proportional midpoint keeps byte distribution aligned with worker share.
 	mid := start + (length*int64(leftWorkers))/int64(workers)
+
+	fmt.Printf("Splitting range [%d,%d) at %d (L=%d R=%d)\n", start, end, mid, leftWorkers, rightWorkers)
+
+	// Adjust mid to rune boundary to avoid splitting multi-byte runes.
+	mid = int64(adjustToRuneBoundary(r, int(mid)))
+
+	fmt.Printf("Adjusted mid to rune boundary: %d\n", mid)
+
 	// Ensure forward progress if integer division collapses interval.
-	if mid <= start && end-start > 1 {
+	if mid < start && end-start > 1 {
 		mid = start + 1
 	}
 	if mid >= end && end-start > 1 {
@@ -77,6 +88,39 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 	leftRes.sg.Merge(&rightSeg)
 	// fmt.Println("Merged segment: \n", leftRes.sg.String())
 	return leftRes.sg, nil
+}
+
+func adjustToRuneBoundary(r io.ReaderAt, pos int) int {
+
+	bufStart := pos - windowSize
+	if bufStart < 0 {
+		bufStart = 0
+	}
+	bufEnd := pos + windowSize
+	if bufEnd < bufStart {
+		bufEnd = bufStart
+	}
+
+	bufLen := bufEnd - bufStart
+	data := make([]byte, bufLen)
+
+	if _, err := r.ReadAt(data, int64(bufStart)); err != nil && err != io.EOF {
+		// On read error, just return original pos (may split rune)
+		return pos
+	}
+
+	fixPos := int(pos - bufStart)
+	if fixPos >= len(data) {
+		return bufLen
+	}
+
+	for !utf8.RuneStart(data[fixPos]) {
+		fixPos--
+		if fixPos <= 0 {
+			return 0
+		}
+	}
+	return bufStart + fixPos
 }
 
 func (f *ForkyScanner) Scan(r io.ReaderAt, size int64) ([]common.Token, error) {
