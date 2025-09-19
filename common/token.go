@@ -29,6 +29,60 @@ func (t Token) String() string {
 	return t.Typ.String()
 }
 
+// --- ANSI color support and pretty printing ---
+const (
+	colReset   = "\x1b[0m"
+	colRed     = "\x1b[31m"
+	colYellow  = "\x1b[33m"
+	colBlue    = "\x1b[34m"
+	colMagenta = "\x1b[35m"
+)
+
+func isKeywordType(tt TokenType) bool {
+	_, ok := KEYWORDS_VALUES[tt]
+	return ok
+}
+
+func isOperatorType(tt TokenType) bool {
+	switch tt {
+	case PLUS, MINUS, ASTERISK, SLASH,
+		EQUAL, BANG, LESS, GREATER,
+		EQUAL_EQUAL, BANG_EQUAL, LESS_EQUAL, GREATER_EQUAL,
+		OPEN_PARENTHESIS, CLOSE_PARENTHESIS,
+		COMMA, COLON, SEMICOLON:
+		return true
+	default:
+		return false
+	}
+}
+
+func isLiteralType(tt TokenType) bool {
+	switch tt {
+	case NUMBER, LITERAL, STARTED_LITERAL, ENDED_LITERAL, TRUE, FALSE, NONE:
+		return true
+	default:
+		return false
+	}
+}
+
+// ColorString returns the token formatted with ANSI colors according to its category.
+// Precedence: literals -> keywords -> operators -> identifiers -> default
+func (t Token) ColorString() string {
+	switch {
+	case isLiteralType(t.Typ):
+		// Treat all literal-like values the same color
+		return colYellow + t.String() + colReset
+	case isKeywordType(t.Typ):
+		return colMagenta + t.String() + colReset
+	case isOperatorType(t.Typ):
+		return colRed + t.String() + colReset
+	case t.Typ == IDENTIFIER:
+		return colBlue + t.String() + colReset
+	default:
+		return t.String()
+	}
+}
+
 type TokenType int
 
 var tokenTypeNames = [...]string{
@@ -156,27 +210,31 @@ const (
 )
 
 var KEYWORDS = map[string]TokenType{
-	TRUE_KEYWORD:   TRUE,
-	FALSE_KEYWORD:  FALSE,
-	NONE_KEYWORD:   NONE,
-	IF_KEYWORD:     IF,
-	ELSE_KEYWORD:   ELSE,
-	WHILE_KEYWORD:  WHILE,
-	FUNC_KEYWORD:   FUNC,
-	RETURN_KEYWORD: RETURN,
-	VAR_KEYWORD:    VAR,
+	TRUE_KEYWORD:     TRUE,
+	FALSE_KEYWORD:    FALSE,
+	NONE_KEYWORD:     NONE,
+	IF_KEYWORD:       IF,
+	ELSE_KEYWORD:     ELSE,
+	WHILE_KEYWORD:    WHILE,
+	FUNC_KEYWORD:     FUNC,
+	RETURN_KEYWORD:   RETURN,
+	VAR_KEYWORD:      VAR,
+	CONTINUE_KEYWORD: CONTINUE,
+	BREAK_KEYWORD:    BREAK,
 }
 
 var KEYWORDS_VALUES = map[TokenType]string{
-	TRUE:   TRUE_KEYWORD,
-	FALSE:  FALSE_KEYWORD,
-	NONE:   NONE_KEYWORD,
-	IF:     IF_KEYWORD,
-	ELSE:   ELSE_KEYWORD,
-	WHILE:  WHILE_KEYWORD,
-	FUNC:   FUNC_KEYWORD,
-	RETURN: RETURN_KEYWORD,
-	VAR:    VAR_KEYWORD,
+	TRUE:     TRUE_KEYWORD,
+	FALSE:    FALSE_KEYWORD,
+	NONE:     NONE_KEYWORD,
+	IF:       IF_KEYWORD,
+	ELSE:     ELSE_KEYWORD,
+	WHILE:    WHILE_KEYWORD,
+	FUNC:     FUNC_KEYWORD,
+	RETURN:   RETURN_KEYWORD,
+	VAR:      VAR_KEYWORD,
+	CONTINUE: CONTINUE_KEYWORD,
+	BREAK:    BREAK_KEYWORD,
 }
 
 func IsNumber(r rune) bool {

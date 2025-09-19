@@ -3,7 +3,6 @@ package scanner
 import (
 	"fmt"
 	"io"
-	"os"
 
 	"github.com/Tinchocw/Interprete-concurrente/common"
 )
@@ -80,7 +79,7 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 	return leftRes.sg, nil
 }
 
-func (f *ForkJoinScanner) scan(r io.ReaderAt, size int64) ([]common.Token, error) {
+func (f *ForkJoinScanner) Scan(r io.ReaderAt, size int64) ([]common.Token, error) {
 	sg, err := parallelScan(r, 0, size, f.numWorkers)
 	if err != nil {
 		return nil, err
@@ -100,24 +99,8 @@ func CreateForkJoinScanner(numWorkers int) ForkJoinScanner {
 	return ForkJoinScanner{numWorkers: numWorkers}
 }
 
-func (f *ForkJoinScanner) ScanFile(filePath string) ([]common.Token, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	info, err := file.Stat()
-	if err != nil {
-		return nil, err
-	}
-
-	size := info.Size()
-	return f.scan(file, size)
-}
-
 func (f *ForkJoinScanner) ScanBytes(data []byte) ([]common.Token, error) {
-	return f.scan(bytesReader(data), int64(len(data)))
+	return f.Scan(bytesReader(data), int64(len(data)))
 }
 
 // scanString scans an in-memory string using the configured number of workers.

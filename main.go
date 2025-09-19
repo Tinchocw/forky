@@ -1,60 +1,88 @@
 package main
 
 import (
+	"bufio"
+	"flag"
 	"fmt"
+	"io"
 	"os"
-	"strconv"
-
-	scanpkg "github.com/Tinchocw/Interprete-concurrente/scanner"
+	"strings"
 )
 
-func readArguments() (string, int, error) {
-	if len(os.Args) < 2 {
-		exetuable := os.Args[0]
-		return "", 0, fmt.Errorf("uso esperado: %s <file_path> <num_workers>", exetuable)
-	}
-
-	args := os.Args[1:]
-
-	file_path := args[0]
-	num_workers := args[1]
-
-	num_workers_int, err := strconv.Atoi(num_workers)
-	if err != nil {
-		return "", 0, fmt.Errorf("el argumento num_workers debe ser un entero, se recibió: %s", num_workers)
-	}
-
-	return file_path, num_workers_int, nil
-}
-
-func run(filePath string, workers int) error {
-	scanner := scanpkg.CreateForkJoinScanner(workers)
-
-	tokens, err := scanner.ScanFile(filePath)
-	if err != nil {
-		return err
-	}
-
-	for _, t := range tokens {
-		fmt.Println(t.String())
-	}
-	// TODO: Parse & execute
-	return nil
-}
+const DEFAULT_WORKERS = 4
 
 func main() {
-	file_path, num_workers, err := readArguments()
+	// Flags
+	var (
+		debug    bool
+		scanning bool
+		// parsing  bool
+		// resolve  bool
+		workers int
+	)
 
-	if err != nil {
-		fmt.Println(err)
+	flag.BoolVar(&debug, "debug", false, "Enable debug output")
+	flag.BoolVar(&scanning, "scanning", false, "Run in scanning mode")
+	// flag.BoolVar(&parsing, "parsing", false, "Run in parsing mode")
+	// flag.BoolVar(&resolve, "resolve", false, "Run in resolve mode")
+	flag.IntVar(&workers, "workers", DEFAULT_WORKERS, "Number of workers for fork-join scanning")
+	flag.Parse()
+
+	// Determine mode (default: scanning)
+	mode := NormalMode
+	if scanning {
+		mode = ScanningMode
+	}
+
+	if workers <= 0 {
+		workers = DEFAULT_WORKERS
+	}
+
+	fj := NewForkJoiner(workers, debug, mode)
+
+	// If a file arg remains, run once on that file
+	if flag.NArg() > 0 {
+		path := flag.Arg(0)
+		f, err := os.Open(path)
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		defer f.Close()
+		st, err := f.Stat()
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+		if err := fj.Run(f, st.Size()); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
 		return
 	}
 
-	fmt.Printf("file_path: %s, num_workers: %d\n", file_path, num_workers)
-
-	err = run(file_path, num_workers)
-	if err != nil {
-		fmt.Println(err)
-		return
+	// REPL mode: read from stdin line-by-line
+	in := bufio.NewReader(os.Stdin)
+	fmt.Println("ForkJoiner - REPL. Ctrl-D/Ctrl-C to exit.")
+	for {
+		fmt.Print("> ")
+		line, err := in.ReadString('\n')
+		if err == io.EOF {
+			fmt.Println()
+			break
+		}
+		if err != nil {
+			if debug {
+				fmt.Printf("read error: %v\n", err)
+			}
+			continue
+		}
+		line = strings.TrimRight(line, "\r\n")
+		if line == "" {
+			continue
+		}
+		if err := fj.Run(strings.NewReader(line), int64(len(line))); err != nil {
+			fmt.Println(err)
+		}
 	}
 }
