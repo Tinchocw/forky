@@ -38,7 +38,7 @@ func main() {
 		workers = DEFAULT_WORKERS
 	}
 
-	fj := NewForkJoiner(workers, debug, mode)
+	forky := NewForky(workers, debug, mode)
 
 	// If a file arg remains, run once on that file
 	if flag.NArg() > 0 {
@@ -54,7 +54,7 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		if err := fj.Run(f, st.Size()); err != nil {
+		if err := forky.Run(f, st.Size()); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}
@@ -63,7 +63,8 @@ func main() {
 
 	// REPL mode: read from stdin line-by-line
 	in := bufio.NewReader(os.Stdin)
-	fmt.Println("ForkJoiner - REPL. Ctrl-D/Ctrl-C to exit.")
+	fmt.Println("Forky - REPL. Ctrl-D/Ctrl-C to exit.")
+	fmt.Println()
 	for {
 		fmt.Print("> ")
 		line, err := in.ReadString('\n')
@@ -81,7 +82,7 @@ func main() {
 		if line == "" {
 			continue
 		}
-		if err := fj.Run(strings.NewReader(line), int64(len(line))); err != nil {
+		if err := forky.Run(strings.NewReader(line), int64(len(line))); err != nil {
 			fmt.Println(err)
 		}
 	}

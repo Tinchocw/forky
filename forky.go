@@ -16,23 +16,23 @@ const (
 	// ResolveMode
 )
 
-// ForkJoiner is the top-level runner that coordinates the scanning (and future phases).
-type ForkJoiner struct {
+// Forky is the top-level runner that coordinates the scanning (and future phases).
+type Forky struct {
 	workers int
 	debug   bool
 	mode    InterpreterMode
 }
 
-func NewForkJoiner(workers int, debug bool, mode InterpreterMode) *ForkJoiner {
+func NewForky(workers int, debug bool, mode InterpreterMode) *Forky {
 	if workers < 1 {
 		workers = 1
 	}
-	return &ForkJoiner{workers: workers, debug: debug, mode: mode}
+	return &Forky{workers: workers, debug: debug, mode: mode}
 }
 
 // Run executes the configured mode against the provided ReaderAt of given size.
-func (fj *ForkJoiner) Run(r io.ReaderAt, size int64) error {
-	sc := scannerPackage.CreateForkJoinScanner(fj.workers)
+func (fj *Forky) Run(r io.ReaderAt, size int64) error {
+	sc := scannerPackage.CreateForkyScanner(fj.workers)
 
 	// Read entire input into memory and scan from bytes
 	buf := make([]byte, size)
@@ -48,6 +48,7 @@ func (fj *ForkJoiner) Run(r io.ReaderAt, size int64) error {
 	}
 
 	if fj.mode == ScanningMode {
+		fmt.Println()
 		fmt.Println("== Tokens ==")
 
 		for i, t := range tokens {
@@ -55,6 +56,7 @@ func (fj *ForkJoiner) Run(r io.ReaderAt, size int64) error {
 		}
 
 		fmt.Println("== End of Tokens ==")
+		fmt.Println()
 	}
 
 	return nil

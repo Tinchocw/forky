@@ -7,7 +7,7 @@ import (
 	"github.com/Tinchocw/Interprete-concurrente/common"
 )
 
-type ForkJoinScanner struct{ numWorkers int }
+type ForkyScanner struct{ numWorkers int }
 
 // parallelScan performs a fork-join recursive scan. It splits the range
 // [start,end) roughly in half while there is budget (>1) of workers left
@@ -79,7 +79,7 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 	return leftRes.sg, nil
 }
 
-func (f *ForkJoinScanner) Scan(r io.ReaderAt, size int64) ([]common.Token, error) {
+func (f *ForkyScanner) Scan(r io.ReaderAt, size int64) ([]common.Token, error) {
 	sg, err := parallelScan(r, 0, size, f.numWorkers)
 	if err != nil {
 		return nil, err
@@ -92,24 +92,24 @@ func (f *ForkJoinScanner) Scan(r io.ReaderAt, size int64) ([]common.Token, error
 
 // PUBLIC API
 
-func CreateForkJoinScanner(numWorkers int) ForkJoinScanner {
+func CreateForkyScanner(numWorkers int) ForkyScanner {
 	if numWorkers < 1 {
 		numWorkers = 1
 	}
-	return ForkJoinScanner{numWorkers: numWorkers}
+	return ForkyScanner{numWorkers: numWorkers}
 }
 
-func (f *ForkJoinScanner) ScanBytes(data []byte) ([]common.Token, error) {
+func (f *ForkyScanner) ScanBytes(data []byte) ([]common.Token, error) {
 	return f.Scan(bytesReader(data), int64(len(data)))
 }
 
 // scanString scans an in-memory string using the configured number of workers.
-func (f *ForkJoinScanner) scanString(src string) ([]common.Token, error) {
+func (f *ForkyScanner) scanString(src string) ([]common.Token, error) {
 	return f.ScanBytes([]byte(src))
 }
 
 // ScanString is a package-level helper to scan a string without manually creating a ForkJoinScanner.
 func ScanString(src string, workers int) ([]common.Token, error) {
-	sc := CreateForkJoinScanner(workers)
+	sc := CreateForkyScanner(workers)
 	return sc.scanString(src)
 }
