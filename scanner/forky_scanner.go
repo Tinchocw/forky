@@ -49,12 +49,8 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 	// Proportional midpoint keeps byte distribution aligned with worker share.
 	mid := start + (length*int64(leftWorkers))/int64(workers)
 
-	fmt.Printf("Splitting range [%d,%d) at %d (L=%d R=%d)\n", start, end, mid, leftWorkers, rightWorkers)
-
 	// Adjust mid to rune boundary to avoid splitting multi-byte runes.
 	mid = int64(adjustToRuneBoundary(r, int(mid)))
-
-	fmt.Printf("Adjusted mid to rune boundary: %d\n", mid)
 
 	// Ensure forward progress if integer division collapses interval.
 	if mid < start && end-start > 1 {
