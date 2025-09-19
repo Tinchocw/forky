@@ -30,13 +30,6 @@ func (t Token) String() string {
 }
 
 // --- ANSI color support and pretty printing ---
-const (
-	colReset   = "\x1b[0m"
-	colRed     = "\x1b[31m"
-	colYellow  = "\x1b[33m"
-	colBlue    = "\x1b[34m"
-	colMagenta = "\x1b[35m"
-)
 
 func isKeywordType(tt TokenType) bool {
 	_, ok := KEYWORDS_VALUES[tt]
@@ -66,21 +59,23 @@ func isValueType(tt TokenType) bool {
 }
 
 // ColorString returns the token formatted with ANSI colors according to its category.
-// Precedence: literals -> keywords -> operators -> identifiers -> default
 func (t Token) ColorString() string {
+	var color string
+
 	switch {
 	case isValueType(t.Typ):
-		// Treat all literal-like values the same color
-		return colYellow + t.String() + colReset
+		color = COLOR_YELLOW
 	case isKeywordType(t.Typ):
-		return colMagenta + t.String() + colReset
+		color = COLOR_MAGENTA
 	case isOperatorType(t.Typ):
-		return colRed + t.String() + colReset
+		color = COLOR_RED
 	case t.Typ == IDENTIFIER:
-		return colBlue + t.String() + colReset
+		color = COLOR_BLUE
 	default:
 		return t.String()
 	}
+
+	return color + t.String() + COLOR_RESET
 }
 
 type TokenType int
