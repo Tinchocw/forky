@@ -16,15 +16,13 @@ type ForkyScanner struct{ numWorkers int }
 // remaining worker budget. When budget == 1 or range is minimal, it scans
 // sequentially in-place.
 func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error) {
-	// 1. Invalid worker count
-	if workers <= 0 {
-		return segment{}, fmt.Errorf("workers must be >= 1 (got %d)", workers)
-	}
-
 	length := max(end-start, 0)
 
-	// 2. Single worker (or empty length) -> direct scan
-	if workers == 1 || length == 0 {
+	if workers <= 0 || length == 0 {
+		return segment{}, nil
+	}
+
+	if workers == 1 || length == 1 {
 		buf := make([]byte, length)
 		if length > 0 {
 			if _, err := r.ReadAt(buf, start); err != nil && err != io.EOF {
@@ -33,11 +31,9 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 		}
 		sc := createScanner(string(buf))
 		sg, err := sc.scan()
-		// fmt.Println("Scanned segment: \n", sg.String())
 		return sg, err
 	}
 
-	// 3. workers >= 2: proportional split based on worker allocation.
 	leftWorkers := (workers + 1) / 2 // ceil(workers/2) ensures left >= right when odd
 	rightWorkers := workers - leftWorkers
 
@@ -49,6 +45,7 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 	if err != nil {
 		return segment{}, err
 	}
+
 	mid = adjustedPos
 
 	type res struct {
@@ -57,7 +54,7 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 	}
 
 	leftCh := make(chan res, 1)
-	go func() { // fork left branch
+	func() { // fork left branch
 		sg, err := parallelScan(r, start, mid, leftWorkers)
 		leftCh <- res{sg, err}
 	}()
@@ -74,7 +71,6 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 	}
 
 	leftRes.sg.Merge(&rightSeg)
-	// fmt.Println("Merged segment: \n", leftRes.sg.String())
 	return leftRes.sg, nil
 }
 
@@ -98,6 +94,7 @@ func (f *ForkyScanner) Scan(r io.ReaderAt, size int64) ([]common.Token, error) {
 	if sg.hasInvalidTokens() {
 		return nil, fmt.Errorf("merged segment has invalid tokens")
 	}
+
 	return sg.Tokens, nil
 }
 

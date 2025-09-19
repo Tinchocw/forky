@@ -98,7 +98,13 @@ func (current *segment) Merge(other *segment) {
 	}()
 
 	if !other.hasTokens() {
-		current.CouldMergeEnd = other.CouldMergeEnd
+		if len(other.Content) > 0 {
+			current.CouldMergeEnd = other.CouldMergeEnd
+		}
+
+		if len(current.Content) == 0 {
+			current.CouldMergeStart = other.CouldMergeStart
+		}
 		return
 	}
 
@@ -119,6 +125,10 @@ func (current *segment) Merge(other *segment) {
 
 	if !current.CouldMergeEnd || !current.hasTokens() {
 		current.Tokens = append(current.Tokens, other.Tokens...)
+		if len(current.Content) == 0 {
+			current.CouldMergeStart = other.CouldMergeStart
+		}
+
 		current.CouldMergeEnd = other.CouldMergeEnd
 		return
 	}
