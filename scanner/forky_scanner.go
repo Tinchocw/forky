@@ -8,8 +8,6 @@ import (
 	"github.com/Tinchocw/Interprete-concurrente/common"
 )
 
-const windowSize = 4 // Number of runes to look ahead for merging segments
-
 type ForkyScanner struct{ numWorkers int }
 
 // parallelScan performs a fork-join recursive scan. It splits the range
@@ -23,10 +21,7 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 		return segment{}, fmt.Errorf("workers must be >= 1 (got %d)", workers)
 	}
 
-	length := end - start
-	if length < 0 {
-		length = 0
-	}
+	length := max(end-start, 0)
 
 	// 2. Single worker (or empty length) -> direct scan
 	if workers == 1 || length == 0 {
@@ -50,20 +45,17 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 	mid := start + (length*int64(leftWorkers))/int64(workers)
 
 	// Adjust mid to rune boundary to avoid splitting multi-byte runes.
-	mid = int64(adjustToRuneBoundary(r, int(mid)))
-
-	// Ensure forward progress if integer division collapses interval.
-	if mid < start && end-start > 1 {
-		mid = start + 1
+	adjustedPos, err := adjustToRuneBoundary(r, mid)
+	if err != nil {
+		return segment{}, err
 	}
-	if mid >= end && end-start > 1 {
-		mid = end - 1
-	}
+	mid = adjustedPos
 
 	type res struct {
 		sg  segment
 		err error
 	}
+
 	leftCh := make(chan res, 1)
 	go func() { // fork left branch
 		sg, err := parallelScan(r, start, mid, leftWorkers)
@@ -86,37 +78,16 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int) (segment, error)
 	return leftRes.sg, nil
 }
 
-func adjustToRuneBoundary(r io.ReaderAt, pos int) int {
-
-	bufStart := pos - windowSize
-	if bufStart < 0 {
-		bufStart = 0
-	}
-	bufEnd := pos + windowSize
-	if bufEnd < bufStart {
-		bufEnd = bufStart
-	}
-
-	bufLen := bufEnd - bufStart
-	data := make([]byte, bufLen)
-
-	if _, err := r.ReadAt(data, int64(bufStart)); err != nil && err != io.EOF {
-		// On read error, just return original pos (may split rune)
-		return pos
-	}
-
-	fixPos := int(pos - bufStart)
-	if fixPos >= len(data) {
-		return bufLen
-	}
-
-	for !utf8.RuneStart(data[fixPos]) {
-		fixPos--
-		if fixPos <= 0 {
-			return 0
+func adjustToRuneBoundary(r io.ReaderAt, pos int64) (int64, error) {
+	for i := pos; i > 0; i-- {
+		readByte := make([]byte, 1)
+		r.ReadAt(readByte, i)
+		if utf8.RuneStart(readByte[0]) {
+			return pos, nil
 		}
 	}
-	return bufStart + fixPos
+
+	return 0, nil
 }
 
 func (f *ForkyScanner) Scan(r io.ReaderAt, size int64) ([]common.Token, error) {
