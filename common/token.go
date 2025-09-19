@@ -56,7 +56,7 @@ func isOperatorType(tt TokenType) bool {
 	}
 }
 
-func isLiteralType(tt TokenType) bool {
+func isValueType(tt TokenType) bool {
 	switch tt {
 	case NUMBER, LITERAL, STARTED_LITERAL, ENDED_LITERAL, TRUE, FALSE, NONE:
 		return true
@@ -69,7 +69,7 @@ func isLiteralType(tt TokenType) bool {
 // Precedence: literals -> keywords -> operators -> identifiers -> default
 func (t Token) ColorString() string {
 	switch {
-	case isLiteralType(t.Typ):
+	case isValueType(t.Typ):
 		// Treat all literal-like values the same color
 		return colYellow + t.String() + colReset
 	case isKeywordType(t.Typ):
