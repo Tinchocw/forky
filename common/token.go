@@ -94,6 +94,8 @@ var tokenTypeNames = [...]string{
 	GREATER:           "GREATER",
 	OPEN_PARENTHESIS:  "OPEN_PARENTHESIS",
 	CLOSE_PARENTHESIS: "CLOSE_PARENTHESIS",
+	OPEN_BRACKET:      "OPEN_BRACKET",
+	CLOSE_BRACKET:     "CLOSE_BRACKET",
 	COMMA:             "COMMA",
 	COLON:             "COLON",
 	SEMICOLON:         "SEMICOLON",
@@ -117,6 +119,9 @@ var tokenTypeNames = [...]string{
 	VAR:               "VAR",
 	STARTED_LITERAL:   "STARTED_LITERAL",
 	ENDED_LITERAL:     "ENDED_LITERAL",
+	OR:                "OR",
+	AND:               "AND",
+	PRINT:             "PRINT",
 }
 
 func (t TokenType) String() string {
@@ -141,6 +146,8 @@ const (
 	COMMA
 	COLON
 	SEMICOLON
+	OPEN_BRACKET
+	CLOSE_BRACKET
 
 	// MULTI CHARACTER TOKENS
 	EQUAL_EQUAL
@@ -163,12 +170,19 @@ const (
 	CONTINUE
 	BREAK
 
+	// LOGICAL OPERATORS
+	OR
+	AND
+
 	// IDENTIFIERS
 	IDENTIFIER
 	FUNC
 	VAR
 
-	// SPECIAL TOKENS PRE MERGE
+	// SPECIAL TOKENS
+	PRINT
+
+	// PRE MERGE
 	STARTED_LITERAL
 	ENDED_LITERAL
 )
@@ -190,6 +204,8 @@ const (
 	COMMA_SYMBOL             = ','
 	COLON_SYMBOL             = ':'
 	SEMICOLON_SYMBOL         = ';'
+	OPEN_BRACKET_SYMBOL      = '{'
+	CLOSE_BRACKET_SYMBOL     = '}'
 )
 
 // Keywords
@@ -205,6 +221,9 @@ const (
 	VAR_KEYWORD      = "var"
 	CONTINUE_KEYWORD = "continue"
 	BREAK_KEYWORD    = "break"
+	OR_KEYWORD       = "or"
+	AND_KEYWORD      = "and"
+	PRINT_KEYWORD    = "print"
 )
 
 var KEYWORDS = map[string]TokenType{
@@ -219,6 +238,9 @@ var KEYWORDS = map[string]TokenType{
 	VAR_KEYWORD:      VAR,
 	CONTINUE_KEYWORD: CONTINUE,
 	BREAK_KEYWORD:    BREAK,
+	OR_KEYWORD:       OR,
+	AND_KEYWORD:      AND,
+	PRINT_KEYWORD:    PRINT,
 }
 
 var KEYWORDS_VALUES = map[TokenType]string{
@@ -233,6 +255,9 @@ var KEYWORDS_VALUES = map[TokenType]string{
 	VAR:      VAR_KEYWORD,
 	CONTINUE: CONTINUE_KEYWORD,
 	BREAK:    BREAK_KEYWORD,
+	OR:       OR_KEYWORD,
+	AND:      AND_KEYWORD,
+	PRINT:    PRINT_KEYWORD,
 }
 
 func IsNumber(r rune) bool {

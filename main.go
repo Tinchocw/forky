@@ -16,14 +16,14 @@ func main() {
 	var (
 		debug    bool
 		scanning bool
-		// parsing  bool
+		parsing  bool
 		// resolve  bool
 		workers int
 	)
 
 	flag.BoolVar(&debug, "debug", false, "Enable debug output")
 	flag.BoolVar(&scanning, "scanning", false, "Run in scanning mode")
-	// flag.BoolVar(&parsing, "parsing", false, "Run in parsing mode")
+	flag.BoolVar(&parsing, "parsing", false, "Run in parsing mode")
 	// flag.BoolVar(&resolve, "resolve", false, "Run in resolve mode")
 	flag.IntVar(&workers, "workers", DEFAULT_WORKERS, "Number of workers for fork-join scanning")
 	flag.Parse()
@@ -33,6 +33,12 @@ func main() {
 	if scanning {
 		mode = ScanningMode
 	}
+	if parsing {
+		mode = ParsingMode
+	}
+	// if resolve {
+	// 	mode = ResolveMode
+	// }
 
 	if workers <= 0 {
 		workers = DEFAULT_WORKERS

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 
+	parserPackage "github.com/Tinchocw/Interprete-concurrente/parser"
 	scannerPackage "github.com/Tinchocw/Interprete-concurrente/scanner"
 )
 
@@ -12,7 +13,7 @@ type InterpreterMode int
 const (
 	NormalMode InterpreterMode = iota
 	ScanningMode
-	// ParsingMode
+	ParsingMode
 	// ResolveMode
 )
 
@@ -56,6 +57,20 @@ func (fj *Forky) Run(r io.ReaderAt, size int64) error {
 		}
 
 		fmt.Println("== End of Tokens ==")
+		fmt.Println()
+	}
+
+	ps := parserPackage.NewParser(tokens)
+	program, err := ps.Parse()
+	if err != nil {
+		return err
+	}
+
+	if fj.mode == ParsingMode {
+		fmt.Println()
+		fmt.Println("== PROGRAM ==")
+		fmt.Println(program)
+		fmt.Println("== End of PROGRAM ==")
 		fmt.Println()
 	}
 

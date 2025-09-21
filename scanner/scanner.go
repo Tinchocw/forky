@@ -138,6 +138,12 @@ func (s *scanner) scan() (segment, error) {
 		case common.CLOSE_PARENTHESIS_SYMBOL:
 			s.addToken(common.CLOSE_PARENTHESIS)
 
+		case common.OPEN_BRACKET_SYMBOL:
+			s.addToken(common.OPEN_BRACKET)
+
+		case common.CLOSE_BRACKET_SYMBOL:
+			s.addToken(common.CLOSE_BRACKET)
+
 		case common.EQUAL_SYMBOL:
 			if s.matchRune(common.EQUAL_SYMBOL) {
 				s.addToken(common.EQUAL_EQUAL)
