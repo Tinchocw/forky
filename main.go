@@ -14,9 +14,10 @@ const DEFAULT_WORKERS = 4
 func main() {
 	// Flags
 	var (
-		debug    bool
-		scanning bool
-		parsing  bool
+		debug     bool
+		scanning  bool
+		parsing   bool
+		colorDemo bool
 		// resolve  bool
 		workers int
 	)
@@ -24,6 +25,7 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable debug output")
 	flag.BoolVar(&scanning, "scanning", false, "Run in scanning mode")
 	flag.BoolVar(&parsing, "parsing", false, "Run in parsing mode")
+	flag.BoolVar(&colorDemo, "color-demo", false, "Show color functions demo")
 	// flag.BoolVar(&resolve, "resolve", false, "Run in resolve mode")
 	flag.IntVar(&workers, "workers", DEFAULT_WORKERS, "Number of workers for fork-join scanning")
 	flag.Parse()
@@ -35,6 +37,9 @@ func main() {
 	}
 	if parsing {
 		mode = ParsingMode
+	}
+	if colorDemo {
+		mode = ColorDemoMode
 	}
 	// if resolve {
 	// 	mode = ResolveMode

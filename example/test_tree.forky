@@ -1,0 +1,19 @@
+func fibonacci(n) {
+    if (n <= 1) {
+        return n;
+    } else if (n == 2) {
+        return 1;
+    } else {
+        return fibonacci(n - 1) + fibonacci(n - 2);
+    }
+}
+
+var x = 10;
+var result = fibonacci(x);
+print(result);
+
+while (x > 0) {
+    print("Counting down: ');
+    print(x);
+    x = x - 1;
+}
