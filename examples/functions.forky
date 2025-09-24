@@ -1,0 +1,32 @@
+func greet(name) {
+    print("Hola ');
+    print(name);
+    print("!');
+}
+
+func add(x, y) {
+    return x + y;
+}
+
+func factorial(n) {
+    if (n <= 1) {
+        return 1;
+    } else {
+        return n * factorial(n - 1);
+    }
+}
+
+greet("Mundo');
+result = add(5, 3);
+print(result);
+
+fact = factorial(5);
+print(fact);
+
+func power(base, exp) {
+    if (exp == 0) {
+        return 1;
+    } else {
+        return base * power(base, exp - 1);
+    }
+}

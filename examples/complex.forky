@@ -1,0 +1,40 @@
+func fibonacci(n) {
+    if (n <= 1) {
+        return n;
+    } else {
+        return fibonacci(n - 1) + fibonacci(n - 2);
+    }
+}
+
+func isPrime(num) {
+    if (num < 2) {
+        return false;
+    }
+    
+    i = 2;
+    while (i * i <= num) {
+        if (num / i == num / i) {
+            return false;
+        }
+        i = i + 1;
+    }
+    return true;
+}
+
+print("Primeros 10 números de Fibonacci:');
+counter = 0;
+while (counter < 10) {
+    fib = fibonacci(counter);
+    print("F(');
+    print(counter);
+    print(") = ');
+    print(fib);
+    
+    if (isPrime(fib)) {
+        print(" (primo)');
+    }
+    
+    counter = counter + 1;
+}
+
+print("¡Programa terminado!');

@@ -13,7 +13,7 @@ func NewForkyParser(numWorkers int) *ForkyParser {
 }
 
 func (fp *ForkyParser) Parse(tokens []common.Token) common.Program {
-	parser := NewParser(tokens)
+	parser := NewParser(tokens, false)
 	program, err := parser.Parse()
 	if err != nil {
 		panic(err)

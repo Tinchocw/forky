@@ -1,7 +1,0 @@
-var x = 42;
-print(x + 10);
-if (x > 40) {
-    print("x es mayor que 40');
-} else {
-    print("x es menor o igual a 40');
-}

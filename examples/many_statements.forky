@@ -1,0 +1,26 @@
+a = 1;
+b = 2;
+c = 3;
+d = 4;
+e = 5;
+f = 6;
+g = 7;
+h = 8;
+i = 9;
+j = 10;
+k = 11;
+while (a < 3) {
+    print("Statement 1');
+    print("Statement 2');
+    print("Statement 3');
+    print("Statement 4');
+    print("Statement 5');
+    print("Statement 6');
+    print("Statement 7');
+    print("Statement 8');
+    print("Statement 9');
+    print("Statement 10');
+    print("Statement 11');
+    print("Statement 12');
+    a = a + 1;
+}

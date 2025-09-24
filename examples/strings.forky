@@ -1,0 +1,15 @@
+name = "Juan';
+surname = "Pérez';
+greeting = "¡Bienvenido!';
+
+print(greeting);
+print(name);
+print(surname);
+
+message1 = "Esto es una cadena normal';
+message2 = "Cadena con números: 123';
+
+
+print(message1);
+print(message2);
+print(message3);

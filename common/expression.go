@@ -2,23 +2,19 @@ package common
 
 import (
 	"fmt"
-	"strings"
 )
 
 /*
-
-	Program			-> 	Statements * EOF
 	Statements		-> 	BlockStatement 			|
 							IfStatement 		|
 							WhileStatement 		|
 							FunctionDef 		|
+							ReturnStatement		|
 							VarDeclaration 		|
 							Assignment 			|
-							PrintStat	}
-}
+							PrintStatement 		|
+							FunctionCall
 
-type Unary interface{}ent 		|
-							Expression
 
 	BlockStatement	-> '{' Statements * '}'
 	IfStatement 	-> 'if' '(' Expression ')' BlockStatement
@@ -30,6 +26,9 @@ type Unary interface{}ent 		|
 	Assignment 		-> IDENTIFIER '=' Expression ';'
 	PrintStatement 	-> 'print' '(' Expression ')' ';'
 	Return 			-> 'return' Expression ';'
+
+	Call 	-> IDENTIFIER '(' Arguments? ')'
+	Arguments 		-> Expression (',' Expression)*
 
 	Expression 		->	BinaryOr
 	BinaryOr 		->	BinaryAnd ('or' BinaryAnd )*
@@ -48,24 +47,44 @@ type Unary interface{}ent 		|
 							Call				|
 							GroupingExpression
 
-	Call 	-> IDENTIFIER '(' Arguments? ')'
 	GroupingExpression -> '(' Expression ')'
-
-	Parameters 		-> IDENTIFIER (',' IDENTIFIER)*
-	Arguments 		-> Expression (',' Expression)*
 */
 
-// Helper function for simple indentation
-func simpleIndent(level int) string {
-	return strings.Repeat("  ", level)
-}
-
-// Helper function to create tree connectors (only for lowest level)
-func leafPrefix(isLast bool) string {
-	if isLast {
-		return "└── "
-	} else {
-		return "├── "
+func friendlyOperatorName(token *Token, isUnary bool) string {
+	if token == nil {
+		return ""
+	}
+	switch token.Typ {
+	case EQUAL_EQUAL:
+		return "EQUALS"
+	case BANG_EQUAL:
+		return "NOT_EQUALS"
+	case LESS:
+		return "LESS_THAN"
+	case GREATER:
+		return "GREATER_THAN"
+	case LESS_EQUAL:
+		return "LESS_OR_EQUAL"
+	case GREATER_EQUAL:
+		return "GREATER_OR_EQUAL"
+	case PLUS:
+		if isUnary {
+			return "POSITIVE"
+		}
+		return "PLUS"
+	case MINUS:
+		if isUnary {
+			return "NEGATIVE"
+		}
+		return "MINUS"
+	case ASTERISK:
+		return "MULTIPLY"
+	case SLASH:
+		return "DIVIDE"
+	case BANG:
+		return "NOT"
+	default:
+		return token.String()
 	}
 }
 
@@ -73,33 +92,32 @@ type Expression struct {
 	Root BinaryOr
 }
 
-// Helper functions to check if nodes are "pass-through" (only have Left, no Right/Operator)
-func (bo BinaryOr) isSimple() bool {
+func (bo BinaryOr) skipPrinting() bool {
 	return bo.Right == nil
 }
 
-func (ba BinaryAnd) isSimple() bool {
+func (ba BinaryAnd) skipPrinting() bool {
 	return ba.Right == nil
 }
 
-func (eq Equality) isSimple() bool {
+func (eq Equality) skipPrinting() bool {
 	return eq.Operator == nil && eq.Right == nil
 }
 
-func (c Comparison) isSimple() bool {
+func (c Comparison) skipPrinting() bool {
 	return c.Operator == nil && c.Right == nil
 }
 
-func (t Term) isSimple() bool {
+func (t Term) skipPrinting() bool {
 	return t.Operator == nil && t.Right == nil
 }
 
-func (f Factor) isSimple() bool {
+func (f Factor) skipPrinting() bool {
 	return f.Operator == nil && f.Right == nil
 }
 
-func (e Expression) Print(level int) {
-	e.Root.Print(level)
+func (e Expression) Print(start string) {
+	e.Root.Print(start)
 }
 
 type BinaryOr struct {
@@ -107,23 +125,17 @@ type BinaryOr struct {
 	Right *BinaryOr
 }
 
-func (bo BinaryOr) Print(level int) {
-	// Si es simple (no tiene Right), saltear este nivel
-	if bo.isSimple() {
-		bo.Left.Print(level)
+func (bo BinaryOr) Print(start string) {
+	if bo.skipPrinting() {
+		bo.Left.Print(start)
 		return
 	}
 
-	fmt.Printf("%s%sBinaryOr%s\n", simpleIndent(level), COLOR_MAGENTA, COLOR_RESET)
-
-	fmt.Printf("%sLeft:\n", simpleIndent(level+1))
-	bo.Left.Print(level + 2)
-
-	if bo.Right != nil {
-		fmt.Printf("%sOperator: %sor%s\n", simpleIndent(level+1), COLOR_RED, COLOR_RESET)
-		fmt.Printf("%sRight:\n", simpleIndent(level+1))
-		bo.Right.Print(level + 2)
-	}
+	nodeName := "BinaryOr"
+	fmt.Printf("%s%s\n", start, Colorize(nodeName, COLOR_MAGENTA))
+	start = advanceSuffix(start)
+	bo.Left.Print(start + string(BRANCH_CONNECTOR))
+	bo.Right.Print(start + string(LAST_CONNECTOR))
 }
 
 type BinaryAnd struct {
@@ -131,23 +143,17 @@ type BinaryAnd struct {
 	Right *BinaryAnd
 }
 
-func (ba BinaryAnd) Print(level int) {
-	// Si es simple (no tiene Right), saltear este nivel
-	if ba.isSimple() {
-		ba.Left.Print(level)
+func (ba BinaryAnd) Print(start string) {
+	if ba.skipPrinting() {
+		ba.Left.Print(start)
 		return
 	}
 
-	fmt.Printf("%s%sBinaryAnd%s\n", simpleIndent(level), COLOR_MAGENTA, COLOR_RESET)
-
-	fmt.Printf("%sLeft:\n", simpleIndent(level+1))
-	ba.Left.Print(level + 2)
-
-	if ba.Right != nil {
-		fmt.Printf("%sOperator: %sand%s\n", simpleIndent(level+1), COLOR_RED, COLOR_RESET)
-		fmt.Printf("%sRight:\n", simpleIndent(level+1))
-		ba.Right.Print(level + 2)
-	}
+	nodeName := "BinaryAnd"
+	fmt.Printf("%s%s\n", start, Colorize(nodeName, COLOR_MAGENTA))
+	start = advanceSuffix(start)
+	ba.Left.Print(start + string(BRANCH_CONNECTOR))
+	ba.Right.Print(start + string(LAST_CONNECTOR))
 }
 
 type Equality struct {
@@ -156,23 +162,17 @@ type Equality struct {
 	Right    *Equality
 }
 
-func (eq Equality) Print(level int) {
-	// Si es simple (no tiene operador), saltear este nivel
-	if eq.isSimple() {
-		eq.Left.Print(level)
+func (eq Equality) Print(start string) {
+	if eq.skipPrinting() {
+		eq.Left.Print(start)
 		return
 	}
 
-	fmt.Printf("%s%sEquality%s\n", simpleIndent(level), COLOR_MAGENTA, COLOR_RESET)
-
-	fmt.Printf("%sLeft:\n", simpleIndent(level+1))
-	eq.Left.Print(level + 2)
-
-	if eq.Operator != nil && eq.Right != nil {
-		fmt.Printf("%sOperator: %s\n", simpleIndent(level+1), eq.Operator.ColorString())
-		fmt.Printf("%sRight:\n", simpleIndent(level+1))
-		eq.Right.Print(level + 2)
-	}
+	nodeName := fmt.Sprintf("Equality (%s)", friendlyOperatorName(eq.Operator, false))
+	fmt.Printf("%s%s\n", start, Colorize(nodeName, COLOR_MAGENTA))
+	start = advanceSuffix(start)
+	eq.Left.Print(start + string(BRANCH_CONNECTOR))
+	eq.Right.Print(start + string(LAST_CONNECTOR))
 }
 
 type Comparison struct {
@@ -181,23 +181,17 @@ type Comparison struct {
 	Right    *Comparison
 }
 
-func (c Comparison) Print(level int) {
-	// Si es simple (no tiene operador), saltear este nivel
-	if c.isSimple() {
-		c.Left.Print(level)
+func (c Comparison) Print(start string) {
+	if c.skipPrinting() {
+		c.Left.Print(start)
 		return
 	}
 
-	fmt.Printf("%s%sComparison%s\n", simpleIndent(level), COLOR_MAGENTA, COLOR_RESET)
-
-	fmt.Printf("%sLeft:\n", simpleIndent(level+1))
-	c.Left.Print(level + 2)
-
-	if c.Operator != nil && c.Right != nil {
-		fmt.Printf("%sOperator: %s\n", simpleIndent(level+1), c.Operator.ColorString())
-		fmt.Printf("%sRight:\n", simpleIndent(level+1))
-		c.Right.Print(level + 2)
-	}
+	nodeName := fmt.Sprintf("Comparison (%s)", friendlyOperatorName(c.Operator, false))
+	fmt.Printf("%s%s\n", start, Colorize(nodeName, COLOR_MAGENTA))
+	start = advanceSuffix(start)
+	c.Left.Print(start + string(BRANCH_CONNECTOR))
+	c.Right.Print(start + string(LAST_CONNECTOR))
 }
 
 type Term struct {
@@ -206,23 +200,18 @@ type Term struct {
 	Right    *Term
 }
 
-func (t Term) Print(level int) {
-	// Si es simple (no tiene operador), saltear este nivel
-	if t.isSimple() {
-		t.Left.Print(level)
+func (t Term) Print(start string) {
+	if t.skipPrinting() {
+		t.Left.Print(start)
 		return
 	}
 
-	fmt.Printf("%s%sTerm%s\n", simpleIndent(level), COLOR_MAGENTA, COLOR_RESET)
+	nodeName := fmt.Sprintf("Term (%s)", friendlyOperatorName(t.Operator, false))
 
-	fmt.Printf("%sLeft:\n", simpleIndent(level+1))
-	t.Left.Print(level + 2)
-
-	if t.Operator != nil && t.Right != nil {
-		fmt.Printf("%sOperator: %s\n", simpleIndent(level+1), t.Operator.ColorString())
-		fmt.Printf("%sRight:\n", simpleIndent(level+1))
-		t.Right.Print(level + 2)
-	}
+	fmt.Printf("%s%s\n", start, Colorize(nodeName, COLOR_MAGENTA))
+	start = advanceSuffix(start)
+	t.Left.Print(start + string(BRANCH_CONNECTOR))
+	t.Right.Print(start + string(LAST_CONNECTOR))
 }
 
 type Factor struct {
@@ -231,85 +220,56 @@ type Factor struct {
 	Right    *Factor
 }
 
-func (f Factor) Print(level int) {
-	// Si es simple (no tiene operador), saltear este nivel
-	if f.isSimple() {
-		switch u := f.Left.(type) {
-		case UnaryWithOperator:
-			u.Print(level)
-		case Primary:
-			u.Print(level)
-		}
+func (f Factor) Print(start string) {
+	if f.skipPrinting() {
+		f.Left.Print(start)
 		return
 	}
 
-	fmt.Printf("%s%sFactor%s\n", simpleIndent(level), COLOR_MAGENTA, COLOR_RESET)
+	nodeName := fmt.Sprintf("Factor (%s)", friendlyOperatorName(f.Operator, false))
 
-	fmt.Printf("%sLeft:\n", simpleIndent(level+1))
-	switch u := f.Left.(type) {
-	case UnaryWithOperator:
-		u.Print(level + 2)
-	case Primary:
-		u.Print(level + 2)
-	}
-
-	if f.Operator != nil && f.Right != nil {
-		fmt.Printf("%sOperator: %s\n", simpleIndent(level+1), f.Operator.ColorString())
-		fmt.Printf("%sRight:\n", simpleIndent(level+1))
-		f.Right.Print(level + 2)
-	}
+	fmt.Printf("%s%s\n", start, Colorize(nodeName, COLOR_MAGENTA))
+	start = advanceSuffix(start)
+	f.Left.Print(start + string(BRANCH_CONNECTOR))
+	f.Right.Print(start + string(LAST_CONNECTOR))
 }
 
-type Unary interface{}
+type Unary interface {
+	Print(start string)
+}
 
 type UnaryWithOperator struct {
 	Operator Token
 	Right    Unary
 }
 
-func (uwo UnaryWithOperator) Print(level int) {
-	fmt.Printf("%s%sUnary%s\n", simpleIndent(level), COLOR_MAGENTA, COLOR_RESET)
-	fmt.Printf("%sOperator: %s\n", simpleIndent(level+1), uwo.Operator.ColorString())
-	fmt.Printf("%sRight:\n", simpleIndent(level+1))
-	switch u := uwo.Right.(type) {
-	case UnaryWithOperator:
-		u.Print(level + 2)
-	case Primary:
-		u.Print(level + 2)
-	}
+func (uwo UnaryWithOperator) Print(start string) {
+	nodeName := fmt.Sprintf("Unary (%s)", friendlyOperatorName(&uwo.Operator, true))
+	fmt.Printf("%s%s\n", start, Colorize(nodeName, COLOR_MAGENTA))
+	start = advanceSuffix(start)
+	uwo.Right.Print(start + string(LAST_CONNECTOR))
 }
 
 type Primary struct {
 	Value PrimaryValue
 }
 
-func (p Primary) Print(level int) {
-	// Solo aquí mostramos un conector simple - es el más bajo nivel
-	fmt.Printf("%s└── ", simpleIndent(level))
-	switch v := p.Value.(type) {
-	case Token:
-		fmt.Printf("%s%s%s\n", COLOR_GREEN, v.ColorString(), COLOR_RESET)
-	case Call:
-		fmt.Printf("%sCall%s\n", COLOR_GREEN, COLOR_RESET)
-		v.Print(level + 1)
-	case GroupingExpression:
-		fmt.Printf("%sGrouping%s\n", COLOR_GREEN, COLOR_RESET)
-		v.Print(level + 1)
-	default:
-		fmt.Printf("%s%v%s\n", COLOR_GREEN, v, COLOR_RESET)
-	}
+func (p Primary) Print(start string) {
+	p.Value.Print(start)
 }
 
-type PrimaryValue interface{}
+type PrimaryValue interface {
+	Print(start string)
+}
 
 type GroupingExpression struct {
 	Expression Expression
 }
 
-func (ge GroupingExpression) Print(level int) {
-	fmt.Printf("%s%sGroupingExpression%s\n", simpleIndent(level), COLOR_GREEN, COLOR_RESET)
-	fmt.Printf("%sExpression:\n", simpleIndent(level+1))
-	ge.Expression.Print(level + 2)
+func (ge GroupingExpression) Print(start string) {
+	fmt.Printf("%s%s\n", start, Colorize("GroupingExpression", COLOR_GREEN))
+	start = advanceSuffix(start)
+	ge.Expression.Print(start + string(LAST_CONNECTOR))
 }
 
 type Call struct {
@@ -317,35 +277,25 @@ type Call struct {
 	Arguments []Expression
 }
 
-func (c Call) Print(level int) {
-	fmt.Printf("%s%sCall%s\n", simpleIndent(level), COLOR_GREEN, COLOR_RESET)
-	fmt.Printf("%sCallee: %s%s%s\n", simpleIndent(level+1), COLOR_WHITE, c.Callee, COLOR_RESET)
+func (c Call) Print(start string) {
+	nodeName := "Call"
+	fmt.Printf("%s%s\n", start, Colorize(nodeName, COLOR_GREEN))
+	start = advanceSuffix(start)
+	fmt.Printf("%sCallee: %s\n", start+string(BRANCH_CONNECTOR), Colorize(c.Callee, COLOR_WHITE))
 
 	if len(c.Arguments) > 0 {
-		fmt.Printf("%sArguments:\n", simpleIndent(level+1))
+		nodeName := "Arguments"
+		fmt.Printf("%s%s\n", start+string(LAST_CONNECTOR), Colorize(nodeName, COLOR_GREEN))
+		start += string(SIMPLE_INDENT)
 		for i, arg := range c.Arguments {
-			fmt.Printf("%sArg[%d]:\n", simpleIndent(level+2), i)
-			arg.Print(level + 3)
+			connector := BRANCH_CONNECTOR
+			identation := SIMPLE_CONNECTOR
+			if i == len(c.Arguments)-1 {
+				connector = LAST_CONNECTOR
+				identation = SIMPLE_INDENT
+			}
+			fmt.Printf("%sArg[%d]:\n", start+string(connector), i)
+			arg.Print(start + string(identation) + string(LAST_CONNECTOR))
 		}
-	}
-}
-
-func NewLiteralExpression(value PrimaryValue) Expression {
-	return Expression{
-		Root: BinaryOr{
-			Left: BinaryAnd{
-				Left: Equality{
-					Left: Comparison{
-						Left: Term{
-							Left: Factor{
-								Left: Primary{
-									Value: value,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
 	}
 }

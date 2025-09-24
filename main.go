@@ -14,36 +14,29 @@ const DEFAULT_WORKERS = 4
 func main() {
 	// Flags
 	var (
-		debug     bool
-		scanning  bool
-		parsing   bool
-		colorDemo bool
-		// resolve  bool
+		debug   bool
+		modeStr string
 		workers int
 	)
 
 	flag.BoolVar(&debug, "debug", false, "Enable debug output")
-	flag.BoolVar(&scanning, "scanning", false, "Run in scanning mode")
-	flag.BoolVar(&parsing, "parsing", false, "Run in parsing mode")
-	flag.BoolVar(&colorDemo, "color-demo", false, "Show color functions demo")
-	// flag.BoolVar(&resolve, "resolve", false, "Run in resolve mode")
+	flag.StringVar(&modeStr, "mode", "normal", "Run mode: normal, scanning, parsing")
 	flag.IntVar(&workers, "workers", DEFAULT_WORKERS, "Number of workers for fork-join scanning")
 	flag.Parse()
 
-	// Determine mode (default: scanning)
-	mode := NormalMode
-	if scanning {
+	// Determine mode based on string flag
+	var mode InterpreterMode
+	switch modeStr {
+	case "scanning":
 		mode = ScanningMode
-	}
-	if parsing {
+	case "parsing":
 		mode = ParsingMode
+	case "normal":
+		mode = NormalMode
+	default:
+		fmt.Printf("Invalid mode: %s. Valid modes are: normal, scanning, parsing\n", modeStr)
+		os.Exit(1)
 	}
-	if colorDemo {
-		mode = ColorDemoMode
-	}
-	// if resolve {
-	// 	mode = ResolveMode
-	// }
 
 	if workers <= 0 {
 		workers = DEFAULT_WORKERS

@@ -1,0 +1,22 @@
+var globalVar = "soy global';
+
+func testScope() {
+    var localVar = "soy local';
+    globalVar = "modificado desde función';
+    
+    print(localVar);
+    print(globalVar);
+}
+
+print("Antes de la función:');
+print(globalVar);
+
+testScope();
+
+print("Después de la función:');
+print(globalVar);
+
+if (true) {
+    var blockVar = "variable de bloque';
+    print(blockVar);
+}

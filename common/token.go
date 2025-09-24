@@ -32,8 +32,6 @@ func (t Token) String() string {
 	return t.Typ.String()
 }
 
-// --- ANSI color support and pretty printing ---
-
 func isKeywordType(tt TokenType) bool {
 	_, ok := KEYWORDS_VALUES[tt]
 	return ok
@@ -61,9 +59,8 @@ func isValueType(tt TokenType) bool {
 	}
 }
 
-// ColorString returns the token formatted with ANSI colors according to its category.
 func (t Token) ColorString() string {
-	var color string
+	var color Color
 
 	switch {
 	case isValueType(t.Typ):
@@ -78,7 +75,12 @@ func (t Token) ColorString() string {
 		return t.String()
 	}
 
-	return color + t.String() + COLOR_RESET
+	return Colorize(t.String(), color)
+}
+
+// Print implements the Print method for PrimaryValue interface
+func (t Token) Print(start string) {
+	fmt.Printf("%s%s\n", start, t.ColorString())
 }
 
 type TokenType int
@@ -274,4 +276,20 @@ func IsAlphanumeric(r rune) bool {
 
 func IsWhitespace(r rune) bool {
 	return r == ' ' || r == '\t' || r == '\n'
+}
+
+func PrintTokens(tokens []Token) {
+	fmt.Println()
+	fmt.Printf("%s\n", Title("Tokens"))
+
+	for i, token := range tokens {
+		fmt.Printf("%4d: %s\n", i, token.ColorString())
+	}
+
+	fmt.Printf("%s\n", Title("End of Tokens"))
+	fmt.Println()
+}
+
+func PrintToken(index int, token Token) {
+	fmt.Printf("%4d: %s\n", index, token.ColorString())
 }
