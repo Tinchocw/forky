@@ -172,6 +172,6 @@ func executeReturnStatement(stmt common.ReturnStatement, env *Env) (Value, error
 	return value, NewReturnErr()
 }
 
-func executeBreakStatement(stmt common.BreakStatement, env *Env) (Value, error) {
+func executeBreakStatement(_ common.BreakStatement, _ *Env) (Value, error) {
 	return Value{}, NewBreakErr()
 }

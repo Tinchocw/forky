@@ -17,10 +17,10 @@ func factorial(n) {
 }
 
 greet("Mundo');
-result = add(5, 3);
+var result = add(5, 3);
 print(result);
 
-fact = factorial(5);
+var fact = factorial(5);
 print(fact);
 
 func power(base, exp) {

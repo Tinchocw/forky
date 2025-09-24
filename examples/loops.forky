@@ -1,13 +1,13 @@
-counter = 0;
+var counter = 0;
 while (counter < 5) {
     print("Contador: ');
     print(counter);
     counter = counter + 1;
 }
 
-i = 0;
+var i = 0;
 while (i < 3) {
-    j = 0;
+    var j = 0;
     while (j < 3) {
         print("i: ');
         print(i);

@@ -1,8 +1,8 @@
-pi = 3.14159;
-radius = 5;
+var pi = 3;
+var radius = 5;
 
-area = pi * radius * radius;
-circumference = 2 * pi * radius;
+var area = pi * radius * radius;
+var circumference = 2 * pi * radius;
 
 print("Radio: ');
 print(radius);
@@ -11,10 +11,10 @@ print(area);
 print("Circunferencia: ');
 print(circumference);
 
-result1 = 2 + 3 * 4;
-result2 = (2 + 3) * 4;
-result3 = 10 / 2 + 3;
-result4 = 10 / (2 + 3);
+var result1 = 2 + 3 * 4;
+var result2 = (2 + 3) * 4;
+var result3 = 10 / 2 + 3;
+var result4 = 10 / (2 + 3);
 
 print("2 + 3 * 4 = ');
 print(result1);

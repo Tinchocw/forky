@@ -113,7 +113,7 @@ func (current *segment) Merge(other *segment) {
 			current.lastToken().Typ = common.LITERAL
 			current.lastToken().Value += other.consumeOne().Value
 		} else {
-			other.lastToken().Value = current.Content + other.lastToken().Value
+			other.firstToken().Value = current.Content + other.firstToken().Value
 			current.clearTokens()
 		}
 

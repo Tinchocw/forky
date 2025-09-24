@@ -331,8 +331,6 @@ func (p *Parser) assignmentStatement() (common.Assignment, error) {
 
 	name := p.advance().Value
 
-	fmt.Printf("Assigning to variable: %s\n", name)
-
 	if !p.match(common.EQUAL) {
 		return common.Assignment{}, fmt.Errorf("expected '=' after variable name")
 	}

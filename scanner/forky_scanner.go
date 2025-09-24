@@ -43,6 +43,14 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int, debug bool) (seg
 		sg, err := sc.scan()
 		if debug {
 			fmt.Printf("[DEBUG] Sequential scan result: %d tokens\n", len(sg.Tokens))
+			if len(sg.Tokens) > 0 {
+				fmt.Printf("[DEBUG] Content scanned: '%s'\n", sg.Content)
+				fmt.Printf("[DEBUG] Tokens found:\n")
+				for i, token := range sg.Tokens {
+					fmt.Printf("[DEBUG]   [%d] %s\n", i, token.String())
+				}
+				fmt.Printf("[DEBUG] Merge capabilities: Start=%v, End=%v\n", sg.CouldMergeStart, sg.CouldMergeEnd)
+			}
 		}
 		return sg, err
 	}
@@ -72,19 +80,25 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int, debug bool) (seg
 	}
 
 	leftCh := make(chan res, 1)
-	func() { // fork left branch
+	go func() { // fork left branch
 		if debug {
-			fmt.Printf("[DEBUG] Forking left branch [%d,%d)\n", start, mid)
+			fmt.Printf("[DEBUG] Forking left branch [%d,%d) with %d workers\n", start, mid, leftWorkers)
 		}
 		sg, err := parallelScan(r, start, mid, leftWorkers, debug)
+		if debug && err == nil {
+			fmt.Printf("[DEBUG] Left branch [%d,%d) completed: %d tokens\n", start, mid, len(sg.Tokens))
+		}
 		leftCh <- res{sg, err}
 	}()
 
 	// Recurse right branch in current goroutine (join pattern)
 	if debug {
-		fmt.Printf("[DEBUG] Processing right branch [%d,%d)\n", mid, end)
+		fmt.Printf("[DEBUG] Processing right branch [%d,%d) with %d workers\n", mid, end, rightWorkers)
 	}
 	rightSeg, rightErr := parallelScan(r, mid, end, rightWorkers, debug)
+	if debug && rightErr == nil {
+		fmt.Printf("[DEBUG] Right branch [%d,%d) completed: %d tokens\n", mid, end, len(rightSeg.Tokens))
+	}
 	leftRes := <-leftCh
 
 	if leftRes.err != nil {
@@ -97,12 +111,32 @@ func parallelScan(r io.ReaderAt, start, end int64, workers int, debug bool) (seg
 	if debug {
 		fmt.Printf("[DEBUG] Merging segments: left=%d tokens, right=%d tokens\n",
 			len(leftRes.sg.Tokens), len(rightSeg.Tokens))
+
+		if len(leftRes.sg.Tokens) > 0 {
+			fmt.Printf("[DEBUG] Left segment tokens:\n")
+			for i, token := range leftRes.sg.Tokens {
+				fmt.Printf("[DEBUG]   L[%d] %s\n", i, token.String())
+			}
+		}
+
+		if len(rightSeg.Tokens) > 0 {
+			fmt.Printf("[DEBUG] Right segment tokens:\n")
+			for i, token := range rightSeg.Tokens {
+				fmt.Printf("[DEBUG]   R[%d] %s\n", i, token.String())
+			}
+		}
 	}
 
 	leftRes.sg.Merge(&rightSeg)
 
 	if debug {
 		fmt.Printf("[DEBUG] Merge complete: total=%d tokens\n", len(leftRes.sg.Tokens))
+		if len(leftRes.sg.Tokens) > 0 {
+			fmt.Printf("[DEBUG] Merged result tokens:\n")
+			for i, token := range leftRes.sg.Tokens {
+				fmt.Printf("[DEBUG]   M[%d] %s\n", i, token.String())
+			}
+		}
 	}
 
 	return leftRes.sg, nil
@@ -122,19 +156,36 @@ func adjustToRuneBoundary(r io.ReaderAt, pos int64) (int64, error) {
 
 func (f *ForkyScanner) Scan(r io.ReaderAt, size int64) ([]common.Token, error) {
 	if f.debug {
-		fmt.Printf("[DEBUG] Starting scan with %d workers on %d bytes\n", f.numWorkers, size)
+		fmt.Printf("[DEBUG] ========== STARTING FORKY SCAN ==========\n")
+		fmt.Printf("[DEBUG] Workers: %d, Input size: %d bytes\n", f.numWorkers, size)
 	}
 
 	sg, err := parallelScan(r, 0, size, f.numWorkers, f.debug)
 	if err != nil {
+		if f.debug {
+			fmt.Printf("[DEBUG] ========== SCAN FAILED ==========\n")
+			fmt.Printf("[DEBUG] Error: %v\n", err)
+		}
 		return nil, err
 	}
 	if sg.hasInvalidTokens() {
+		if f.debug {
+			fmt.Printf("[DEBUG] ========== SCAN FAILED ==========\n")
+			fmt.Printf("[DEBUG] Error: merged segment has invalid tokens\n")
+		}
 		return nil, fmt.Errorf("merged segment has invalid tokens")
 	}
 
 	if f.debug {
-		fmt.Printf("[DEBUG] Scan completed, found %d tokens\n", len(sg.Tokens))
+		fmt.Printf("[DEBUG] ========== SCAN COMPLETED SUCCESSFULLY ==========\n")
+		fmt.Printf("[DEBUG] Total tokens found: %d\n", len(sg.Tokens))
+		if len(sg.Tokens) > 0 {
+			fmt.Printf("[DEBUG] Final token list:\n")
+			for i, token := range sg.Tokens {
+				fmt.Printf("[DEBUG]   [%d] %s\n", i, token.String())
+			}
+		}
+		fmt.Printf("[DEBUG] ================================================\n")
 	}
 
 	return sg.Tokens, nil

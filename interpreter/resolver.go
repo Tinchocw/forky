@@ -288,7 +288,14 @@ func resolvePrimary(primary common.Primary, env *Env) (Value, error) {
 			args = append(args, argValue)
 		}
 
-		return function.Call(args, env)
+		value, err := function.Call(args, env)
+
+		if err == nil || !IsReturnErr(err) {
+			return Value{}, err
+		}
+
+		return value, nil
+
 	case common.GroupingExpression:
 		return resolveExpression(p.Expression, env)
 	default:

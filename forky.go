@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/Tinchocw/Interprete-concurrente/common"
+	"github.com/Tinchocw/Interprete-concurrente/interpreter"
 	parserPackage "github.com/Tinchocw/Interprete-concurrente/parser"
 	scannerPackage "github.com/Tinchocw/Interprete-concurrente/scanner"
 )
@@ -19,16 +20,18 @@ const (
 
 // Forky is the top-level runner that coordinates the scanning (and future phases).
 type Forky struct {
-	workers int
-	debug   bool
-	mode    InterpreterMode
+	workers     int
+	debug       bool
+	mode        InterpreterMode
+	interpreter *interpreter.Interpreter
 }
 
 func NewForky(workers int, debug bool, mode InterpreterMode) *Forky {
 	if workers < 1 {
 		workers = 1
 	}
-	return &Forky{workers: workers, debug: debug, mode: mode}
+	i := interpreter.NewInterpreter()
+	return &Forky{workers: workers, debug: debug, mode: mode, interpreter: &i}
 }
 
 // Run executes the configured mode against the provided ReaderAt of given size.
@@ -62,5 +65,5 @@ func (forky *Forky) Run(r io.ReaderAt, size int64) error {
 		common.PrintProgram(program)
 	}
 
-	return nil
+	return forky.interpreter.Interpret(program)
 }

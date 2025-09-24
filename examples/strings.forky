@@ -1,13 +1,13 @@
-name = "Juan';
-surname = "Pérez';
-greeting = "¡Bienvenido!';
+var name = "Juan';
+var surname = "Pérez';
+var greeting = "¡Bienvenido!';
 
 print(greeting);
 print(name);
 print(surname);
 
-message1 = "Esto es una cadena normal';
-message2 = "Cadena con números: 123';
+var message1 = "Esto es una cadena normal';
+var message2 = "Cadena con números: 123';
 
 
 print(message1);

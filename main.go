@@ -1,12 +1,13 @@
 package main
 
 import (
-	"bufio"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strings"
+
+	"github.com/peterh/liner"
 )
 
 const DEFAULT_WORKERS = 4
@@ -66,28 +67,41 @@ func main() {
 		return
 	}
 
-	// REPL mode: read from stdin line-by-line
-	in := bufio.NewReader(os.Stdin)
-	fmt.Println("Forky - REPL. Ctrl-D/Ctrl-C to exit.")
+	// REPL mode: read from stdin with arrow key support
+	line := liner.NewLiner()
+	defer line.Close()
+
+	line.SetCtrlCAborts(true)
+
+	fmt.Println("Forky - REPL with arrow key support. Ctrl-D/Ctrl-C to exit.")
+	fmt.Println("Use ↑↓ arrows for history, ←→ for line editing.")
 	fmt.Println()
+
 	for {
-		fmt.Print("> ")
-		line, err := in.ReadString('\n')
-		if err == io.EOF {
-			fmt.Println()
-			break
-		}
+		input, err := line.Prompt("> ")
 		if err != nil {
+			if err == liner.ErrPromptAborted {
+				fmt.Println("^C")
+				continue
+			} else if err == io.EOF {
+				fmt.Println()
+				break
+			}
 			if debug {
 				fmt.Printf("read error: %v\n", err)
 			}
 			continue
 		}
-		line = strings.TrimRight(line, "\r\n")
-		if line == "" {
+
+		input = strings.TrimSpace(input)
+		if input == "" {
 			continue
 		}
-		if err := forky.Run(strings.NewReader(line), int64(len(line))); err != nil {
+
+		// Add to history
+		line.AppendHistory(input)
+
+		if err := forky.Run(strings.NewReader(input), int64(len(input))); err != nil {
 			fmt.Println(err)
 		}
 	}
