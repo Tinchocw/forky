@@ -14,7 +14,7 @@ func NewInterpreter() Interpreter {
 	}
 }
 
-func (i *Interpreter) Interpret(program common.Program) error {
-	_, err := executeStatements(program.Statements, i.globalEnv)
-	return err
+func (i *Interpreter) Interpret(program common.Program) (string, error) {
+	value, err := executeStatements(program.Statements, i.globalEnv)
+	return value.Content(), err
 }

@@ -35,20 +35,20 @@ func NewForky(workers int, debug bool, mode InterpreterMode) *Forky {
 }
 
 // Run executes the configured mode against the provided ReaderAt of given size.
-func (forky *Forky) Run(r io.ReaderAt, size int64) error {
+func (forky *Forky) Run(r io.ReaderAt, size int64) (string, error) {
 	sc := scannerPackage.CreateForkyScanner(forky.workers, forky.debug)
 
 	// Read entire input into memory and scan from bytes
 	buf := make([]byte, size)
 	if size > 0 {
 		if _, err := r.ReadAt(buf, 0); err != nil && err != io.EOF {
-			return err
+			return "", err
 		}
 	}
 
 	tokens, err := sc.Scan(r, size)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if forky.mode == ScanningMode {
@@ -58,7 +58,7 @@ func (forky *Forky) Run(r io.ReaderAt, size int64) error {
 	ps := parserPackage.NewParser(tokens, forky.debug)
 	program, err := ps.Parse()
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	if forky.mode == ParsingMode {

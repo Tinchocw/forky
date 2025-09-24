@@ -7,15 +7,18 @@ import (
 )
 
 func executeStatements(statements []common.Statement, env *Env) (Value, error) {
+	var lastValue Value
 	for _, stmt := range statements {
-		if value, err := executeStatement(stmt, env); err != nil {
+		value, err := executeStatement(stmt, env)
+		if err != nil {
 			if IsReturnErr(err) {
 				return value, err
 			}
 			return Value{}, err
 		}
+
 	}
-	return Value{}, nil
+	return lastValue, nil
 }
 
 func executeStatement(stmt common.Statement, env *Env) (Value, error) {
@@ -34,8 +37,8 @@ func executeStatement(stmt common.Statement, env *Env) (Value, error) {
 		return executeWhileStatement(s, env)
 	case common.FunctionDef:
 		return executeFunctionDef(s, env)
-	case common.CallStatement:
-		return executeCallStatement(s, env)
+	case common.ExpressionStatement:
+		return executeExpressionStatement(s, env)
 	case common.ReturnStatement:
 		return executeReturnStatement(s, env)
 	case common.BreakStatement:
@@ -82,7 +85,7 @@ func executePrintStatement(stmt common.PrintStatement, env *Env) (Value, error) 
 		return Value{}, err
 	}
 
-	fmt.Println(value.Data)
+	fmt.Println(value.Content())
 	return Value{}, nil
 }
 
@@ -141,26 +144,9 @@ func executeFunctionDef(stmt common.FunctionDef, env *Env) (Value, error) {
 	return Value{}, nil
 }
 
-func executeCallStatement(stmt common.CallStatement, env *Env) (Value, error) {
-	function, ok := env.GetFunction(stmt.Call.Callee)
-	if !ok {
-		return Value{}, fmt.Errorf("undefined function: %s", stmt.Call.Callee)
-	}
-
-	if len(stmt.Call.Arguments) != len(function.Parameters) {
-		return Value{}, fmt.Errorf("expected %d arguments, got %d", len(function.Parameters), len(stmt.Call.Arguments))
-	}
-
-	args := make([]Value, 0, len(stmt.Call.Arguments))
-	for _, argExpr := range stmt.Call.Arguments {
-		argValue, err := resolveExpression(argExpr, env)
-		if err != nil {
-			return Value{}, err
-		}
-		args = append(args, argValue)
-	}
-
-	return function.Call(args, env)
+func executeExpressionStatement(stmt common.ExpressionStatement, env *Env) (Value, error) {
+	value, err := resolveExpression(stmt.Expression, env)
+	return value, err
 }
 
 func executeReturnStatement(stmt common.ReturnStatement, env *Env) (Value, error) {

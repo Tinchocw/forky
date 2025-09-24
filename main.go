@@ -59,8 +59,10 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		if err := forky.Run(f, st.Size()); err != nil {
-			fmt.Println(err)
+		var runErr error
+		_, runErr = forky.Run(f, st.Size())
+		if runErr != nil {
+			fmt.Println(runErr)
 			os.Exit(1)
 		}
 
@@ -101,8 +103,11 @@ func main() {
 		// Add to history
 		line.AppendHistory(input)
 
-		if err := forky.Run(strings.NewReader(input), int64(len(input))); err != nil {
+		result, err := forky.Run(strings.NewReader(input), int64(len(input)))
+		if err != nil {
 			fmt.Println(err)
+		} else if result != "" {
+			fmt.Println(result)
 		}
 	}
 

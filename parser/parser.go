@@ -118,21 +118,7 @@ func (p *Parser) statement() (common.Statement, error) {
 		fmt.Printf("[DEBUG] Parsing statement at token %d: %s\n", p.current, p.peek().String())
 	}
 
-	if p.check(common.OPEN_BRACKET) {
-		return p.blockStatement()
-	}
-
-	if p.checkAll(common.IDENTIFIER, common.EQUAL) {
-		return p.assignmentStatement()
-	}
-
-	if p.checkAll(common.IDENTIFIER, common.OPEN_PARENTHESIS) {
-		return p.functionCallStatement()
-	}
-
-	token := p.advance()
-
-	switch token.Typ {
+	switch token := p.peek(); token.Typ {
 	case common.RETURN:
 		return p.returnStatement()
 	case common.PRINT:
@@ -147,13 +133,23 @@ func (p *Parser) statement() (common.Statement, error) {
 		return p.varStatement()
 	case common.WHILE:
 		return p.whileStatement()
+	case common.OPEN_BRACKET:
+		return p.blockStatement()
 
 	default:
-		return nil, fmt.Errorf("unexpected token: %v", token.String())
+		if p.checkAll(common.IDENTIFIER, common.EQUAL) {
+			return p.assignmentStatement()
+		}
+
+		return p.expressionStatement()
 	}
 }
 
 func (p *Parser) printStatement() (common.PrintStatement, error) {
+	if !p.match(common.PRINT) {
+		return common.PrintStatement{}, fmt.Errorf("expected 'print'")
+	}
+
 	if !p.match(common.OPEN_PARENTHESIS) {
 		return common.PrintStatement{}, fmt.Errorf("expected '(' after 'print'")
 	}
@@ -175,6 +171,10 @@ func (p *Parser) printStatement() (common.PrintStatement, error) {
 }
 
 func (p *Parser) ifStatement() (common.IfStatement, error) {
+	if !p.match(common.IF) {
+		return common.IfStatement{}, fmt.Errorf("expected 'if'")
+	}
+
 	if !p.match(common.OPEN_PARENTHESIS) {
 		return common.IfStatement{}, fmt.Errorf("expected '(' after 'if'")
 	}
@@ -246,6 +246,9 @@ func (p *Parser) elseIfStatement() (common.ElseIfStatement, error) {
 }
 
 func (p *Parser) breakStatement() (common.BreakStatement, error) {
+	if !p.match(common.BREAK) {
+		return common.BreakStatement{}, fmt.Errorf("expected 'break'")
+	}
 	if !p.match(common.SEMICOLON) {
 		return common.BreakStatement{}, fmt.Errorf("expected ';' after 'break'")
 	}
@@ -253,6 +256,9 @@ func (p *Parser) breakStatement() (common.BreakStatement, error) {
 }
 
 func (p *Parser) returnStatement() (common.ReturnStatement, error) {
+	if !p.match(common.RETURN) {
+		return common.ReturnStatement{}, fmt.Errorf("expected 'return'")
+	}
 
 	expr, err := p.expression()
 	if err != nil {
@@ -265,6 +271,10 @@ func (p *Parser) returnStatement() (common.ReturnStatement, error) {
 }
 
 func (p *Parser) funcStatement() (common.FunctionDef, error) {
+	if !p.match(common.FUNC) {
+		return common.FunctionDef{}, fmt.Errorf("expected 'func'")
+	}
+
 	if !p.check(common.IDENTIFIER) {
 		return common.FunctionDef{}, fmt.Errorf("expected function name after 'func'")
 	}
@@ -302,6 +312,10 @@ func (p *Parser) funcStatement() (common.FunctionDef, error) {
 }
 
 func (p *Parser) whileStatement() (common.WhileStatement, error) {
+	if !p.match(common.WHILE) {
+		return common.WhileStatement{}, fmt.Errorf("expected 'while' at the beginning of while statement")
+	}
+
 	if !p.match(common.OPEN_PARENTHESIS) {
 		return common.WhileStatement{}, fmt.Errorf("expected '(' after 'while'")
 	}
@@ -324,7 +338,6 @@ func (p *Parser) whileStatement() (common.WhileStatement, error) {
 }
 
 func (p *Parser) assignmentStatement() (common.Assignment, error) {
-
 	if !p.check(common.IDENTIFIER) {
 		return common.Assignment{}, fmt.Errorf("expected variable name")
 	}
@@ -347,44 +360,24 @@ func (p *Parser) assignmentStatement() (common.Assignment, error) {
 	return common.Assignment{Name: name, Value: value}, nil
 }
 
-func (p *Parser) functionCallStatement() (common.CallStatement, error) {
-	if !p.check(common.IDENTIFIER) {
-		return common.CallStatement{}, fmt.Errorf("expected function name")
-	}
-
-	name := p.advance().Value
-
-	if !p.match(common.OPEN_PARENTHESIS) {
-		return common.CallStatement{}, fmt.Errorf("expected '(' after function name")
-	}
-
-	var args []common.Expression
-	if !p.match(common.CLOSE_PARENTHESIS) {
-		for {
-			arg, err := p.expression()
-			if err != nil {
-				return common.CallStatement{}, err
-			}
-			args = append(args, arg)
-
-			if p.match(common.CLOSE_PARENTHESIS) {
-				break
-			}
-
-			if !p.match(common.COMMA) {
-				return common.CallStatement{}, fmt.Errorf("expected ',' or ')' after argument")
-			}
-		}
+func (p *Parser) expressionStatement() (common.ExpressionStatement, error) {
+	expr, err := p.expression()
+	if err != nil {
+		return common.ExpressionStatement{}, err
 	}
 
 	if !p.match(common.SEMICOLON) {
-		return common.CallStatement{}, fmt.Errorf("expected ';' after function call")
+		return common.ExpressionStatement{}, fmt.Errorf("expected ';' after expression")
 	}
 
-	return common.CallStatement{Call: common.Call{Callee: name, Arguments: args}}, nil
+	return common.ExpressionStatement{Expression: expr}, nil
 }
 
 func (p *Parser) varStatement() (common.VarDeclaration, error) {
+	if !p.match(common.VAR) {
+		return common.VarDeclaration{}, fmt.Errorf("expected 'var' at the beginning of variable declaration")
+	}
+
 	if !p.check(common.IDENTIFIER) {
 		return common.VarDeclaration{}, fmt.Errorf("expected variable name after '%s'", common.VAR_KEYWORD)
 	}

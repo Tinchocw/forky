@@ -5,16 +5,17 @@ import (
 )
 
 /*
-	Program			-> 	Statements * EOF
+	Program			-> 	Statements*
 	Statements		-> 	BlockStatement 			|
 							IfStatement 		|
 							WhileStatement 		|
+							BreakStatement		|
 							FunctionDef 		|
 							ReturnStatement		|
 							VarDeclaration 		|
 							Assignment 			|
 							PrintStatement 		|
-							FunctionCall
+							ExpressionStatement
 
 
 	BlockStatement	-> '{' Statements * '}'
@@ -22,13 +23,14 @@ import (
 						( 'else' 'if' '(' Expression ')' BlockStatement )*
 						( 'else' BlockStatement )?
 	WhileStatement 	-> 'while' '(' Expression ')' BlockStatement
+	BreakStatement  -> 'break' ';'
 	FunctionDef 	-> 'func' IDENTIFIER '(' Parameters? ')' BlockStatement
+	Return 			-> 'return' Expression ';'
 	VarDeclaration 	-> 'var' IDENTIFIER ( '=' Expression )? ';'
 	Assignment 		-> IDENTIFIER '=' Expression ';'
 	PrintStatement 	-> 'print' '(' Expression ')' ';'
-	Return 			-> 'return' Expression ';'
+	ExpressionStatement -> Expression ';'
 
-	Call 	-> IDENTIFIER '(' Arguments? ')'
 	Arguments 		-> Expression (',' Expression)*
 */
 
@@ -54,8 +56,8 @@ func statementHeadline(s Statement) string {
 		return Colorize("ReturnStatement", COLOR_CYAN)
 	case BreakStatement:
 		return Colorize("BreakStatement", COLOR_CYAN)
-	case CallStatement:
-		return Colorize("FunctionCall", COLOR_MAGENTA)
+	case ExpressionStatement:
+		return Colorize("ExpressionStatement", COLOR_YELLOW)
 	default:
 		return Colorize("UnknownStatement", COLOR_RED)
 	}
@@ -237,13 +239,14 @@ func (bs BreakStatement) Print(start string) {
 	fmt.Printf("%s%s\n", start, Colorize("BreakStatement", COLOR_CYAN))
 }
 
-type CallStatement struct {
-	Call Call
+type ExpressionStatement struct {
+	Expression Expression
 }
 
-func (fc CallStatement) Print(start string) {
-	start = advanceSuffix(start)
-	fc.Call.Print(start + string(LAST_CONNECTOR))
+func (es ExpressionStatement) Print(start string) {
+	fmt.Printf("%s%s\n", start+string(LAST_CONNECTOR), Colorize("Expression:", COLOR_YELLOW))
+	start += string(SIMPLE_INDENT) + string(LAST_CONNECTOR)
+	es.Expression.Print(start)
 }
 
 func PrintProgram(program Program) {

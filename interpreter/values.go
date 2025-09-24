@@ -1,9 +1,11 @@
 package interpreter
 
+import "fmt"
+
 type ValueTypes int
 
 const (
-	VAL_INT ValueTypes = iota
+	VAL_INT ValueTypes = iota + 1
 	VAL_STRING
 	VAL_BOOL
 	VAL_NONE
@@ -28,6 +30,24 @@ func (vt ValueTypes) String() string {
 type Value struct {
 	Typ  ValueTypes
 	Data any
+}
+
+func (v Value) Content() string {
+	switch v.Typ {
+	case VAL_INT:
+		return fmt.Sprintf("%d", v.Data.(int))
+	case VAL_STRING:
+		return v.Data.(string)
+	case VAL_BOOL:
+		if v.Data.(bool) {
+			return "true"
+		}
+		return "false"
+	case VAL_NONE:
+		return "none"
+	default:
+		return ""
+	}
 }
 
 func isTruthy(value Value) bool {

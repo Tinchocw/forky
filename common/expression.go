@@ -5,31 +5,6 @@ import (
 )
 
 /*
-	Statements		-> 	BlockStatement 			|
-							IfStatement 		|
-							WhileStatement 		|
-							FunctionDef 		|
-							ReturnStatement		|
-							VarDeclaration 		|
-							Assignment 			|
-							PrintStatement 		|
-							FunctionCall
-
-
-	BlockStatement	-> '{' Statements * '}'
-	IfStatement 	-> 'if' '(' Expression ')' BlockStatement
-						( 'else' 'if' '(' Expression ')' BlockStatement )*
-						( 'else' BlockStatement )?
-	WhileStatement 	-> 'while' '(' Expression ')' BlockStatement
-	FunctionDef 	-> 'func' IDENTIFIER '(' Parameters? ')' BlockStatement
-	VarDeclaration 	-> 'var' IDENTIFIER ( '=' Expression )? ';'
-	Assignment 		-> IDENTIFIER '=' Expression ';'
-	PrintStatement 	-> 'print' '(' Expression ')' ';'
-	Return 			-> 'return' Expression ';'
-
-	Call 	-> IDENTIFIER '(' Arguments? ')'
-	Arguments 		-> Expression (',' Expression)*
-
 	Expression 		->	BinaryOr
 	BinaryOr 		->	BinaryAnd ('or' BinaryAnd )*
 	BinaryAnd 		->	Equality ('and' Equality )*
@@ -47,6 +22,7 @@ import (
 							Call				|
 							GroupingExpression
 
+	Call 	-> IDENTIFIER '(' Arguments? ')'
 	GroupingExpression -> '(' Expression ')'
 */
 
