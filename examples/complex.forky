@@ -22,18 +22,22 @@ func isPrime(num) {
 }
 
 print("Primeros 10 números de Fibonacci:');
-counter = 0;
+var counter = 0;
 while (counter < 10) {
-    fib = fibonacci(counter);
+    var fib = fibonacci(counter);
     print("F(');
     print(counter);
+
     print(") = ');
     print(fib);
     
     if (isPrime(fib)) {
         print(" (primo)');
+
+    }else {
+        print(" (no primo)');
     }
-    
+
     counter = counter + 1;
 }
 
