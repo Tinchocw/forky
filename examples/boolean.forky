@@ -2,16 +2,16 @@ a = 10;
 b = 20;
 c = 15;
 
-print(a < b);
-print(b > c);
-print(a == 10);
-print(b != c);
+print("a < b: ' + (a < b));
+print("b > c: ' + (b > c));
+print("a == 10: ' + (a == 10));
+print("b != c: ' + (b != c));
 
 result1 = a < b and c > a;
-print(result1);
+print("a < b and c > a: ' + result1);
 
 result2 = a > b or c < b;
-print(result2);
+print("a > b or c < b: ' + result2);
 
 complex = (a < b) and (c > 5) and not (b == 15);
-print(complex);
+print("Complex expression: ' + complex);

@@ -4,25 +4,21 @@ func testScope() {
     var localVar = "soy local';
     globalVar = "modificado desde función';
     
-    print(localVar);
-    print(globalVar);
+    print("Local: ' + localVar);
+    print("Global: ' + globalVar);
 }
 
-print("Antes de la función:');
-print(globalVar);
+print("Antes de la función: ' + globalVar);
 
 testScope();
 
-print("Después de la función:');
-print(globalVar);
+print("Después de la función: ' + globalVar);
 
 if (true) {
     var blockVar = "variable de bloque';
     var globalVar = "variable global en bloque';
-    print("Dentro del bloque:');
-    print(blockVar);
-    print(globalVar);
+    print("Dentro del bloque - Block: ' + blockVar);
+    print("Dentro del bloque - Global: ' + globalVar);
 }
 
-print("Fuera del bloque:');
-print(globalVar);
+print("Fuera del bloque: ' + globalVar);

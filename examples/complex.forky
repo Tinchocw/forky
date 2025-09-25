@@ -25,17 +25,11 @@ print("Primeros 10 números de Fibonacci:');
 var counter = 0;
 while (counter < 10) {
     var fib = fibonacci(counter);
-    print("F(');
-    print(counter);
-
-    print(") = ');
-    print(fib);
     
     if (isPrime(fib)) {
-        print(" (primo)');
-
-    }else {
-        print(" (no primo)');
+        print("F(' + counter + ") = ' + fib + " (primo)');
+    } else {
+        print("F(' + counter + ") = ' + fib + " (no primo)');
     }
 
     counter = counter + 1;

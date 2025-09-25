@@ -21,10 +21,10 @@ func power(base, exp) {
 }
 
 var sum = add(10, add(2, 3) * 2);
-print(sum);
+print("Sum result: ' + sum);
 
 var pow_result = power(2 + 1, 3 - 1);
-print(pow_result);
+print("Power result: ' + pow_result);
 
 var max_val = max(7, 15 - 3, add(5, 8));
-print(max_val);
+print("Max value: ' + max_val);

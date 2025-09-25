@@ -1,30 +1,30 @@
 var age = 18;
 if (age >= 18) {
-    print("adulto');
+    print("Edad ' + age + ": adulto');
 } else {
-    print("menor');
+    print("Edad ' + age + ": menor');
 }
 
 var score = 85;
 if (score >= 90) {
-    print("excelente');
+    print("Puntuación ' + score + ": excelente');
 } else {
     if (score >= 70) {
-        print("bueno');
+        print("Puntuación ' + score + ": bueno');
     } else {
-        print("necesita mejorar');
+        print("Puntuación ' + score + ": necesita mejorar');
     }
 }
 
 var height = 175;
 if (height > 180) {
-    print("alto');
+    print("Altura ' + height + "cm: alto');
 } else if (height >= 160) {
-    print("mediano');
+    print("Altura ' + height + "cm: mediano');
 } else if (height >= 140) {
-    print("bajo');
+    print("Altura ' + height + "cm: bajo');
 } else {
-    print("muy bajo');
+    print("Altura ' + height + "cm: muy bajo');
 }
 
 var temp = 22;

@@ -1,0 +1,26 @@
+var name = "Juan';
+var age = 25;
+var isStudent = true;
+var score = 95;
+
+print("Nombre: ' + name);
+print("Edad: ' + age + " años');
+print("Es estudiante: ' + isStudent);
+print("Puntuación: ' + score + "/100');
+
+var greeting = "Hola, mi nombre es ' + name + " y tengo ' + age + " años.';
+print(greeting);
+
+var x = 10;
+var y = 5;
+print("La suma de ' + x + " + ' + y + " = ' + (x + y));
+print("El producto de ' + x + " * ' + y + " = ' + (x * y));
+
+var passed = score >= 60;
+print("¿Aprobado? ' + passed + " (puntuación: ' + score + ")');
+
+if (passed) {
+    print("Resultado final: ' + name + " (' + age + " años) - APROBADO');
+} else {
+    print("Resultado final: ' + name + " (' + age + " años) - REPROBADO');
+}

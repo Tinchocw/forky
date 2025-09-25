@@ -3,8 +3,11 @@ var surname = "Pérez';
 var greeting = "¡Bienvenido!';
 
 print(greeting);
-print(name);
-print(surname);
+print("Nombre: ' + name);
+print("Apellido: ' + surname);
+
+var fullName = name + " ' + surname;
+print("Nombre completo: ' + fullName);
 
 var message1 = "Esto es una cadena normal';
 var message2 = "Cadena con números: 123';

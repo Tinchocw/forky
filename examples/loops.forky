@@ -1,7 +1,6 @@
 var counter = 0;
 while (counter < 5) {
-    print("Contador: ');
-    print(counter);
+    print("Contador: ' + counter);
     counter = counter + 1;
 }
 
@@ -9,10 +8,7 @@ var i = 0;
 while (i < 3) {
     var j = 0;
     while (j < 3) {
-        print("i: ');
-        print(i);
-        print(" j: ');
-        print(j);
+        print("i: ' + i + " j: ' + j);
         j = j + 1;
     }
     i = i + 1;
@@ -23,8 +19,7 @@ while (true) {
     if (n >= 5) {
         break;
     }
-    print("n: ');
-    print(n);
+    print("n: ' + n);
     n = n + 1;
 }
 
