@@ -157,7 +157,7 @@ func resolveTerm(term common.Term, env *Env) (Value, error) {
 	}
 
 	if left.Typ != right.Typ {
-		return Value{}, fmt.Errorf("type mismatch in term operation: %v vs %v", left.Typ, right.Typ)
+		return Value{Typ: VAL_STRING, Data: left.Content() + right.Content()}, nil
 	}
 
 	switch term.Operator.Typ {
