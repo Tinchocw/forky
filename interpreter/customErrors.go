@@ -1,11 +1,13 @@
 package interpreter
 
-import "fmt"
+type ReturnErr struct{}
 
-type ReturnErr error
+func (e ReturnErr) Error() string {
+	return "return"
+}
 
 func NewReturnErr() ReturnErr {
-	return ReturnErr(fmt.Errorf("return"))
+	return ReturnErr{}
 }
 
 func IsReturnErr(err error) bool {
@@ -13,10 +15,14 @@ func IsReturnErr(err error) bool {
 	return ok
 }
 
-type BreakErr error
+type BreakErr struct{}
+
+func (e BreakErr) Error() string {
+	return "break"
+}
 
 func NewBreakErr() BreakErr {
-	return BreakErr(fmt.Errorf("break"))
+	return BreakErr{}
 }
 
 func IsBreakErr(err error) bool {

@@ -17,3 +17,28 @@ while (i < 3) {
     }
     i = i + 1;
 }
+
+var n = 0;
+while (true) {
+    if (n >= 5) {
+        break;
+    }
+    print("n: ');
+    print(n);
+    n = n + 1;
+}
+
+print("Countdown: ');
+
+func countdown(x) {
+    while (true) {
+        print(x);
+        x = x - 1;
+
+        if (x == 0) {
+            return "Despegue';
+        }
+    }
+}
+
+print(countdown(5));

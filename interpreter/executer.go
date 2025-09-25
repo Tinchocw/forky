@@ -7,18 +7,19 @@ import (
 )
 
 func executeStatements(statements []common.Statement, env *Env) (Value, error) {
-	var lastValue Value
+	var value Value
+	var err error
+
 	for _, stmt := range statements {
-		value, err := executeStatement(stmt, env)
+		value, err = executeStatement(stmt, env)
 		if err != nil {
 			if IsReturnErr(err) {
 				return value, err
 			}
 			return Value{}, err
 		}
-
 	}
-	return lastValue, nil
+	return value, nil
 }
 
 func executeStatement(stmt common.Statement, env *Env) (Value, error) {
@@ -129,9 +130,15 @@ func executeWhileStatement(stmt common.WhileStatement, env *Env) (Value, error) 
 			break
 		}
 
-		if _, err := executeStatement(stmt.Body, env); err != nil {
-			return Value{}, err
+		result, err := executeBlockStatement(stmt.Body, env)
+		if err != nil {
+			if IsBreakErr(err) {
+				break
+			} else {
+				return result, err
+			}
 		}
+
 	}
 	return Value{}, nil
 }

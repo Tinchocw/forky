@@ -65,5 +65,5 @@ func (forky *Forky) Run(r io.ReaderAt, size int64) (string, error) {
 		common.PrintProgram(program)
 	}
 
-	return forky.interpreter.Interpret(program)
+	return forky.interpreter.Excecute(program)
 }
