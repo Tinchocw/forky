@@ -55,15 +55,16 @@ func (forky *Forky) Run(r io.ReaderAt, size int64) (string, error) {
 		common.PrintTokens(tokens)
 	}
 
-	ps := parserPackage.NewParser(tokens, forky.debug)
-	program, err := ps.Parse()
+	ps := parserPackage.CreateForkyParser(forky.workers)
+	program, err := ps.Parse(tokens, true)
 	if err != nil {
 		return "", err
 	}
 
 	if forky.mode == ParsingMode {
-		common.PrintProgram(program)
+		common.PrintPartialProgram(program)
 	}
+	return "", nil
 
-	return forky.interpreter.Excecute(program)
+	//eturn forky.interpreter.Excecute(program)
 }
