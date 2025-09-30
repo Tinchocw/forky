@@ -49,7 +49,7 @@ func ParallelParse(tokens []common.Token, numWorkers int, debug bool) (segment, 
 	}
 
 	leftCh := make(chan res, 1)
-	go func() {
+	func() {
 		if debug {
 			println("[DEBUG] Left parse: tokens [0:", mid, ") length =", mid, "workers =", leftWorkers)
 		}
@@ -81,7 +81,7 @@ func ParallelParse(tokens []common.Token, numWorkers int, debug bool) (segment, 
 		println("[DEBUG] Merging segments: left tokens =", len(leftRes.sg.Tokens), "right tokens =", len(rightSegment.Tokens))
 	}
 
-	//leftRes.sg.Merge(&rightSegment)
+	leftRes.sg.Merge(rightSegment)
 
 	if debug {
 		println("[DEBUG] Merge complete: total tokens =", len(leftRes.sg.Tokens))

@@ -1,6 +1,8 @@
 package parser
 
-import "github.com/Tinchocw/Interprete-concurrente/common"
+import (
+	"github.com/Tinchocw/Interprete-concurrente/common"
+)
 
 type segment struct {
 	CouldMergeStart bool
@@ -29,15 +31,6 @@ func (current *segment) hasStatements() bool {
 	return len(current.Program.Statements) > 0
 }
 
-func (current *segment) hasInvalidStatements() bool {
-
-	if !current.hasStatements() {
-		return false
-	}
-
-	return false
-}
-
 func (current *segment) firstStatement() common.IncompleteStatement {
 	if len(current.Program.Statements) > 0 {
 		return current.Program.Statements[0]
@@ -52,8 +45,9 @@ func (current *segment) lastStatement() common.IncompleteStatement {
 	return nil
 }
 
-func (current *segment) mergeExpressions(right common.IncompleteExpression) {
-	current.mergeBinaryOr(current.lastStatement().(*common.IncompleteExpression).Root, right.Root)
+func (current *segment) mergeExpressions(leftNode, rightNode *common.IncompleteExpression) {
+
+	current.mergeBinaryOr(leftNode.Root, rightNode.Root)
 }
 
 func (current *segment) mergeBinaryOr(leftNode, rightNode *common.IncompleteBinaryOr) {
@@ -167,34 +161,23 @@ func (current *segment) mergePrimary(leftNode *common.IncompletePrimary) {
 
 }
 
-func (current *segment) Merge(other segment) segment {
+func (current *segment) Merge(other segment) {
 	defer func() {
 		current.Tokens = append(current.Tokens, other.Tokens...)
 	}()
 
-	if !current.hasStatements() && other.hasStatements() {
-		return other
-	}
-
-	if !other.hasStatements() && current.hasStatements() {
-		return *current
-	}
-
 	if current.CouldMergeEnd && other.CouldMergeStart {
 
-		switch current.lastStatement().(type) {
-		case *common.IncompleteExpression:
+		switch leftExpr := current.lastStatement().(type) {
+		case common.IncompleteExpressionStatement:
 			switch rightExpr := other.firstStatement().(type) {
-			case *common.IncompleteExpression:
-				current.mergeExpressions(*rightExpr)
-				//current.Program.Statements[len(current.Program.Statements)-1] = &left
+			case common.IncompleteExpressionStatement:
+
+				current.mergeExpressions(leftExpr.Expression, rightExpr.Expression)
 				current.CouldMergeEnd = other.CouldMergeEnd
-				return *current
 			}
+
 		}
+
 	}
-
-	current.AddStatements(other.Program.Statements)
-
-	return *current
 }
