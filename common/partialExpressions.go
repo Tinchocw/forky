@@ -41,6 +41,34 @@ type IncompleteBinaryOr struct {
 	Right *IncompleteBinaryOr
 }
 
+func (bo IncompleteBinaryOr) IsComplete() bool {
+	if bo.Left != nil && bo.Right != nil {
+		return true
+	}
+	return false
+}
+
+func (bo IncompleteBinaryOr) IsEmpty() bool {
+	if bo.Left == nil && bo.Right == nil {
+		return true
+	}
+	return false
+}
+
+func (bo IncompleteBinaryOr) IsLeftComplete() bool {
+	if bo.Left != nil /* && bo.Left.isComplete() */ {
+		return true
+	}
+	return false
+}
+
+func (bo IncompleteBinaryOr) IsRightComplete() bool {
+	if bo.Right != nil && bo.Right.IsComplete() {
+		return true
+	}
+	return false
+}
+
 func (bo IncompleteBinaryOr) Print(start string) {
 	if bo.skipPrinting() {
 		bo.Left.Print(start)
@@ -73,6 +101,34 @@ func (ba IncompleteBinaryAnd) Print(start string) {
 	ba.Right.Print(start + string(LAST_CONNECTOR))
 }
 
+func (ba IncompleteBinaryAnd) IsComplete() bool {
+	if ba.Left != nil && ba.Right != nil {
+		return true
+	}
+	return false
+}
+
+func (ba IncompleteBinaryAnd) IsEmpty() bool {
+	if ba.Left == nil && ba.Right == nil {
+		return true
+	}
+	return false
+}
+
+func (ba IncompleteBinaryAnd) IsLeftComplete() bool {
+	if ba.Left != nil /* && ba.Left.isComplete() */ {
+		return true
+	}
+	return false
+}
+
+func (ba IncompleteBinaryAnd) IsRightComplete() bool {
+	if ba.Right != nil && ba.Right.IsComplete() {
+		return true
+	}
+	return false
+}
+
 type IncompleteEquality struct {
 	Left     *IncompleteComparison
 	Operator *Token
@@ -91,6 +147,41 @@ func (eq IncompleteEquality) Print(start string) {
 	start = advanceSuffix(start)
 	eq.Left.Print(start + string(BRANCH_CONNECTOR))
 	eq.Right.Print(start + string(LAST_CONNECTOR))
+}
+
+func (eq IncompleteEquality) IsComplete() bool {
+	if eq.Left != nil && eq.Operator != nil && eq.Right != nil {
+		return true
+	}
+	return false
+}
+
+func (eq IncompleteEquality) IsEmpty() bool {
+	if eq.Left == nil && eq.Operator == nil && eq.Right == nil {
+		return true
+	}
+	return false
+}
+
+func (eq IncompleteEquality) IsLeftComplete() bool {
+	if eq.Left != nil /* && eq.Left.isComplete() */ {
+		return true
+	}
+	return false
+}
+
+func (eq IncompleteEquality) IsRightComplete() bool {
+	if eq.Right != nil && eq.Right.IsComplete() {
+		return true
+	}
+	return false
+}
+
+func (eq IncompleteEquality) IsOperatorComplete() bool {
+	if eq.Operator != nil {
+		return true
+	}
+	return false
 }
 
 type IncompleteComparison struct {
@@ -113,6 +204,41 @@ func (c IncompleteComparison) Print(start string) {
 	c.Right.Print(start + string(LAST_CONNECTOR))
 }
 
+func (c IncompleteComparison) IsComplete() bool {
+	if c.Left != nil && c.Operator != nil && c.Right != nil {
+		return true
+	}
+	return false
+}
+
+func (c IncompleteComparison) IsEmpty() bool {
+	if c.Left == nil && c.Operator == nil && c.Right == nil {
+		return true
+	}
+	return false
+}
+
+func (c IncompleteComparison) IsLeftComplete() bool {
+	if c.Left != nil /* && c.Left.isComplete() */ {
+		return true
+	}
+	return false
+}
+
+func (c IncompleteComparison) IsRightComplete() bool {
+	if c.Right != nil && c.Right.IsComplete() {
+		return true
+	}
+	return false
+}
+
+func (c IncompleteComparison) IsOperatorComplete() bool {
+	if c.Operator != nil {
+		return true
+	}
+	return false
+}
+
 type IncompleteTerm struct {
 	Left     *IncompleteFactor
 	Operator *Token
@@ -132,10 +258,76 @@ func (t IncompleteTerm) Print(start string) {
 	t.Right.Print(start + string(LAST_CONNECTOR))
 }
 
+func (t IncompleteTerm) IsComplete() bool {
+	if t.Left != nil && t.Operator != nil && t.Right != nil {
+		return true
+	}
+	return false
+}
+
+func (t IncompleteTerm) IsEmpty() bool {
+	if t.Left == nil && t.Operator == nil && t.Right == nil {
+		return true
+	}
+	return false
+}
+
+func (t IncompleteTerm) IsLeftComplete() bool {
+	if t.Left != nil /* && t.Left.isComplete() */ {
+		return true
+	}
+	return false
+}
+
+func (t IncompleteTerm) IsRightComplete() bool {
+	if t.Right != nil && t.Right.IsComplete() {
+		return true
+	}
+	return false
+}
+
+func (t IncompleteTerm) IsOperatorComplete() bool {
+	if t.Operator != nil {
+		return true
+	}
+	return false
+}
+
 type IncompleteFactor struct {
 	Left     *IncompleteUnary
 	Operator *Token
 	Right    *IncompleteFactor
+}
+
+func (f IncompleteFactor) IsComplete() bool {
+	if f.Left != nil && f.Operator != nil && f.Right != nil {
+		return true
+	}
+	return false
+}
+func (f IncompleteFactor) IsEmpty() bool {
+	if f.Left == nil && f.Operator == nil && f.Right == nil {
+		return true
+	}
+	return false
+}
+func (f IncompleteFactor) IsLeftComplete() bool {
+	if f.Left != nil /* && f.Left.isComplete() */ {
+		return true
+	}
+	return false
+}
+func (f IncompleteFactor) IsRightComplete() bool {
+	if f.Right != nil && f.Right.IsComplete() {
+		return true
+	}
+	return false
+}
+func (f IncompleteFactor) IsOperatorComplete() bool {
+	if f.Operator != nil {
+		return true
+	}
+	return false
 }
 
 func (f IncompleteFactor) Print(start string) {
@@ -153,6 +345,9 @@ func (f IncompleteFactor) Print(start string) {
 
 type IncompleteUnary interface {
 	Print(start string)
+	IsComplete() bool
+	IsEmpty() bool
+	IsRightComplete() bool
 }
 
 type IncompleteUnaryWithOperator struct {
@@ -167,6 +362,24 @@ func (uwo IncompleteUnaryWithOperator) Print(start string) {
 	(*uwo.Right).Print(start + string(LAST_CONNECTOR))
 }
 
+func (uwo IncompleteUnaryWithOperator) IsComplete() bool {
+	if uwo.Operator != nil && uwo.Right != nil {
+		return true
+	}
+	return false
+}
+
+func (uwo IncompleteUnaryWithOperator) IsEmpty() bool {
+	if uwo.Operator == nil && uwo.Right == nil {
+		return true
+	}
+	return false
+}
+
+func (uwo IncompleteUnaryWithOperator) IsRightComplete() bool {
+	return uwo.Right != nil
+}
+
 type IncompletePrimary struct {
 	Value PrimaryValue
 }
@@ -176,6 +389,18 @@ func (ip IncompletePrimary) Print(start string) {
 		fmt.Printf("%s%s\n", start, Colorize("IncompletePrimary (empty)", COLOR_RED))
 		return
 	}
+}
+
+func (ip IncompletePrimary) IsEmpty() bool {
+	return ip.Value == nil
+}
+
+func (ip IncompletePrimary) IsComplete() bool {
+	return ip.Value != nil
+}
+
+func (ip IncompletePrimary) IsRightComplete() bool {
+	return ip.Value != nil
 }
 
 type IncompleteGroupingExpression struct {

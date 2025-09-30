@@ -378,6 +378,11 @@ func (p *Parser) expressionStatement() (common.IncompleteExpressionStatement, er
 		return common.IncompleteExpressionStatement{}, err
 	}
 
+	if p.match(common.SEMICOLON) {
+		// It's supposed to be a valid expression statement in the right side
+		p.CouldMergeEnd = false
+	}
+
 	return common.IncompleteExpressionStatement{Expression: &expr}, nil
 }
 
@@ -419,6 +424,15 @@ func (p *Parser) expression() (common.IncompleteExpression, error) {
 }
 
 func (p *Parser) binaryOr() (common.IncompleteBinaryOr, error) {
+
+	if p.match(common.OR) {
+		right, err := p.binaryOr()
+		if err != nil {
+			return common.IncompleteBinaryOr{}, err
+		}
+		return common.IncompleteBinaryOr{Left: nil, Right: &right}, nil
+	}
+
 	left, err := p.binaryAnd()
 	if err != nil {
 		return common.IncompleteBinaryOr{}, err
@@ -437,6 +451,15 @@ func (p *Parser) binaryOr() (common.IncompleteBinaryOr, error) {
 }
 
 func (p *Parser) binaryAnd() (common.IncompleteBinaryAnd, error) {
+
+	if p.match(common.AND) {
+		right, err := p.binaryAnd()
+		if err != nil {
+			return common.IncompleteBinaryAnd{}, err
+		}
+		return common.IncompleteBinaryAnd{Left: nil, Right: &right}, nil
+	}
+
 	left, err := p.equality()
 	if err != nil {
 		return common.IncompleteBinaryAnd{}, err
@@ -455,6 +478,16 @@ func (p *Parser) binaryAnd() (common.IncompleteBinaryAnd, error) {
 }
 
 func (p *Parser) equality() (common.IncompleteEquality, error) {
+
+	if p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
+		operator := p.advance()
+		right, err := p.equality()
+		if err != nil {
+			return common.IncompleteEquality{}, err
+		}
+		return common.IncompleteEquality{Left: nil, Operator: &operator, Right: &right}, nil
+	}
+
 	left, err := p.comparison()
 	if err != nil {
 		return common.IncompleteEquality{}, err
@@ -474,6 +507,16 @@ func (p *Parser) equality() (common.IncompleteEquality, error) {
 }
 
 func (p *Parser) comparison() (common.IncompleteComparison, error) {
+
+	if p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
+		operator := p.advance()
+		right, err := p.comparison()
+		if err != nil {
+			return common.IncompleteComparison{}, err
+		}
+		return common.IncompleteComparison{Left: nil, Operator: &operator, Right: &right}, nil
+	}
+
 	left, err := p.term()
 	if err != nil {
 		return common.IncompleteComparison{}, err
@@ -493,6 +536,16 @@ func (p *Parser) comparison() (common.IncompleteComparison, error) {
 }
 
 func (p *Parser) term() (common.IncompleteTerm, error) {
+
+	if p.check(common.MINUS, common.PLUS) {
+		operator := p.advance()
+		right, err := p.term()
+		if err != nil {
+			return common.IncompleteTerm{}, err
+		}
+		return common.IncompleteTerm{Left: nil, Operator: &operator, Right: &right}, nil
+	}
+
 	left, err := p.factor()
 	if err != nil {
 		return common.IncompleteTerm{}, err
@@ -515,6 +568,16 @@ func (p *Parser) term() (common.IncompleteTerm, error) {
 }
 
 func (p *Parser) factor() (common.IncompleteFactor, error) {
+
+	if p.check(common.SLASH, common.ASTERISK) {
+		operator := p.advance()
+		right, err := p.factor()
+		if err != nil {
+			return common.IncompleteFactor{}, err
+		}
+		return common.IncompleteFactor{Left: nil, Operator: &operator, Right: &right}, nil
+	}
+
 	left, err := p.unary()
 	if err != nil {
 		return common.IncompleteFactor{}, err
@@ -564,7 +627,7 @@ func (p *Parser) primary() (common.IncompleteUnary, error) {
 
 	if p.check(common.FALSE, common.TRUE, common.NONE, common.NUMBER, common.LITERAL) {
 		token := p.advance()
-		return common.Primary{Value: token}, nil
+		return common.IncompletePrimary{Value: token}, nil
 	}
 
 	if p.match(common.OPEN_PARENTHESIS) {
@@ -575,7 +638,7 @@ func (p *Parser) primary() (common.IncompleteUnary, error) {
 		if !p.match(common.CLOSE_PARENTHESIS) {
 			return nil, fmt.Errorf("expected ')' after expression")
 		}
-		return common.Primary{Value: common.IncompleteGroupingExpression{Expression: &expr}}, nil
+		return common.IncompletePrimary{Value: common.IncompleteGroupingExpression{Expression: &expr}}, nil
 	}
 
 	if p.check(common.IDENTIFIER) {
