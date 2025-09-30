@@ -425,6 +425,10 @@ func (p *Parser) expression() (common.IncompleteExpression, error) {
 
 func (p *Parser) binaryOr() (common.IncompleteBinaryOr, error) {
 
+	if p.isAtEnd() {
+		return common.IncompleteBinaryOr{}, nil
+	}
+
 	if p.match(common.OR) {
 		right, err := p.binaryOr()
 		if err != nil {
@@ -623,6 +627,7 @@ func (p *Parser) primary() (common.IncompleteUnary, error) {
 		if p.previous().Typ == common.OPEN_PARENTHESIS {
 			//return common.IncompletePrimary{Value: common.IncompleteGroupingExpression{hasOpen: true, hasClose: false}}, nil
 		}
+		return common.IncompletePrimary{}, nil
 	}
 
 	if p.check(common.FALSE, common.TRUE, common.NONE, common.NUMBER, common.LITERAL) {
