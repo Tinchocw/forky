@@ -95,12 +95,12 @@ func CreateForkyParser(numWorkers int) *ForkyParser {
 	return &ForkyParser{numWorkers: numWorkers}
 }
 
-func (fp *ForkyParser) Parse(tokens []common.Token, debug bool) (common.PartialProgram, error) {
+func (fp *ForkyParser) Parse(tokens []common.Token, debug bool) (common.Program, error) {
 
 	sg, err := ParallelParse(tokens, fp.numWorkers, debug)
 	if err != nil {
-		return common.PartialProgram{}, err
+		return common.Program{}, err
 	}
-	// i have to change this to return a Program
+
 	return sg.Program, nil
 }

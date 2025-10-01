@@ -61,10 +61,5 @@ func (forky *Forky) Run(r io.ReaderAt, size int64) (string, error) {
 		return "", err
 	}
 
-	if forky.mode == ParsingMode {
-		common.PrintPartialProgram(program)
-	}
-	return "", nil
-
-	//eturn forky.interpreter.Excecute(program)
+	return forky.interpreter.Execute(program)
 }

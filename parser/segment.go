@@ -7,7 +7,7 @@ import (
 type segment struct {
 	CouldMergeStart bool
 	CouldMergeEnd   bool
-	Program         common.PartialProgram
+	Program         common.Program
 	Tokens          []common.Token
 }
 
@@ -15,15 +15,15 @@ func NewSegment() segment {
 	return segment{
 		CouldMergeStart: true,
 		CouldMergeEnd:   true,
-		Program:         common.PartialProgram{Statements: []common.IncompleteStatement{}},
+		Program:         common.Program{Statements: []common.Statement{}},
 		Tokens:          []common.Token{},
 	}
 }
 
-func (current *segment) AddStatement(content common.IncompleteStatement) {
+func (current *segment) AddStatement(content common.Statement) {
 	current.Program.Statements = append(current.Program.Statements, content)
 }
-func (current *segment) AddStatements(contents []common.IncompleteStatement) {
+func (current *segment) AddStatements(contents []common.Statement) {
 	current.Program.Statements = append(current.Program.Statements, contents...)
 }
 
@@ -31,44 +31,48 @@ func (current *segment) hasStatements() bool {
 	return len(current.Program.Statements) > 0
 }
 
-func (current *segment) firstStatement() common.IncompleteStatement {
+func (current *segment) firstStatement() common.Statement {
 	if len(current.Program.Statements) > 0 {
 		return current.Program.Statements[0]
 	}
 	return nil
 }
 
-func (current *segment) lastStatement() common.IncompleteStatement {
+func (current *segment) lastStatement() common.Statement {
 	if len(current.Program.Statements) > 0 {
 		return current.Program.Statements[len(current.Program.Statements)-1]
 	}
 	return nil
 }
 
-func (current *segment) mergeExpressions(leftNode, rightNode *common.IncompleteExpression) {
+func (current *segment) mergeExpressions(leftNode, rightNode *common.Expression) {
 
 	current.mergeBinaryOr(leftNode.Root, rightNode.Root)
 }
 
-func (current *segment) mergeBinaryOr(leftNode, rightNode *common.IncompleteBinaryOr) {
+func (current *segment) mergeBinaryOr(leftAst, rightAst *common.BinaryOr) {
 
-	// LeftNode with left and without right
-	if leftNode.IsLeftComplete() && !leftNode.IsRightComplete() {
-		leftNode.Right = rightNode
+	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() && !rightAst.IsLeftComplete() && rightAst.IsRightComplete() {
+		current.mergeBinaryAnd(leftAst.Left, rightAst.Left)
 	}
 
-	if leftNode.IsLeftComplete() && leftNode.IsRightComplete() && rightNode.IsLeftComplete() && !rightNode.IsRightComplete() {
-		current.mergeBinaryAnd(leftNode.Left, rightNode.Left)
+	// LeftNode with left and without right
+	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() {
+		leftAst.Right = rightAst
+	}
+
+	if leftAst.IsLeftComplete() && leftAst.IsRightComplete() && rightAst.IsLeftComplete() && !rightAst.IsRightComplete() {
+		current.mergeBinaryAnd(leftAst.Left, rightAst.Left)
 	}
 
 	// both size complete
-	if leftNode.IsComplete() && rightNode.IsComplete() {
-		current.mergeBinaryOr(leftNode.Right, rightNode)
+	if leftAst.IsComplete() && rightAst.IsComplete() {
+		current.mergeBinaryOr(leftAst.Right, rightAst)
 	}
 
 }
 
-func (current *segment) mergeBinaryAnd(leftNode, rightNode *common.IncompleteBinaryAnd) {
+func (current *segment) mergeBinaryAnd(leftNode, rightNode *common.BinaryAnd) {
 
 	if leftNode.IsLeftComplete() && !leftNode.IsRightComplete() {
 		leftNode.Right = rightNode
@@ -83,7 +87,7 @@ func (current *segment) mergeBinaryAnd(leftNode, rightNode *common.IncompleteBin
 	}
 }
 
-func (current *segment) mergeEquality(leftNode, rightNode *common.IncompleteEquality) {
+func (current *segment) mergeEquality(leftNode, rightNode *common.Equality) {
 
 	if leftNode.IsLeftComplete() && leftNode.IsOperatorComplete() && !leftNode.IsRightComplete() {
 		leftNode.Right = rightNode
@@ -98,7 +102,7 @@ func (current *segment) mergeEquality(leftNode, rightNode *common.IncompleteEqua
 	}
 }
 
-func (current *segment) mergeComparison(leftNode, rightNode *common.IncompleteComparison) {
+func (current *segment) mergeComparison(leftNode, rightNode *common.Comparison) {
 
 	if leftNode.IsLeftComplete() && !leftNode.IsRightComplete() {
 
@@ -114,7 +118,7 @@ func (current *segment) mergeComparison(leftNode, rightNode *common.IncompleteCo
 	}
 }
 
-func (current *segment) mergeTerm(leftNode, rightNode *common.IncompleteTerm) {
+func (current *segment) mergeTerm(leftNode, rightNode *common.Term) {
 
 	if leftNode.IsLeftComplete() && leftNode.IsOperatorComplete() && !leftNode.IsRightComplete() {
 		leftNode.Right = rightNode
@@ -129,7 +133,7 @@ func (current *segment) mergeTerm(leftNode, rightNode *common.IncompleteTerm) {
 	}
 }
 
-func (current *segment) mergeFactor(leftNode, rightNode *common.IncompleteFactor) {
+func (current *segment) mergeFactor(leftNode, rightNode *common.Factor) {
 
 	if leftNode.IsLeftComplete() && leftNode.IsOperatorComplete() && !leftNode.IsRightComplete() {
 		leftNode.Right = rightNode
@@ -137,7 +141,7 @@ func (current *segment) mergeFactor(leftNode, rightNode *common.IncompleteFactor
 
 	// TODO: See all the posible cases
 	if leftNode.IsLeftComplete() && leftNode.IsOperatorComplete() && !leftNode.IsRightComplete() && !rightNode.IsLeftComplete() && rightNode.IsRightComplete() && rightNode.IsOperatorComplete() {
-		current.mergeUnary(*leftNode.Left)
+		current.mergeUnary(leftNode.Left)
 	}
 
 	if leftNode.IsComplete() && rightNode.IsComplete() {
@@ -145,19 +149,19 @@ func (current *segment) mergeFactor(leftNode, rightNode *common.IncompleteFactor
 	}
 }
 
-func (current *segment) mergeUnary(rightNode common.IncompleteUnary) {
+func (current *segment) mergeUnary(rightNode common.Unary) {
 	switch rightNode := rightNode.(type) {
-	case *common.IncompleteUnaryWithOperator:
+	case *common.UnaryWithOperator:
 		current.mergeUnaryWithOperator(rightNode)
-	case *common.IncompletePrimary:
+	case *common.Primary:
 		current.mergePrimary(rightNode)
 	}
 }
 
-func (current *segment) mergeUnaryWithOperator(rightNode *common.IncompleteUnaryWithOperator) {
+func (current *segment) mergeUnaryWithOperator(rightNode *common.UnaryWithOperator) {
 }
 
-func (current *segment) mergePrimary(leftNode *common.IncompletePrimary) {
+func (current *segment) mergePrimary(leftNode *common.Primary) {
 
 }
 
@@ -169,9 +173,9 @@ func (current *segment) Merge(other segment) {
 	if current.CouldMergeEnd && other.CouldMergeStart {
 
 		switch leftExpr := current.lastStatement().(type) {
-		case common.IncompleteExpressionStatement:
+		case common.ExpressionStatement:
 			switch rightExpr := other.firstStatement().(type) {
-			case common.IncompleteExpressionStatement:
+			case common.ExpressionStatement:
 
 				current.mergeExpressions(leftExpr.Expression, rightExpr.Expression)
 				current.CouldMergeEnd = other.CouldMergeEnd

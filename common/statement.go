@@ -92,20 +92,20 @@ func (bs BlockStatement) Print(start string) {
 }
 
 type IfStatement struct {
-	Condition Expression
-	Body      BlockStatement
+	Condition *Expression
+	Body      *BlockStatement
 	ElseIf    *ElseIfStatement
 	Else      *ElseStatement
 }
 
 type ElseIfStatement struct {
-	Condition Expression
-	Body      BlockStatement
+	Condition *Expression
+	Body      *BlockStatement
 	ElseIf    *ElseIfStatement
 }
 
 type ElseStatement struct {
-	Body BlockStatement
+	Body *BlockStatement
 }
 
 func (ifs IfStatement) Print(start string) {
@@ -152,8 +152,8 @@ func (es ElseStatement) Print(start string) {
 }
 
 type WhileStatement struct {
-	Condition Expression
-	Body      BlockStatement
+	Condition *Expression
+	Body      *BlockStatement
 }
 
 func (ws WhileStatement) Print(start string) {
@@ -165,13 +165,13 @@ func (ws WhileStatement) Print(start string) {
 }
 
 type FunctionDef struct {
-	Name       string
+	Name       *string
 	Parameters []string
-	Body       BlockStatement
+	Body       *BlockStatement
 }
 
 func (fd FunctionDef) Print(start string) {
-	fmt.Printf("%s%s %s\n", start+string(BRANCH_CONNECTOR), Colorize("Name:", COLOR_YELLOW), Colorize(fd.Name, COLOR_WHITE))
+	fmt.Printf("%s%s %s\n", start+string(BRANCH_CONNECTOR), Colorize("Name:", COLOR_YELLOW), Colorize(*fd.Name, COLOR_WHITE))
 
 	if len(fd.Parameters) > 0 {
 		fmt.Printf("%s%s\n", start+string(BRANCH_CONNECTOR), Colorize("Parameters:", COLOR_YELLOW))
@@ -190,31 +190,31 @@ func (fd FunctionDef) Print(start string) {
 }
 
 type VarDeclaration struct {
-	Name  string
-	Value Expression
+	Name  *string
+	Value *Expression
 }
 
 func (vd VarDeclaration) Print(start string) {
-	fmt.Printf("%s%s %s\n", start+string(BRANCH_CONNECTOR), Colorize("Name:", COLOR_YELLOW), Colorize(vd.Name, COLOR_WHITE))
+	fmt.Printf("%s%s %s\n", start+string(BRANCH_CONNECTOR), Colorize("Name:", COLOR_YELLOW), Colorize(*vd.Name, COLOR_WHITE))
 	fmt.Printf("%s%s\n", start+string(LAST_CONNECTOR), Colorize("Value:", COLOR_YELLOW))
 	start += string(SIMPLE_INDENT) + string(LAST_CONNECTOR)
 	vd.Value.Print(start)
 }
 
 type Assignment struct {
-	Name  string
-	Value Expression
+	Name  *string
+	Value *Expression
 }
 
 func (a Assignment) Print(start string) {
-	fmt.Printf("%s%s %s\n", start+string(BRANCH_CONNECTOR), Colorize("Name:", COLOR_YELLOW), Colorize(a.Name, COLOR_WHITE))
+	fmt.Printf("%s%s %s\n", start+string(BRANCH_CONNECTOR), Colorize("Name:", COLOR_YELLOW), Colorize(*a.Name, COLOR_WHITE))
 	fmt.Printf("%s%s\n", start+string(LAST_CONNECTOR), Colorize("Value:", COLOR_YELLOW))
 	start += string(SIMPLE_INDENT) + string(LAST_CONNECTOR)
 	a.Value.Print(start)
 }
 
 type PrintStatement struct {
-	Value Expression
+	Value *Expression
 }
 
 func (ps PrintStatement) Print(start string) {
@@ -224,7 +224,7 @@ func (ps PrintStatement) Print(start string) {
 }
 
 type ReturnStatement struct {
-	Value Expression
+	Value *Expression
 }
 
 func (r ReturnStatement) Print(start string) {
@@ -240,7 +240,7 @@ func (bs BreakStatement) Print(start string) {
 }
 
 type ExpressionStatement struct {
-	Expression Expression
+	Expression *Expression
 }
 
 func (es ExpressionStatement) Print(start string) {

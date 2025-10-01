@@ -55,33 +55,33 @@ func executeBlockStatement(stmt common.BlockStatement, env *Env) (Value, error) 
 }
 
 func executeVarDeclaration(stmt common.VarDeclaration, env *Env) (Value, error) {
-	value, err := resolveExpression(stmt.Value, env)
+	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return Value{}, err
 	}
 
-	if !env.DefineVariable(stmt.Name, value) {
-		return Value{}, fmt.Errorf("variable '%s' already defined in this scope", stmt.Name)
+	if !env.DefineVariable(*stmt.Name, value) {
+		return Value{}, fmt.Errorf("variable '%s' already defined in this scope", *stmt.Name)
 	}
 
 	return Value{}, nil
 }
 
 func executeAssignment(stmt common.Assignment, env *Env) (Value, error) {
-	value, err := resolveExpression(stmt.Value, env)
+	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return Value{}, err
 	}
 
-	if !env.AssignVariable(stmt.Name, value) {
-		return Value{}, fmt.Errorf("variable '%s' not defined", stmt.Name)
+	if !env.AssignVariable(*stmt.Name, value) {
+		return Value{}, fmt.Errorf("variable '%s' not defined", *stmt.Name)
 	}
 
 	return Value{}, nil
 }
 
 func executePrintStatement(stmt common.PrintStatement, env *Env) (Value, error) {
-	value, err := resolveExpression(stmt.Value, env)
+	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -91,29 +91,29 @@ func executePrintStatement(stmt common.PrintStatement, env *Env) (Value, error) 
 }
 
 func executeIfStatement(stmt common.IfStatement, env *Env) (Value, error) {
-	conditionValue, err := resolveExpression(stmt.Condition, env)
+	conditionValue, err := resolveExpression(*stmt.Condition, env)
 	if err != nil {
 		return Value{}, err
 	}
 
 	if isTruthy(conditionValue) {
-		return executeBlockStatement(stmt.Body, env)
+		return executeBlockStatement(*stmt.Body, env)
 	}
 
 	elseIf := stmt.ElseIf
 	for elseIf != nil {
-		condValue, err := resolveExpression(elseIf.Condition, env)
+		condValue, err := resolveExpression(*elseIf.Condition, env)
 		if err != nil {
 			return Value{}, err
 		}
 		if isTruthy(condValue) {
-			return executeBlockStatement(elseIf.Body, env)
+			return executeBlockStatement(*elseIf.Body, env)
 		}
 		elseIf = elseIf.ElseIf
 	}
 
 	if stmt.Else != nil {
-		return executeBlockStatement(stmt.Else.Body, env)
+		return executeBlockStatement(*stmt.Else.Body, env)
 	}
 
 	return Value{}, nil
@@ -121,7 +121,7 @@ func executeIfStatement(stmt common.IfStatement, env *Env) (Value, error) {
 
 func executeWhileStatement(stmt common.WhileStatement, env *Env) (Value, error) {
 	for {
-		conditionValue, err := resolveExpression(stmt.Condition, env)
+		conditionValue, err := resolveExpression(*stmt.Condition, env)
 		if err != nil {
 			return Value{}, err
 		}
@@ -130,7 +130,7 @@ func executeWhileStatement(stmt common.WhileStatement, env *Env) (Value, error) 
 			break
 		}
 
-		result, err := executeBlockStatement(stmt.Body, env)
+		result, err := executeBlockStatement(*stmt.Body, env)
 		if err != nil {
 			if IsBreakErr(err) {
 				break
@@ -145,19 +145,19 @@ func executeWhileStatement(stmt common.WhileStatement, env *Env) (Value, error) 
 
 func executeFunctionDef(stmt common.FunctionDef, env *Env) (Value, error) {
 	function := NewFunction(stmt.Parameters, stmt.Body.Statements)
-	if !env.DefineFunction(stmt.Name, function) {
-		return Value{}, fmt.Errorf("function '%s' already defined in this scope", stmt.Name)
+	if !env.DefineFunction(*stmt.Name, function) {
+		return Value{}, fmt.Errorf("function '%s' already defined in this scope", *stmt.Name)
 	}
 	return Value{}, nil
 }
 
 func executeExpressionStatement(stmt common.ExpressionStatement, env *Env) (Value, error) {
-	value, err := resolveExpression(stmt.Expression, env)
+	value, err := resolveExpression(*stmt.Expression, env)
 	return value, err
 }
 
 func executeReturnStatement(stmt common.ReturnStatement, env *Env) (Value, error) {
-	value, err := resolveExpression(stmt.Value, env)
+	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return Value{}, err
 	}

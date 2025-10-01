@@ -81,7 +81,7 @@ func (p *Parser) matchs(token_types ...common.TokenType) bool {
 // STATEMENTS
 
 func (p *Parser) program() (segment, error) {
-	var statements []common.IncompleteStatement
+	var statements []common.Statement
 	for !p.isAtEnd() {
 		stmt, err := p.statement()
 		if err != nil {
@@ -91,36 +91,36 @@ func (p *Parser) program() (segment, error) {
 	}
 
 	return segment{
-		Program:         common.PartialProgram{Statements: statements},
+		Program:         common.Program{Statements: statements},
 		Tokens:          p.tokens,
 		CouldMergeStart: p.CouldMergeStart,
 		CouldMergeEnd:   p.CouldMergeEnd,
 	}, nil
 }
 
-func (p *Parser) blockStatement() (common.IncompleteBlockStatement, error) {
+func (p *Parser) blockStatement() (common.BlockStatement, error) {
 
 	if !p.match(common.OPEN_BRACKET) {
-		return common.IncompleteBlockStatement{}, fmt.Errorf("expected '{' at the beginning of block")
+		return common.BlockStatement{}, fmt.Errorf("expected '{' at the beginning of block")
 	}
 
-	var statements []common.IncompleteStatement
+	var statements []common.Statement
 	for !p.isAtEnd() && !p.check(common.CLOSE_BRACKET) {
 		stmt, err := p.statement()
 		if err != nil {
-			return common.IncompleteBlockStatement{}, err
+			return common.BlockStatement{}, err
 		}
 		statements = append(statements, stmt)
 	}
 
 	if !p.match(common.CLOSE_BRACKET) {
-		return common.IncompleteBlockStatement{}, fmt.Errorf("expected '}' at the end of block")
+		return common.BlockStatement{}, fmt.Errorf("expected '}' at the end of block")
 	}
 
-	return common.IncompleteBlockStatement{Statements: statements}, nil
+	return common.BlockStatement{Statements: statements}, nil
 }
 
-func (p *Parser) statement() (common.IncompleteStatement, error) {
+func (p *Parser) statement() (common.Statement, error) {
 
 	if p.isAtEnd() {
 		return nil, fmt.Errorf("unexpected end of input")
@@ -157,60 +157,60 @@ func (p *Parser) statement() (common.IncompleteStatement, error) {
 	}
 }
 
-func (p *Parser) printStatement() (common.IncompletePrintStatement, error) {
+func (p *Parser) printStatement() (common.PrintStatement, error) {
 	if !p.match(common.PRINT) {
-		return common.IncompletePrintStatement{}, fmt.Errorf("expected 'print'")
+		return common.PrintStatement{}, fmt.Errorf("expected 'print'")
 	}
 
 	if !p.match(common.OPEN_PARENTHESIS) {
-		return common.IncompletePrintStatement{}, fmt.Errorf("expected '(' after 'print'")
+		return common.PrintStatement{}, fmt.Errorf("expected '(' after 'print'")
 	}
 
 	expr, err := p.expression()
 	if err != nil {
-		return common.IncompletePrintStatement{}, err
+		return common.PrintStatement{}, err
 	}
 
 	if !p.match(common.CLOSE_PARENTHESIS) {
-		return common.IncompletePrintStatement{}, fmt.Errorf("expected ')' after expression")
+		return common.PrintStatement{}, fmt.Errorf("expected ')' after expression")
 	}
 
 	if !p.match(common.SEMICOLON) {
-		return common.IncompletePrintStatement{}, fmt.Errorf("expected ';' after print statement")
+		return common.PrintStatement{}, fmt.Errorf("expected ';' after print statement")
 	}
 
-	return common.IncompletePrintStatement{Value: &expr}, nil
+	return common.PrintStatement{Value: &expr}, nil
 }
 
-func (p *Parser) ifStatement() (common.IncompleteIfStatement, error) {
+func (p *Parser) ifStatement() (common.IfStatement, error) {
 	if !p.match(common.IF) {
-		return common.IncompleteIfStatement{}, fmt.Errorf("expected 'if'")
+		return common.IfStatement{}, fmt.Errorf("expected 'if'")
 	}
 
 	if !p.match(common.OPEN_PARENTHESIS) {
-		return common.IncompleteIfStatement{}, fmt.Errorf("expected '(' after 'if'")
+		return common.IfStatement{}, fmt.Errorf("expected '(' after 'if'")
 	}
 
 	condition, err := p.expression()
 	if err != nil {
-		return common.IncompleteIfStatement{}, err
+		return common.IfStatement{}, err
 	}
 
 	if !p.match(common.CLOSE_PARENTHESIS) {
-		return common.IncompleteIfStatement{}, fmt.Errorf("expected ')' after if condition")
+		return common.IfStatement{}, fmt.Errorf("expected ')' after if condition")
 	}
 
 	body, err := p.blockStatement()
 	if err != nil {
-		return common.IncompleteIfStatement{}, err
+		return common.IfStatement{}, err
 	}
 
-	ifStatement := common.IncompleteIfStatement{Condition: &condition, Body: &body}
+	ifStatement := common.IfStatement{Condition: &condition, Body: &body}
 
 	if p.matchs(common.ELSE, common.IF) {
 		elseIf, err := p.elseIfStatement()
 		if err != nil {
-			return common.IncompleteIfStatement{}, err
+			return common.IfStatement{}, err
 		}
 
 		ifStatement.ElseIf = &elseIf
@@ -219,81 +219,81 @@ func (p *Parser) ifStatement() (common.IncompleteIfStatement, error) {
 	if p.match(common.ELSE) {
 		elseBody, err := p.blockStatement()
 		if err != nil {
-			return common.IncompleteIfStatement{}, err
+			return common.IfStatement{}, err
 		}
-		ifStatement.Else = &common.IncompleteElseStatement{Body: &elseBody}
+		ifStatement.Else = &common.ElseStatement{Body: &elseBody}
 	}
 
 	return ifStatement, nil
 }
 
-func (p *Parser) elseIfStatement() (common.IncompleteElseIfStatement, error) {
+func (p *Parser) elseIfStatement() (common.ElseIfStatement, error) {
 	if !p.match(common.OPEN_PARENTHESIS) {
-		return common.IncompleteElseIfStatement{}, fmt.Errorf("expected '(' after 'else if'")
+		return common.ElseIfStatement{}, fmt.Errorf("expected '(' after 'else if'")
 	}
 
 	condition, err := p.expression()
 	if err != nil {
-		return common.IncompleteElseIfStatement{}, err
+		return common.ElseIfStatement{}, err
 	}
 
 	if !p.match(common.CLOSE_PARENTHESIS) {
-		return common.IncompleteElseIfStatement{}, fmt.Errorf("expected ')' after else if condition")
+		return common.ElseIfStatement{}, fmt.Errorf("expected ')' after else if condition")
 	}
 
 	body, err := p.blockStatement()
 	if err != nil {
-		return common.IncompleteElseIfStatement{}, err
+		return common.ElseIfStatement{}, err
 	}
 
 	if p.matchs(common.ELSE, common.IF) {
 		elseIf, err := p.elseIfStatement()
 		if err != nil {
-			return common.IncompleteElseIfStatement{}, err
+			return common.ElseIfStatement{}, err
 		}
-		return common.IncompleteElseIfStatement{Condition: &condition, Body: &body, ElseIf: &elseIf}, nil
+		return common.ElseIfStatement{Condition: &condition, Body: &body, ElseIf: &elseIf}, nil
 	}
 
-	return common.IncompleteElseIfStatement{Condition: &condition, Body: &body}, nil
+	return common.ElseIfStatement{Condition: &condition, Body: &body}, nil
 }
 
-func (p *Parser) breakStatement() (common.IncompleteBreakStatement, error) {
+func (p *Parser) breakStatement() (common.BreakStatement, error) {
 	if !p.match(common.BREAK) {
-		return common.IncompleteBreakStatement{}, fmt.Errorf("expected 'break'")
+		return common.BreakStatement{}, fmt.Errorf("expected 'break'")
 	}
 	if !p.match(common.SEMICOLON) {
-		return common.IncompleteBreakStatement{}, fmt.Errorf("expected ';' after 'break'")
+		return common.BreakStatement{}, fmt.Errorf("expected ';' after 'break'")
 	}
-	return common.IncompleteBreakStatement{}, nil
+	return common.BreakStatement{}, nil
 }
 
-func (p *Parser) returnStatement() (common.IncompleteReturnStatement, error) {
+func (p *Parser) returnStatement() (common.ReturnStatement, error) {
 	if !p.match(common.RETURN) {
-		return common.IncompleteReturnStatement{}, fmt.Errorf("expected 'return'")
+		return common.ReturnStatement{}, fmt.Errorf("expected 'return'")
 	}
 
 	expr, err := p.expression()
 	if err != nil {
-		return common.IncompleteReturnStatement{}, err
+		return common.ReturnStatement{}, err
 	}
 	if !p.match(common.SEMICOLON) {
-		return common.IncompleteReturnStatement{}, fmt.Errorf("expected ';' after 'return'")
+		return common.ReturnStatement{}, fmt.Errorf("expected ';' after 'return'")
 	}
-	return common.IncompleteReturnStatement{Value: &expr}, nil
+	return common.ReturnStatement{Value: &expr}, nil
 }
 
-func (p *Parser) funcStatement() (common.IncompleteFunctionDef, error) {
+func (p *Parser) funcStatement() (common.FunctionDef, error) {
 	if !p.match(common.FUNC) {
-		return common.IncompleteFunctionDef{}, fmt.Errorf("expected 'func'")
+		return common.FunctionDef{}, fmt.Errorf("expected 'func'")
 	}
 
 	if !p.check(common.IDENTIFIER) {
-		return common.IncompleteFunctionDef{}, fmt.Errorf("expected function name after 'func'")
+		return common.FunctionDef{}, fmt.Errorf("expected function name after 'func'")
 	}
 	name := p.advance()
 
 	if !p.match(common.OPEN_PARENTHESIS) {
-		return common.IncompleteFunctionDef{}, fmt.Errorf("expected '(' after function name")
+		return common.FunctionDef{}, fmt.Errorf("expected '(' after function name")
 	}
 
 	var parameters []string
@@ -301,7 +301,7 @@ func (p *Parser) funcStatement() (common.IncompleteFunctionDef, error) {
 	if !p.match(common.CLOSE_PARENTHESIS) {
 		for {
 			if !p.check(common.IDENTIFIER) {
-				return common.IncompleteFunctionDef{}, fmt.Errorf("expected parameter name")
+				return common.FunctionDef{}, fmt.Errorf("expected parameter name")
 			}
 			parameters = append(parameters, p.advance().Value)
 
@@ -310,72 +310,72 @@ func (p *Parser) funcStatement() (common.IncompleteFunctionDef, error) {
 			}
 
 			if !p.match(common.COMMA) {
-				return common.IncompleteFunctionDef{}, fmt.Errorf("expected ',' or ')' after parameter")
+				return common.FunctionDef{}, fmt.Errorf("expected ',' or ')' after parameter")
 			}
 		}
 	}
 
 	body, err := p.blockStatement()
 	if err != nil {
-		return common.IncompleteFunctionDef{}, err
+		return common.FunctionDef{}, err
 	}
 
-	return common.IncompleteFunctionDef{Name: &name.Value, Parameters: parameters, Body: &body}, nil
+	return common.FunctionDef{Name: &name.Value, Parameters: parameters, Body: &body}, nil
 }
 
-func (p *Parser) whileStatement() (common.IncompleteWhileStatement, error) {
+func (p *Parser) whileStatement() (common.WhileStatement, error) {
 	if !p.match(common.WHILE) {
-		return common.IncompleteWhileStatement{}, fmt.Errorf("expected 'while' at the beginning of while statement")
+		return common.WhileStatement{}, fmt.Errorf("expected 'while' at the beginning of while statement")
 	}
 
 	if !p.match(common.OPEN_PARENTHESIS) {
-		return common.IncompleteWhileStatement{}, fmt.Errorf("expected '(' after 'while'")
+		return common.WhileStatement{}, fmt.Errorf("expected '(' after 'while'")
 	}
 
 	condition, err := p.expression()
 	if err != nil {
-		return common.IncompleteWhileStatement{}, err
+		return common.WhileStatement{}, err
 	}
 
 	if !p.match(common.CLOSE_PARENTHESIS) {
-		return common.IncompleteWhileStatement{}, fmt.Errorf("expected ')' after while condition")
+		return common.WhileStatement{}, fmt.Errorf("expected ')' after while condition")
 	}
 
 	body, err := p.blockStatement()
 	if err != nil {
-		return common.IncompleteWhileStatement{}, err
+		return common.WhileStatement{}, err
 	}
 
-	return common.IncompleteWhileStatement{Condition: &condition, Body: &body}, nil
+	return common.WhileStatement{Condition: &condition, Body: &body}, nil
 }
 
-func (p *Parser) assignmentStatement() (common.IncompleteAssignment, error) {
+func (p *Parser) assignmentStatement() (common.Assignment, error) {
 	if !p.check(common.IDENTIFIER) {
-		return common.IncompleteAssignment{}, fmt.Errorf("expected variable name")
+		return common.Assignment{}, fmt.Errorf("expected variable name")
 	}
 
 	name := p.advance().Value
 
 	if !p.match(common.EQUAL) {
-		return common.IncompleteAssignment{}, fmt.Errorf("expected '=' after variable name")
+		return common.Assignment{}, fmt.Errorf("expected '=' after variable name")
 	}
 
 	value, err := p.expression()
 	if err != nil {
-		return common.IncompleteAssignment{}, err
+		return common.Assignment{}, err
 	}
 
 	if !p.match(common.SEMICOLON) {
-		return common.IncompleteAssignment{}, fmt.Errorf("expected ';' after assignment")
+		return common.Assignment{}, fmt.Errorf("expected ';' after assignment")
 	}
 
-	return common.IncompleteAssignment{Name: &name, Value: &value}, nil
+	return common.Assignment{Name: &name, Value: &value}, nil
 }
 
-func (p *Parser) expressionStatement() (common.IncompleteExpressionStatement, error) {
+func (p *Parser) expressionStatement() (common.ExpressionStatement, error) {
 	expr, err := p.expression()
 	if err != nil {
-		return common.IncompleteExpressionStatement{}, err
+		return common.ExpressionStatement{}, err
 	}
 
 	if p.match(common.SEMICOLON) {
@@ -383,237 +383,241 @@ func (p *Parser) expressionStatement() (common.IncompleteExpressionStatement, er
 		p.CouldMergeEnd = false
 	}
 
-	return common.IncompleteExpressionStatement{Expression: &expr}, nil
+	return common.ExpressionStatement{Expression: &expr}, nil
 }
 
-func (p *Parser) varStatement() (common.IncompleteVarDeclaration, error) {
+func (p *Parser) varStatement() (common.VarDeclaration, error) {
 	if !p.match(common.VAR) {
-		return common.IncompleteVarDeclaration{}, fmt.Errorf("expected 'var' at the beginning of variable declaration")
+		return common.VarDeclaration{}, fmt.Errorf("expected 'var' at the beginning of variable declaration")
 	}
 
 	if !p.check(common.IDENTIFIER) {
-		return common.IncompleteVarDeclaration{}, fmt.Errorf("expected variable name after '%s'", common.VAR_KEYWORD)
+		return common.VarDeclaration{}, fmt.Errorf("expected variable name after '%s'", common.VAR_KEYWORD)
 	}
 
 	name := p.advance()
 
 	if !p.match(common.EQUAL) {
-		return common.IncompleteVarDeclaration{}, fmt.Errorf("expected '=' after variable name")
+		return common.VarDeclaration{}, fmt.Errorf("expected '=' after variable name")
 	}
 
 	value, err := p.expression()
 	if err != nil {
-		return common.IncompleteVarDeclaration{}, err
+		return common.VarDeclaration{}, err
 	}
 
 	if !p.match(common.SEMICOLON) {
-		return common.IncompleteVarDeclaration{}, fmt.Errorf("expected ';' after variable declaration")
+		return common.VarDeclaration{}, fmt.Errorf("expected ';' after variable declaration")
 	}
 
-	return common.IncompleteVarDeclaration{Name: &name.Value, Value: &value}, nil
+	return common.VarDeclaration{Name: &name.Value, Value: &value}, nil
 }
 
 // EXPRESIONES
 
-func (p *Parser) expression() (common.IncompleteExpression, error) {
+func (p *Parser) expression() (common.Expression, error) {
 	root, err := p.binaryOr()
 	if err != nil {
-		return common.IncompleteExpression{}, err
+		return common.Expression{}, err
 	}
-	return common.IncompleteExpression{Root: &root}, nil
+	return common.Expression{Root: &root}, nil
 }
 
-func (p *Parser) binaryOr() (common.IncompleteBinaryOr, error) {
+func (p *Parser) binaryOr() (common.BinaryOr, error) {
 
 	if p.isAtEnd() {
-		return common.IncompleteBinaryOr{}, nil
+		return common.BinaryOr{}, nil
 	}
 
-	if p.match(common.OR) {
+	if p.check(common.OR) {
+		operator := p.advance()
 		right, err := p.binaryOr()
 		if err != nil {
-			return common.IncompleteBinaryOr{}, err
+			return common.BinaryOr{}, err
 		}
-		return common.IncompleteBinaryOr{Left: nil, Right: &right}, nil
+		return common.BinaryOr{Left: nil, Operator: &operator, Right: &right}, nil
 	}
 
 	left, err := p.binaryAnd()
 	if err != nil {
-		return common.IncompleteBinaryOr{}, err
+		return common.BinaryOr{}, err
 	}
 
-	if p.match(common.OR) {
+	if p.check(common.OR) {
+		operator := p.advance()
 		right, err := p.binaryOr()
 		if err != nil {
-			return common.IncompleteBinaryOr{}, err
+			return common.BinaryOr{}, err
 		}
 
-		return common.IncompleteBinaryOr{Left: &left, Right: &right}, nil
+		return common.BinaryOr{Left: &left, Operator: &operator, Right: &right}, nil
 	}
 
-	return common.IncompleteBinaryOr{Left: &left, Right: nil}, nil
+	return common.BinaryOr{Left: &left, Right: nil}, nil
 }
 
-func (p *Parser) binaryAnd() (common.IncompleteBinaryAnd, error) {
+func (p *Parser) binaryAnd() (common.BinaryAnd, error) {
 
-	if p.match(common.AND) {
+	if p.check(common.AND) {
+		operator := p.advance()
 		right, err := p.binaryAnd()
 		if err != nil {
-			return common.IncompleteBinaryAnd{}, err
+			return common.BinaryAnd{}, err
 		}
-		return common.IncompleteBinaryAnd{Left: nil, Right: &right}, nil
+		return common.BinaryAnd{Left: nil, Operator: &operator, Right: &right}, nil
 	}
 
 	left, err := p.equality()
 	if err != nil {
-		return common.IncompleteBinaryAnd{}, err
+		return common.BinaryAnd{}, err
 	}
 
-	if p.match(common.AND) {
+	if p.check(common.AND) {
+		operator := p.advance()
 		right, err := p.binaryAnd()
 		if err != nil {
-			return common.IncompleteBinaryAnd{}, err
+			return common.BinaryAnd{}, err
 		}
 
-		return common.IncompleteBinaryAnd{Left: &left, Right: &right}, nil
+		return common.BinaryAnd{Left: &left, Operator: &operator, Right: &right}, nil
 	}
 
-	return common.IncompleteBinaryAnd{Left: &left, Right: nil}, nil
+	return common.BinaryAnd{Left: &left, Right: nil}, nil
 }
 
-func (p *Parser) equality() (common.IncompleteEquality, error) {
+func (p *Parser) equality() (common.Equality, error) {
 
 	if p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
 		operator := p.advance()
 		right, err := p.equality()
 		if err != nil {
-			return common.IncompleteEquality{}, err
+			return common.Equality{}, err
 		}
-		return common.IncompleteEquality{Left: nil, Operator: &operator, Right: &right}, nil
+		return common.Equality{Left: nil, Operator: &operator, Right: &right}, nil
 	}
 
 	left, err := p.comparison()
 	if err != nil {
-		return common.IncompleteEquality{}, err
+		return common.Equality{}, err
 	}
 
 	if p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
 		operator := p.advance()
 		right, err := p.equality()
 		if err != nil {
-			return common.IncompleteEquality{}, err
+			return common.Equality{}, err
 		}
 
-		return common.IncompleteEquality{Left: &left, Operator: &operator, Right: &right}, nil
+		return common.Equality{Left: &left, Operator: &operator, Right: &right}, nil
 	}
 
-	return common.IncompleteEquality{Left: &left, Operator: nil, Right: nil}, nil
+	return common.Equality{Left: &left, Operator: nil, Right: nil}, nil
 }
 
-func (p *Parser) comparison() (common.IncompleteComparison, error) {
+func (p *Parser) comparison() (common.Comparison, error) {
 
 	if p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
 		operator := p.advance()
 		right, err := p.comparison()
 		if err != nil {
-			return common.IncompleteComparison{}, err
+			return common.Comparison{}, err
 		}
-		return common.IncompleteComparison{Left: nil, Operator: &operator, Right: &right}, nil
+		return common.Comparison{Left: nil, Operator: &operator, Right: &right}, nil
 	}
 
 	left, err := p.term()
 	if err != nil {
-		return common.IncompleteComparison{}, err
+		return common.Comparison{}, err
 	}
 
 	if p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
 		operator := p.advance()
 		right, err := p.comparison()
 		if err != nil {
-			return common.IncompleteComparison{}, err
+			return common.Comparison{}, err
 		}
 
-		return common.IncompleteComparison{Left: &left, Operator: &operator, Right: &right}, nil
+		return common.Comparison{Left: &left, Operator: &operator, Right: &right}, nil
 	}
 
-	return common.IncompleteComparison{Left: &left, Operator: nil, Right: nil}, nil
+	return common.Comparison{Left: &left, Operator: nil, Right: nil}, nil
 }
 
-func (p *Parser) term() (common.IncompleteTerm, error) {
+func (p *Parser) term() (common.Term, error) {
 
 	if p.check(common.MINUS, common.PLUS) {
 		operator := p.advance()
 		right, err := p.term()
 		if err != nil {
-			return common.IncompleteTerm{}, err
+			return common.Term{}, err
 		}
-		return common.IncompleteTerm{Left: nil, Operator: &operator, Right: &right}, nil
+		return common.Term{Left: nil, Operator: &operator, Right: &right}, nil
 	}
 
 	left, err := p.factor()
 	if err != nil {
-		return common.IncompleteTerm{}, err
+		return common.Term{}, err
 	}
 
 	if p.check(common.MINUS, common.PLUS) {
 		operator := p.advance()
 		if p.isAtEnd() {
-			return common.IncompleteTerm{Left: &left, Operator: &operator, Right: nil}, nil
+			return common.Term{Left: &left, Operator: &operator, Right: nil}, nil
 		}
 
 		right, err := p.term()
 		if err != nil {
-			return common.IncompleteTerm{}, err
+			return common.Term{}, err
 		}
 
-		return common.IncompleteTerm{Left: &left, Operator: &operator, Right: &right}, nil
+		return common.Term{Left: &left, Operator: &operator, Right: &right}, nil
 	}
-	return common.IncompleteTerm{Left: &left, Operator: nil, Right: nil}, nil
+	return common.Term{Left: &left, Operator: nil, Right: nil}, nil
 }
 
-func (p *Parser) factor() (common.IncompleteFactor, error) {
+func (p *Parser) factor() (common.Factor, error) {
 
 	if p.check(common.SLASH, common.ASTERISK) {
 		operator := p.advance()
 		right, err := p.factor()
 		if err != nil {
-			return common.IncompleteFactor{}, err
+			return common.Factor{}, err
 		}
-		return common.IncompleteFactor{Left: nil, Operator: &operator, Right: &right}, nil
+		return common.Factor{Left: nil, Operator: &operator, Right: &right}, nil
 	}
 
 	left, err := p.unary()
 	if err != nil {
-		return common.IncompleteFactor{}, err
+		return common.Factor{}, err
 	}
 
 	if p.check(common.SLASH, common.ASTERISK) {
 		operator := p.advance()
 		if p.isAtEnd() {
-			return common.IncompleteFactor{Left: &left, Operator: &operator, Right: nil}, nil
+			return common.Factor{Left: left, Operator: &operator, Right: nil}, nil
 		}
 		right, err := p.factor()
 		if err != nil {
-			return common.IncompleteFactor{}, err
+			return common.Factor{}, err
 		}
 
-		return common.IncompleteFactor{Left: &left, Operator: &operator, Right: &right}, nil
+		return common.Factor{Left: left, Operator: &operator, Right: &right}, nil
 	}
 
-	return common.IncompleteFactor{Left: &left, Operator: nil, Right: nil}, nil
+	return common.Factor{Left: left, Operator: nil, Right: nil}, nil
 }
 
-func (p *Parser) unary() (common.IncompleteUnary, error) {
+func (p *Parser) unary() (common.Unary, error) {
 	if p.check(common.BANG, common.MINUS) {
 		operator := p.advance()
 		if p.isAtEnd() {
-			return common.IncompleteUnaryWithOperator{Operator: &operator, Right: nil}, nil
+			return common.UnaryWithOperator{Operator: &operator, Right: nil}, nil
 		}
 		right, err := p.unary()
 		if err != nil {
-			return common.IncompleteUnaryWithOperator{}, err
+			return common.UnaryWithOperator{}, err
 		}
-		return common.IncompleteUnaryWithOperator{Operator: &operator, Right: &right}, nil
+		return common.UnaryWithOperator{Operator: &operator, Right: &right}, nil
 	}
 	return p.primary()
 }
@@ -621,18 +625,18 @@ func (p *Parser) unary() (common.IncompleteUnary, error) {
 // var = 3
 // ;
 
-func (p *Parser) primary() (common.IncompleteUnary, error) {
+func (p *Parser) primary() (common.Unary, error) {
 
 	if p.isAtEnd() {
 		if p.previous().Typ == common.OPEN_PARENTHESIS {
-			//return common.IncompletePrimary{Value: common.IncompleteGroupingExpression{hasOpen: true, hasClose: false}}, nil
+			//return common.Primary{Value: common.GroupingExpression{hasOpen: true, hasClose: false}}, nil
 		}
-		return common.IncompletePrimary{}, nil
+		return common.Primary{}, nil
 	}
 
 	if p.check(common.FALSE, common.TRUE, common.NONE, common.NUMBER, common.LITERAL) {
 		token := p.advance()
-		return common.IncompletePrimary{Value: token}, nil
+		return common.Primary{Value: token}, nil
 	}
 
 	if p.match(common.OPEN_PARENTHESIS) {
@@ -643,14 +647,14 @@ func (p *Parser) primary() (common.IncompleteUnary, error) {
 		if !p.match(common.CLOSE_PARENTHESIS) {
 			return nil, fmt.Errorf("expected ')' after expression")
 		}
-		return common.IncompletePrimary{Value: common.IncompleteGroupingExpression{Expression: &expr}}, nil
+		return common.Primary{Value: common.GroupingExpression{Expression: &expr}}, nil
 	}
 
 	if p.check(common.IDENTIFIER) {
 		identifier := p.advance()
 
 		if p.match(common.OPEN_PARENTHESIS) {
-			var args []common.IncompleteExpression
+			var args []common.Expression
 			if !p.match(common.CLOSE_PARENTHESIS) {
 				for {
 					arg, err := p.expression()
@@ -669,9 +673,9 @@ func (p *Parser) primary() (common.IncompleteUnary, error) {
 				}
 			}
 
-			return common.IncompletePrimary{Value: common.IncompleteCall{Callee: &identifier.Value, Arguments: &args}}, nil
+			return common.Primary{Value: common.Call{Callee: &identifier.Value, Arguments: args}}, nil
 		} else {
-			return common.IncompletePrimary{Value: identifier}, nil
+			return common.Primary{Value: identifier}, nil
 		}
 	}
 
