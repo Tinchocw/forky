@@ -52,24 +52,31 @@ func (current *segment) mergeExpressions(leftNode, rightNode *common.Expression)
 
 func (current *segment) mergeBinaryOr(leftAst, rightAst *common.BinaryOr) {
 
-	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() && !rightAst.IsLeftComplete() && rightAst.IsRightComplete() {
+	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() && rightAst.IsLeftComplete() && !rightAst.IsRightComplete() && rightAst.IsOperatorComplete() {
 		current.mergeBinaryAnd(leftAst.Left, rightAst.Left)
 	}
 
-	// LeftNode with left and without right
-	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() {
+	if leftAst.IsOperatorComplete() && !leftAst.IsRightComplete() && (rightAst.IsLeftComplete() || rightAst.IsLeftComplete() && rightAst.IsRightComplete() && rightAst.IsOperatorComplete()) {
 		leftAst.Right = rightAst
+		return
 	}
 
-	if leftAst.IsLeftComplete() && leftAst.IsRightComplete() && rightAst.IsLeftComplete() && !rightAst.IsRightComplete() {
-		current.mergeBinaryAnd(leftAst.Left, rightAst.Left)
+	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() && !rightAst.IsLeftComplete() && rightAst.IsOperatorComplete() {
+		leftAst.Operator = rightAst.Operator
+		leftAst.Right = rightAst.Right
+		return
 	}
 
-	// both size complete
-	if leftAst.IsComplete() && rightAst.IsComplete() {
+	if leftAst.IsComplete() {
 		current.mergeBinaryOr(leftAst.Right, rightAst)
 	}
 
+	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() && rightAst.IsComplete() {
+		current.mergeBinaryAnd(leftAst.Left, rightAst.Left)
+		leftAst.Operator = rightAst.Operator
+		leftAst.Right = rightAst.Right
+		return
+	}
 }
 
 func (current *segment) mergeBinaryAnd(leftNode, rightNode *common.BinaryAnd) {
