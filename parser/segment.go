@@ -1,6 +1,8 @@
 package parser
 
 import (
+	"fmt"
+
 	"github.com/Tinchocw/Interprete-concurrente/common"
 )
 
@@ -41,59 +43,77 @@ func (current *segment) lastStatement() common.Statement {
 	return nil
 }
 
-func (current *segment) mergeExpressions(leftAst, rightAst *common.Expression) {
-	current.merge(leftAst.Root, rightAst.Root)
+func (current *segment) mergeExpressions(leftAst, rightAst *common.Expression) error {
+	return current.merge(leftAst.Root, rightAst.Root)
 }
 
-func (current *segment) merge(leftAst, rightAst common.MergableNode) {
+// 1. izquierda
+// 2. izquierda + operador
+// 3. operador + derecha
+// 4. izquierda + operador + derecha
+// 5. operador
 
-	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() &&
-		rightAst.IsLeftComplete() && !rightAst.IsRightComplete() && !rightAst.IsOperatorComplete() {
-		current.merge(leftAst.GetLeft(), rightAst.GetLeft())
+func (current *segment) merge(leftAst, rightAst common.MergableNode) error {
+
+	// IZQ = 3 o 4 | DER = *.
+	if leftAst.HasRight() {
+		return current.merge(leftAst.GetRight(), rightAst)
 	}
 
-	if leftAst.IsOperatorComplete() && !leftAst.IsRightComplete() && (rightAst.IsComplete() || rightAst.IsLeftComplete() && !rightAst.IsRightComplete() && !rightAst.IsOperatorComplete()) {
+	// IZQ = 1 | DER = *
+	if leftAst.HasLeft() && !leftAst.HasOperator() {
+		// DER = 1 o 2 o 4
+		if rightAst.HasLeft() {
+			err := current.merge(leftAst.GetLeft(), rightAst.GetLeft())
+			if err != nil {
+				return err
+			}
+		}
+
+		// DER = 3 o 4 o 5
+		if rightAst.HasOperator() {
+			leftAst.SetOperator(rightAst.GetOperator())
+
+			if rightAst.HasRight() {
+				leftAst.SetRight(rightAst.GetRight())
+			}
+		}
+
+		return nil
+	}
+
+	// IZQ = 2 o 5 | DER = 1 o 2 o 4
+	if leftAst.HasOperator() && rightAst.HasLeft() {
 		leftAst.SetRight(rightAst)
-		return
+		return nil
 	}
 
-	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() && !rightAst.IsLeftComplete() && rightAst.IsOperatorComplete() {
-		leftAst.SetOperator(rightAst.GetOperator())
-		leftAst.SetRight(rightAst.GetRight())
-		return
-	}
-
-	if leftAst.IsComplete() {
-		current.merge(leftAst.GetRight(), rightAst)
-		return
-	}
-
-	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() && rightAst.IsComplete() {
-		current.merge(leftAst.GetLeft(), rightAst.GetLeft())
-		leftAst.SetOperator(rightAst.GetOperator())
-		leftAst.SetRight(rightAst.GetRight())
-		return
-	}
-
+	return fmt.Errorf("cannot merge expressions")
 }
 
-func (current *segment) Merge(other segment) {
+func (current *segment) Merge(other segment) error {
 	defer func() {
 		current.Tokens = append(current.Tokens, other.Tokens...)
 	}()
 
 	if current.CouldMergeEnd && other.CouldMergeStart {
-
 		switch leftExpr := current.lastStatement().(type) {
 		case common.ExpressionStatement:
 			switch rightExpr := other.firstStatement().(type) {
 			case common.ExpressionStatement:
 
-				current.mergeExpressions(leftExpr.Expression, rightExpr.Expression)
+				err := current.mergeExpressions(leftExpr.Expression, rightExpr.Expression)
+				if err != nil {
+					return err
+				}
 				current.CouldMergeEnd = other.CouldMergeEnd
+
+				return nil
 			}
 
 		}
 
 	}
+
+	return nil
 }

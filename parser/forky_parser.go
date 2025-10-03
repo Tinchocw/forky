@@ -9,7 +9,6 @@ type ForkyParser struct {
 }
 
 func ParallelParse(tokens []common.Token, numWorkers int, debug bool) (segment, error) {
-
 	length := len(tokens)
 
 	if debug {
@@ -35,7 +34,7 @@ func ParallelParse(tokens []common.Token, numWorkers int, debug bool) (segment, 
 			println("[DEBUG] Sequential parse result: AST with", len(sg.Program.Statements), "statements")
 		}
 
-		return sg, err
+		return sg, nil
 	}
 
 	leftWorkers := (numWorkers + 1) / 2 // ceil(workers/2) ensures left >= right when odd
@@ -56,11 +55,8 @@ func ParallelParse(tokens []common.Token, numWorkers int, debug bool) (segment, 
 
 		leftTokens := tokens[:mid]
 		leftSegment, err := ParallelParse(leftTokens, leftWorkers, debug)
-		if err != nil {
-			return
-		}
 
-		leftCh <- res{sg: leftSegment, err: nil}
+		leftCh <- res{sg: leftSegment, err: err}
 	}()
 
 	if debug {
@@ -81,7 +77,10 @@ func ParallelParse(tokens []common.Token, numWorkers int, debug bool) (segment, 
 		println("[DEBUG] Merging segments: left tokens =", len(leftRes.sg.Tokens), "right tokens =", len(rightSegment.Tokens))
 	}
 
-	leftRes.sg.Merge(rightSegment)
+	err := leftRes.sg.Merge(rightSegment)
+	if err != nil {
+		return segment{}, err
+	}
 
 	if debug {
 		println("[DEBUG] Merge complete: total tokens =", len(leftRes.sg.Tokens))

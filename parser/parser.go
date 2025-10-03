@@ -416,199 +416,268 @@ func (p *Parser) varStatement() (common.VarDeclaration, error) {
 // EXPRESIONES
 
 func (p *Parser) expression() (common.Expression, error) {
-	root, err := p.binaryOr()
+	root, _, err := p.binaryOr()
 	if err != nil {
 		return common.Expression{}, err
 	}
 	return common.Expression{Root: root}, nil
 }
 
-func (p *Parser) binaryOr() (*common.BinaryOr, error) {
-
+func (p *Parser) binaryOr() (*common.BinaryOr, bool, error) {
 	if p.isAtEnd() {
-		return nil, nil
+		return nil, false, nil
 	}
 
 	if p.check(common.OR) {
 		operator := p.advance()
-		right, err := p.binaryOr()
-		if err != nil {
-			return nil, err
+		if p.isAtEnd() {
+			return &common.BinaryOr{Left: nil, Operator: &operator, Right: nil}, true, nil
 		}
-		return &common.BinaryOr{Left: nil, Operator: &operator, Right: right}, nil
+		right, startWithOperator, err := p.binaryOr()
+		if err != nil {
+			return nil, false, err
+		}
+		if startWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
+		}
+
+		return &common.BinaryOr{Left: nil, Operator: &operator, Right: right}, true, nil
 	}
 
-	left, err := p.binaryAnd()
+	left, startWithOperator, err := p.binaryAnd()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if p.check(common.OR) {
 		operator := p.advance()
-		right, err := p.binaryOr()
+		if p.isAtEnd() {
+			return &common.BinaryOr{Left: left, Operator: &operator, Right: nil}, startWithOperator, nil
+		}
+		right, startWithOperator, err := p.binaryOr()
 		if err != nil {
-			return nil, err
+			return nil, false, err
+		}
+		if startWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
 		}
 
-		return &common.BinaryOr{Left: left, Operator: &operator, Right: right}, nil
+		return &common.BinaryOr{Left: left, Operator: &operator, Right: right}, startWithOperator, nil
 	}
 
-	return &common.BinaryOr{Left: left, Right: nil}, nil
+	return &common.BinaryOr{Left: left, Right: nil}, startWithOperator, nil
 }
 
-func (p *Parser) binaryAnd() (*common.BinaryAnd, error) {
+func (p *Parser) binaryAnd() (*common.BinaryAnd, bool, error) {
 
 	if p.check(common.AND) {
 		operator := p.advance()
-		right, err := p.binaryAnd()
-		if err != nil {
-			return nil, err
+		if p.isAtEnd() {
+			return &common.BinaryAnd{Left: nil, Operator: &operator, Right: nil}, true, nil
 		}
-		return &common.BinaryAnd{Left: nil, Operator: &operator, Right: right}, nil
+		right, startWithOperator, err := p.binaryAnd()
+		if err != nil {
+			return nil, false, err
+		}
+		if startWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
+		}
+		return &common.BinaryAnd{Left: nil, Operator: &operator, Right: right}, true, nil
 	}
 
-	left, err := p.equality()
+	left, startWithOperator, err := p.equality()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if p.check(common.AND) {
 		operator := p.advance()
-		right, err := p.binaryAnd()
+		if p.isAtEnd() {
+			return &common.BinaryAnd{Left: left, Operator: &operator, Right: nil}, startWithOperator, nil
+		}
+		right, rightStartWithOperator, err := p.binaryAnd()
 		if err != nil {
-			return nil, err
+			return nil, false, err
+		}
+		if rightStartWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
 		}
 
-		return &common.BinaryAnd{Left: left, Operator: &operator, Right: right}, nil
+		return &common.BinaryAnd{Left: left, Operator: &operator, Right: right}, startWithOperator, nil
 	}
 
-	return &common.BinaryAnd{Left: left, Operator: nil, Right: nil}, nil
+	return &common.BinaryAnd{Left: left, Operator: nil, Right: nil}, startWithOperator, nil
 }
 
-func (p *Parser) equality() (*common.Equality, error) {
+func (p *Parser) equality() (*common.Equality, bool, error) {
 
 	if p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
 		operator := p.advance()
-		right, err := p.equality()
-		if err != nil {
-			return nil, err
+		if p.isAtEnd() {
+			return &common.Equality{Left: nil, Operator: &operator, Right: nil}, true, nil
 		}
-		return &common.Equality{Left: nil, Operator: &operator, Right: right}, nil
+		right, startWithOperator, err := p.equality()
+		if err != nil {
+			return nil, false, err
+		}
+		if startWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
+		}
+		return &common.Equality{Left: nil, Operator: &operator, Right: right}, true, nil
 	}
 
-	left, err := p.comparison()
+	left, startWithOperator, err := p.comparison()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
 		operator := p.advance()
-		right, err := p.equality()
+		if p.isAtEnd() {
+			return &common.Equality{Left: left, Operator: &operator, Right: nil}, startWithOperator, nil
+		}
+		right, rightStartWithOperator, err := p.equality()
 		if err != nil {
-			return nil, err
+			return nil, false, err
+		}
+		if rightStartWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
 		}
 
-		return &common.Equality{Left: left, Operator: &operator, Right: right}, nil
+		return &common.Equality{Left: left, Operator: &operator, Right: right}, startWithOperator, nil
 	}
 
-	return &common.Equality{Left: left, Operator: nil, Right: nil}, nil
+	return &common.Equality{Left: left, Operator: nil, Right: nil}, startWithOperator, nil
 }
 
-func (p *Parser) comparison() (*common.Comparison, error) {
+func (p *Parser) comparison() (*common.Comparison, bool, error) {
 
 	if p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
 		operator := p.advance()
-		right, err := p.comparison()
-		if err != nil {
-			return nil, err
+		if p.isAtEnd() {
+			return &common.Comparison{Left: nil, Operator: &operator, Right: nil}, true, nil
 		}
-		return &common.Comparison{Left: nil, Operator: &operator, Right: right}, nil
+		right, startWithOperator, err := p.comparison()
+		if err != nil {
+			return nil, false, err
+		}
+		if startWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
+		}
+		return &common.Comparison{Left: nil, Operator: &operator, Right: right}, true, nil
 	}
 
-	left, err := p.term()
+	left, startWithOperator, err := p.term()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
 		operator := p.advance()
-		right, err := p.comparison()
+		if p.isAtEnd() {
+			return &common.Comparison{Left: left, Operator: &operator, Right: nil}, startWithOperator, nil
+		}
+		right, rightStartWithOperator, err := p.comparison()
 		if err != nil {
-			return nil, err
+			return nil, false, err
+		}
+		if rightStartWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
 		}
 
-		return &common.Comparison{Left: left, Operator: &operator, Right: right}, nil
+		return &common.Comparison{Left: left, Operator: &operator, Right: right}, startWithOperator, nil
 	}
 
-	return &common.Comparison{Left: left, Operator: nil, Right: nil}, nil
+	return &common.Comparison{Left: left, Operator: nil, Right: nil}, startWithOperator, nil
 }
 
-func (p *Parser) term() (*common.Term, error) {
+func (p *Parser) term() (*common.Term, bool, error) {
 
 	if p.check(common.MINUS, common.PLUS) {
 		operator := p.advance()
-		right, err := p.term()
-		if err != nil {
-			return nil, err
+		if p.isAtEnd() {
+			return &common.Term{Left: nil, Operator: &operator, Right: nil}, true, nil
 		}
-		return &common.Term{Left: nil, Operator: &operator, Right: right}, nil
+
+		right, startWithOperator, err := p.term()
+		if err != nil {
+			return nil, false, err
+		}
+
+		if startWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
+		}
+
+		return &common.Term{Left: nil, Operator: &operator, Right: right}, true, nil
 	}
 
-	left, err := p.factor()
+	left, startWithOperator, err := p.factor()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if p.check(common.MINUS, common.PLUS) {
 		operator := p.advance()
 		if p.isAtEnd() {
-			return &common.Term{Left: left, Operator: &operator, Right: nil}, nil
+			return &common.Term{Left: left, Operator: &operator, Right: nil}, startWithOperator, nil
 		}
 
-		right, err := p.term()
+		right, rightStartWithOperator, err := p.term()
 		if err != nil {
-			return nil, err
+			return nil, false, err
+		}
+		if rightStartWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
 		}
 
-		return &common.Term{Left: left, Operator: &operator, Right: right}, nil
+		return &common.Term{Left: left, Operator: &operator, Right: right}, startWithOperator, nil
 	}
-	return &common.Term{Left: left, Operator: nil, Right: nil}, nil
+	return &common.Term{Left: left, Operator: nil, Right: nil}, startWithOperator, nil
 }
 
-func (p *Parser) factor() (*common.Factor, error) {
+func (p *Parser) factor() (*common.Factor, bool, error) {
 
 	if p.check(common.SLASH, common.ASTERISK) {
 		operator := p.advance()
-		right, err := p.factor()
-		if err != nil {
-			return nil, err
+		if p.isAtEnd() {
+			return &common.Factor{Left: nil, Operator: &operator, Right: nil}, true, nil
 		}
-		return &common.Factor{Left: nil, Operator: &operator, Right: right}, nil
+		right, startWithOperator, err := p.factor()
+		if err != nil {
+			return nil, false, err
+		}
+		if startWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
+		}
+		return &common.Factor{Left: nil, Operator: &operator, Right: right}, true, nil
 	}
 
 	left, err := p.unary()
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if p.check(common.SLASH, common.ASTERISK) {
 		operator := p.advance()
 		if p.isAtEnd() {
-			return &common.Factor{Left: left, Operator: &operator, Right: nil}, nil
+			return &common.Factor{Left: left, Operator: &operator, Right: nil}, false, nil
 		}
-		right, err := p.factor()
+		right, rightStartWithOperator, err := p.factor()
 		if err != nil {
-			return nil, err
+			return nil, false, err
+		}
+		if rightStartWithOperator {
+			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
 		}
 
-		return &common.Factor{Left: left, Operator: &operator, Right: right}, nil
+		return &common.Factor{Left: left, Operator: &operator, Right: right}, false, nil
 	}
 
-	return &common.Factor{Left: left, Operator: nil, Right: nil}, nil
+	return &common.Factor{Left: left, Operator: nil, Right: nil}, false, nil
 }
 
 func (p *Parser) unary() (common.Unary, error) {
-	if p.check(common.BANG, common.MINUS) {
+	if p.check(common.BANG, common.TILDE) {
 		operator := p.advance()
 		if p.isAtEnd() {
 			return &common.UnaryWithOperator{Operator: &operator, Right: nil}, nil
@@ -675,7 +744,6 @@ func (p *Parser) primary() (common.Unary, error) {
 			return &common.Primary{Value: identifier}, nil
 		}
 	}
-
 	return nil, fmt.Errorf("unexpected token: %v", p.peek().String())
 }
 

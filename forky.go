@@ -53,12 +53,18 @@ func (forky *Forky) Run(r io.ReaderAt, size int64) (string, error) {
 
 	if forky.mode == ScanningMode {
 		common.PrintTokens(tokens)
+		return "", nil
 	}
 
 	ps := parserPackage.CreateForkyParser(forky.workers)
 	program, err := ps.Parse(tokens, true)
 	if err != nil {
 		return "", err
+	}
+
+	if forky.mode == ParsingMode {
+		common.PrintProgram(program)
+		return "", nil
 	}
 
 	return forky.interpreter.Execute(program)
