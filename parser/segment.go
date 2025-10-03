@@ -27,10 +27,6 @@ func (current *segment) AddStatements(contents []common.Statement) {
 	current.Program.Statements = append(current.Program.Statements, contents...)
 }
 
-func (current *segment) hasStatements() bool {
-	return len(current.Program.Statements) > 0
-}
-
 func (current *segment) firstStatement() common.Statement {
 	if len(current.Program.Statements) > 0 {
 		return current.Program.Statements[0]
@@ -45,130 +41,39 @@ func (current *segment) lastStatement() common.Statement {
 	return nil
 }
 
-func (current *segment) mergeExpressions(leftNode, rightNode *common.Expression) {
-
-	current.mergeBinaryOr(leftNode.Root, rightNode.Root)
+func (current *segment) mergeExpressions(leftAst, rightAst *common.Expression) {
+	current.merge(leftAst.Root, rightAst.Root)
 }
 
-func (current *segment) mergeBinaryOr(leftAst, rightAst *common.BinaryOr) {
+func (current *segment) merge(leftAst, rightAst common.MergableNode) {
 
-	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() && rightAst.IsLeftComplete() && !rightAst.IsRightComplete() && rightAst.IsOperatorComplete() {
-		current.mergeBinaryAnd(leftAst.Left, rightAst.Left)
+	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() &&
+		rightAst.IsLeftComplete() && !rightAst.IsRightComplete() && !rightAst.IsOperatorComplete() {
+		current.merge(leftAst.GetLeft(), rightAst.GetLeft())
 	}
 
-	if leftAst.IsOperatorComplete() && !leftAst.IsRightComplete() && (rightAst.IsLeftComplete() || rightAst.IsLeftComplete() && rightAst.IsRightComplete() && rightAst.IsOperatorComplete()) {
-		leftAst.Right = rightAst
+	if leftAst.IsOperatorComplete() && !leftAst.IsRightComplete() && (rightAst.IsComplete() || rightAst.IsLeftComplete() && !rightAst.IsRightComplete() && !rightAst.IsOperatorComplete()) {
+		leftAst.SetRight(rightAst)
 		return
 	}
 
 	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() && !rightAst.IsLeftComplete() && rightAst.IsOperatorComplete() {
-		leftAst.Operator = rightAst.Operator
-		leftAst.Right = rightAst.Right
+		leftAst.SetOperator(rightAst.GetOperator())
+		leftAst.SetRight(rightAst.GetRight())
 		return
 	}
 
 	if leftAst.IsComplete() {
-		current.mergeBinaryOr(leftAst.Right, rightAst)
+		current.merge(leftAst.GetRight(), rightAst)
+		return
 	}
 
 	if leftAst.IsLeftComplete() && !leftAst.IsRightComplete() && !leftAst.IsOperatorComplete() && rightAst.IsComplete() {
-		current.mergeBinaryAnd(leftAst.Left, rightAst.Left)
-		leftAst.Operator = rightAst.Operator
-		leftAst.Right = rightAst.Right
+		current.merge(leftAst.GetLeft(), rightAst.GetLeft())
+		leftAst.SetOperator(rightAst.GetOperator())
+		leftAst.SetRight(rightAst.GetRight())
 		return
 	}
-}
-
-func (current *segment) mergeBinaryAnd(leftNode, rightNode *common.BinaryAnd) {
-
-	if leftNode.IsLeftComplete() && !leftNode.IsRightComplete() {
-		leftNode.Right = rightNode
-	}
-
-	if leftNode.IsLeftComplete() && !leftNode.IsRightComplete() && !rightNode.IsLeftComplete() && rightNode.IsRightComplete() {
-		current.mergeEquality(leftNode.Left, rightNode.Left)
-	}
-
-	if leftNode.IsComplete() && rightNode.IsComplete() {
-		current.mergeBinaryAnd(leftNode.Right, rightNode)
-	}
-}
-
-func (current *segment) mergeEquality(leftNode, rightNode *common.Equality) {
-
-	if leftNode.IsLeftComplete() && leftNode.IsOperatorComplete() && !leftNode.IsRightComplete() {
-		leftNode.Right = rightNode
-	}
-
-	if leftNode.IsLeftComplete() && !leftNode.IsRightComplete() && !rightNode.IsLeftComplete() && rightNode.IsRightComplete() && leftNode.IsOperatorComplete() && !rightNode.IsOperatorComplete() {
-		current.mergeComparison(leftNode.Left, rightNode.Left)
-	}
-
-	if leftNode.IsComplete() && rightNode.IsComplete() {
-		current.mergeEquality(leftNode.Right, rightNode)
-	}
-}
-
-func (current *segment) mergeComparison(leftNode, rightNode *common.Comparison) {
-
-	if leftNode.IsLeftComplete() && !leftNode.IsRightComplete() {
-
-		leftNode.Right = rightNode
-	}
-
-	if leftNode.IsLeftComplete() && !leftNode.IsRightComplete() && !rightNode.IsLeftComplete() && rightNode.IsRightComplete() {
-		current.mergeTerm(leftNode.Left, rightNode.Left)
-	}
-
-	if leftNode.IsComplete() && rightNode.IsComplete() {
-		current.mergeComparison(leftNode.Right, rightNode)
-	}
-}
-
-func (current *segment) mergeTerm(leftNode, rightNode *common.Term) {
-
-	if leftNode.IsLeftComplete() && leftNode.IsOperatorComplete() && !leftNode.IsRightComplete() {
-		leftNode.Right = rightNode
-	}
-
-	if leftNode.IsLeftComplete() && leftNode.IsOperatorComplete() && !leftNode.IsRightComplete() && !rightNode.IsLeftComplete() && rightNode.IsRightComplete() && rightNode.IsOperatorComplete() {
-		current.mergeFactor(leftNode.Left, rightNode.Left)
-	}
-
-	if leftNode.IsComplete() && rightNode.IsComplete() {
-		current.mergeTerm(leftNode.Right, rightNode)
-	}
-}
-
-func (current *segment) mergeFactor(leftNode, rightNode *common.Factor) {
-
-	if leftNode.IsLeftComplete() && leftNode.IsOperatorComplete() && !leftNode.IsRightComplete() {
-		leftNode.Right = rightNode
-	}
-
-	// TODO: See all the posible cases
-	if leftNode.IsLeftComplete() && leftNode.IsOperatorComplete() && !leftNode.IsRightComplete() && !rightNode.IsLeftComplete() && rightNode.IsRightComplete() && rightNode.IsOperatorComplete() {
-		current.mergeUnary(leftNode.Left)
-	}
-
-	if leftNode.IsComplete() && rightNode.IsComplete() {
-		current.mergeFactor(leftNode.Right, rightNode)
-	}
-}
-
-func (current *segment) mergeUnary(rightNode common.Unary) {
-	switch rightNode := rightNode.(type) {
-	case *common.UnaryWithOperator:
-		current.mergeUnaryWithOperator(rightNode)
-	case *common.Primary:
-		current.mergePrimary(rightNode)
-	}
-}
-
-func (current *segment) mergeUnaryWithOperator(rightNode *common.UnaryWithOperator) {
-}
-
-func (current *segment) mergePrimary(leftNode *common.Primary) {
 
 }
 

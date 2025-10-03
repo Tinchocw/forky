@@ -420,210 +420,207 @@ func (p *Parser) expression() (common.Expression, error) {
 	if err != nil {
 		return common.Expression{}, err
 	}
-	return common.Expression{Root: &root}, nil
+	return common.Expression{Root: root}, nil
 }
 
-func (p *Parser) binaryOr() (common.BinaryOr, error) {
+func (p *Parser) binaryOr() (*common.BinaryOr, error) {
 
 	if p.isAtEnd() {
-		return common.BinaryOr{}, nil
+		return nil, nil
 	}
 
 	if p.check(common.OR) {
 		operator := p.advance()
 		right, err := p.binaryOr()
 		if err != nil {
-			return common.BinaryOr{}, err
+			return nil, err
 		}
-		return common.BinaryOr{Left: nil, Operator: &operator, Right: &right}, nil
+		return &common.BinaryOr{Left: nil, Operator: &operator, Right: right}, nil
 	}
 
 	left, err := p.binaryAnd()
 	if err != nil {
-		return common.BinaryOr{}, err
+		return nil, err
 	}
 
 	if p.check(common.OR) {
 		operator := p.advance()
 		right, err := p.binaryOr()
 		if err != nil {
-			return common.BinaryOr{}, err
+			return nil, err
 		}
 
-		return common.BinaryOr{Left: &left, Operator: &operator, Right: &right}, nil
+		return &common.BinaryOr{Left: left, Operator: &operator, Right: right}, nil
 	}
 
-	return common.BinaryOr{Left: &left, Right: nil}, nil
+	return &common.BinaryOr{Left: left, Right: nil}, nil
 }
 
-func (p *Parser) binaryAnd() (common.BinaryAnd, error) {
+func (p *Parser) binaryAnd() (*common.BinaryAnd, error) {
 
 	if p.check(common.AND) {
 		operator := p.advance()
 		right, err := p.binaryAnd()
 		if err != nil {
-			return common.BinaryAnd{}, err
+			return nil, err
 		}
-		return common.BinaryAnd{Left: nil, Operator: &operator, Right: &right}, nil
+		return &common.BinaryAnd{Left: nil, Operator: &operator, Right: right}, nil
 	}
 
 	left, err := p.equality()
 	if err != nil {
-		return common.BinaryAnd{}, err
+		return nil, err
 	}
 
 	if p.check(common.AND) {
 		operator := p.advance()
 		right, err := p.binaryAnd()
 		if err != nil {
-			return common.BinaryAnd{}, err
+			return nil, err
 		}
 
-		return common.BinaryAnd{Left: &left, Operator: &operator, Right: &right}, nil
+		return &common.BinaryAnd{Left: left, Operator: &operator, Right: right}, nil
 	}
 
-	return common.BinaryAnd{Left: &left, Right: nil}, nil
+	return &common.BinaryAnd{Left: left, Operator: nil, Right: nil}, nil
 }
 
-func (p *Parser) equality() (common.Equality, error) {
+func (p *Parser) equality() (*common.Equality, error) {
 
 	if p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
 		operator := p.advance()
 		right, err := p.equality()
 		if err != nil {
-			return common.Equality{}, err
+			return nil, err
 		}
-		return common.Equality{Left: nil, Operator: &operator, Right: &right}, nil
+		return &common.Equality{Left: nil, Operator: &operator, Right: right}, nil
 	}
 
 	left, err := p.comparison()
 	if err != nil {
-		return common.Equality{}, err
+		return nil, err
 	}
 
 	if p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
 		operator := p.advance()
 		right, err := p.equality()
 		if err != nil {
-			return common.Equality{}, err
+			return nil, err
 		}
 
-		return common.Equality{Left: &left, Operator: &operator, Right: &right}, nil
+		return &common.Equality{Left: left, Operator: &operator, Right: right}, nil
 	}
 
-	return common.Equality{Left: &left, Operator: nil, Right: nil}, nil
+	return &common.Equality{Left: left, Operator: nil, Right: nil}, nil
 }
 
-func (p *Parser) comparison() (common.Comparison, error) {
+func (p *Parser) comparison() (*common.Comparison, error) {
 
 	if p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
 		operator := p.advance()
 		right, err := p.comparison()
 		if err != nil {
-			return common.Comparison{}, err
+			return nil, err
 		}
-		return common.Comparison{Left: nil, Operator: &operator, Right: &right}, nil
+		return &common.Comparison{Left: nil, Operator: &operator, Right: right}, nil
 	}
 
 	left, err := p.term()
 	if err != nil {
-		return common.Comparison{}, err
+		return nil, err
 	}
 
 	if p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
 		operator := p.advance()
 		right, err := p.comparison()
 		if err != nil {
-			return common.Comparison{}, err
+			return nil, err
 		}
 
-		return common.Comparison{Left: &left, Operator: &operator, Right: &right}, nil
+		return &common.Comparison{Left: left, Operator: &operator, Right: right}, nil
 	}
 
-	return common.Comparison{Left: &left, Operator: nil, Right: nil}, nil
+	return &common.Comparison{Left: left, Operator: nil, Right: nil}, nil
 }
 
-func (p *Parser) term() (common.Term, error) {
+func (p *Parser) term() (*common.Term, error) {
 
 	if p.check(common.MINUS, common.PLUS) {
 		operator := p.advance()
 		right, err := p.term()
 		if err != nil {
-			return common.Term{}, err
+			return nil, err
 		}
-		return common.Term{Left: nil, Operator: &operator, Right: &right}, nil
+		return &common.Term{Left: nil, Operator: &operator, Right: right}, nil
 	}
 
 	left, err := p.factor()
 	if err != nil {
-		return common.Term{}, err
+		return nil, err
 	}
 
 	if p.check(common.MINUS, common.PLUS) {
 		operator := p.advance()
 		if p.isAtEnd() {
-			return common.Term{Left: &left, Operator: &operator, Right: nil}, nil
+			return &common.Term{Left: left, Operator: &operator, Right: nil}, nil
 		}
 
 		right, err := p.term()
 		if err != nil {
-			return common.Term{}, err
+			return nil, err
 		}
 
-		return common.Term{Left: &left, Operator: &operator, Right: &right}, nil
+		return &common.Term{Left: left, Operator: &operator, Right: right}, nil
 	}
-	return common.Term{Left: &left, Operator: nil, Right: nil}, nil
+	return &common.Term{Left: left, Operator: nil, Right: nil}, nil
 }
 
-func (p *Parser) factor() (common.Factor, error) {
+func (p *Parser) factor() (*common.Factor, error) {
 
 	if p.check(common.SLASH, common.ASTERISK) {
 		operator := p.advance()
 		right, err := p.factor()
 		if err != nil {
-			return common.Factor{}, err
+			return nil, err
 		}
-		return common.Factor{Left: nil, Operator: &operator, Right: &right}, nil
+		return &common.Factor{Left: nil, Operator: &operator, Right: right}, nil
 	}
 
 	left, err := p.unary()
 	if err != nil {
-		return common.Factor{}, err
+		return nil, err
 	}
 
 	if p.check(common.SLASH, common.ASTERISK) {
 		operator := p.advance()
 		if p.isAtEnd() {
-			return common.Factor{Left: left, Operator: &operator, Right: nil}, nil
+			return &common.Factor{Left: left, Operator: &operator, Right: nil}, nil
 		}
 		right, err := p.factor()
 		if err != nil {
-			return common.Factor{}, err
+			return nil, err
 		}
 
-		return common.Factor{Left: left, Operator: &operator, Right: &right}, nil
+		return &common.Factor{Left: left, Operator: &operator, Right: right}, nil
 	}
 
-	return common.Factor{Left: left, Operator: nil, Right: nil}, nil
+	return &common.Factor{Left: left, Operator: nil, Right: nil}, nil
 }
 
 func (p *Parser) unary() (common.Unary, error) {
 	if p.check(common.BANG, common.MINUS) {
 		operator := p.advance()
 		if p.isAtEnd() {
-			return common.UnaryWithOperator{Operator: &operator, Right: nil}, nil
+			return &common.UnaryWithOperator{Operator: &operator, Right: nil}, nil
 		}
 		right, err := p.unary()
 		if err != nil {
-			return common.UnaryWithOperator{}, err
+			return &common.UnaryWithOperator{}, err
 		}
-		return common.UnaryWithOperator{Operator: &operator, Right: &right}, nil
+		return &common.UnaryWithOperator{Operator: &operator, Right: right}, nil
 	}
 	return p.primary()
 }
-
-// var = 3
-// ;
 
 func (p *Parser) primary() (common.Unary, error) {
 
@@ -631,12 +628,12 @@ func (p *Parser) primary() (common.Unary, error) {
 		if p.previous().Typ == common.OPEN_PARENTHESIS {
 			//return common.Primary{Value: common.GroupingExpression{hasOpen: true, hasClose: false}}, nil
 		}
-		return common.Primary{}, nil
+		return &common.Primary{}, nil
 	}
 
 	if p.check(common.FALSE, common.TRUE, common.NONE, common.NUMBER, common.LITERAL) {
 		token := p.advance()
-		return common.Primary{Value: token}, nil
+		return &common.Primary{Value: token}, nil
 	}
 
 	if p.match(common.OPEN_PARENTHESIS) {
@@ -647,7 +644,7 @@ func (p *Parser) primary() (common.Unary, error) {
 		if !p.match(common.CLOSE_PARENTHESIS) {
 			return nil, fmt.Errorf("expected ')' after expression")
 		}
-		return common.Primary{Value: common.GroupingExpression{Expression: &expr}}, nil
+		return &common.Primary{Value: common.GroupingExpression{Expression: &expr}}, nil
 	}
 
 	if p.check(common.IDENTIFIER) {
@@ -673,9 +670,9 @@ func (p *Parser) primary() (common.Unary, error) {
 				}
 			}
 
-			return common.Primary{Value: common.Call{Callee: &identifier.Value, Arguments: args}}, nil
+			return &common.Primary{Value: common.Call{Callee: &identifier.Value, Arguments: args}}, nil
 		} else {
-			return common.Primary{Value: identifier}, nil
+			return &common.Primary{Value: identifier}, nil
 		}
 	}
 

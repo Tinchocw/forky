@@ -219,10 +219,10 @@ func resolveFactor(factor common.Factor, env *Env) (Value, error) {
 
 func resolveUnary(unary common.Unary, env *Env) (Value, error) {
 	switch u := unary.(type) {
-	case common.Primary:
-		return resolvePrimary(u, env)
-	case common.UnaryWithOperator:
-		right, err := resolveUnary(*u.Right, env)
+	case *common.Primary:
+		return resolvePrimary(*u, env)
+	case *common.UnaryWithOperator:
+		right, err := resolveUnary(u.Right, env)
 		if err != nil {
 			return Value{}, err
 		}

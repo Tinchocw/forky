@@ -64,6 +64,21 @@ func friendlyOperatorName(token *Token, isUnary bool) string {
 	}
 }
 
+type MergableNode interface {
+	IsComplete() bool
+	IsLeftComplete() bool
+	IsRightComplete() bool
+	IsOperatorComplete() bool
+
+	GetLeft() MergableNode
+	GetRight() MergableNode
+	GetOperator() *Token
+
+	SetLeft(n MergableNode)
+	SetRight(n MergableNode)
+	SetOperator(t *Token)
+}
+
 type Expression struct {
 	Root *BinaryOr
 }
@@ -115,11 +130,53 @@ func (bo BinaryOr) IsLeftComplete() bool {
 }
 
 func (bo BinaryOr) IsRightComplete() bool {
-	return bo.Right != nil && bo.Right.IsComplete()
+	return bo.Right != nil
 }
 
 func (bo BinaryOr) IsOperatorComplete() bool {
 	return bo.Operator != nil
+}
+
+func (bo *BinaryOr) GetLeft() MergableNode {
+	if bo == nil {
+		return nil
+	}
+	return bo.Left
+}
+
+func (bo *BinaryOr) GetRight() MergableNode {
+	if bo == nil {
+		return nil
+	}
+	return bo.Right
+}
+
+func (bo *BinaryOr) GetOperator() *Token {
+	if bo == nil {
+		return nil
+	}
+	return bo.Operator
+}
+
+func (bo *BinaryOr) SetLeft(val MergableNode) {
+	if bo == nil {
+		return
+	}
+	bo.Left = val.(*BinaryAnd)
+}
+
+func (bo *BinaryOr) SetRight(val MergableNode) {
+	if bo == nil {
+		return
+	}
+	bo.Right = val.(*BinaryOr)
+}
+
+func (bo *BinaryOr) SetOperator(op *Token) {
+	if bo == nil {
+		return
+	}
+	bo.Operator = op
 }
 
 func (bo *BinaryOr) Print(start string) {
@@ -141,6 +198,64 @@ type BinaryAnd struct {
 	Right    *BinaryAnd
 }
 
+func (ba *BinaryAnd) IsComplete() bool {
+	return ba.IsLeftComplete() && ba.IsOperatorComplete() && ba.IsRightComplete()
+}
+
+func (ba *BinaryAnd) IsLeftComplete() bool {
+	return ba.Left != nil
+}
+
+func (ba *BinaryAnd) IsRightComplete() bool {
+	return ba.Right != nil
+}
+
+func (ba *BinaryAnd) IsOperatorComplete() bool {
+	return ba.Operator != nil
+}
+
+func (ba *BinaryAnd) GetLeft() MergableNode {
+	if ba == nil || ba.Left == nil {
+		return nil
+	}
+	return ba.Left
+}
+
+func (ba *BinaryAnd) GetRight() MergableNode {
+	if ba == nil || ba.Right == nil {
+		return nil
+	}
+	return ba.Right
+}
+
+func (ba *BinaryAnd) GetOperator() *Token {
+	if ba == nil {
+		return nil
+	}
+	return ba.Operator
+}
+
+func (ba *BinaryAnd) SetLeft(n MergableNode) {
+	if ba == nil {
+		return
+	}
+	ba.Left = n.(*Equality)
+}
+
+func (ba *BinaryAnd) SetRight(n MergableNode) {
+	if ba == nil {
+		return
+	}
+	ba.Right = n.(*BinaryAnd)
+}
+
+func (ba *BinaryAnd) SetOperator(t *Token) {
+	if ba == nil {
+		return
+	}
+	ba.Operator = t
+}
+
 func (ba *BinaryAnd) Print(start string) {
 	if ba.skipPrinting() {
 		ba.Left.Print(start)
@@ -154,29 +269,68 @@ func (ba *BinaryAnd) Print(start string) {
 	ba.Right.Print(start + string(LAST_CONNECTOR))
 }
 
-func (ba BinaryAnd) IsComplete() bool {
-	return ba.IsLeftComplete() && ba.IsOperatorComplete() && ba.IsRightComplete()
-}
-
-func (ba BinaryAnd) IsEmpty() bool {
-	return !ba.IsRightComplete() && !ba.IsOperatorComplete()
-}
-func (ba BinaryAnd) IsLeftComplete() bool {
-	return ba.Left != nil
-}
-
-func (ba BinaryAnd) IsRightComplete() bool {
-	return ba.Right != nil
-}
-
-func (ba BinaryAnd) IsOperatorComplete() bool {
-	return ba.Operator != nil
-}
-
 type Equality struct {
 	Left     *Comparison
 	Operator *Token
 	Right    *Equality
+}
+
+func (eq *Equality) IsComplete() bool {
+	return eq.IsLeftComplete() && eq.IsOperatorComplete() && eq.IsRightComplete()
+}
+
+func (eq *Equality) IsLeftComplete() bool {
+	return eq.Left != nil
+}
+
+func (eq *Equality) IsRightComplete() bool {
+	return eq.Right != nil
+}
+
+func (eq *Equality) IsOperatorComplete() bool {
+	return eq.Operator != nil
+}
+
+func (eq *Equality) GetLeft() MergableNode {
+	if eq == nil || eq.Left == nil {
+		return nil
+	}
+	return eq.Left
+}
+
+func (eq *Equality) GetRight() MergableNode {
+	if eq == nil || eq.Right == nil {
+		return nil
+	}
+	return eq.Right
+}
+
+func (eq *Equality) GetOperator() *Token {
+	if eq == nil {
+		return nil
+	}
+	return eq.Operator
+}
+
+func (eq *Equality) SetLeft(n MergableNode) {
+	if eq == nil {
+		return
+	}
+	eq.Left = n.(*Comparison)
+}
+
+func (eq *Equality) SetRight(n MergableNode) {
+	if eq == nil {
+		return
+	}
+	eq.Right = n.(*Equality)
+}
+
+func (eq *Equality) SetOperator(t *Token) {
+	if eq == nil {
+		return
+	}
+	eq.Operator = t
 }
 
 func (eq *Equality) Print(start string) {
@@ -192,30 +346,68 @@ func (eq *Equality) Print(start string) {
 	eq.Right.Print(start + string(LAST_CONNECTOR))
 }
 
-func (eq Equality) IsComplete() bool {
-	return eq.IsLeftComplete() && eq.IsOperatorComplete() && eq.IsRightComplete()
-}
-
-func (eq Equality) IsEmpty() bool {
-	return !eq.IsLeftComplete() && !eq.IsOperatorComplete() && !eq.IsRightComplete()
-}
-
-func (eq Equality) IsLeftComplete() bool {
-	return eq.Left != nil
-}
-
-func (eq Equality) IsRightComplete() bool {
-	return eq.Right != nil
-}
-
-func (eq Equality) IsOperatorComplete() bool {
-	return eq.Operator != nil
-}
-
 type Comparison struct {
 	Left     *Term
 	Operator *Token
 	Right    *Comparison
+}
+
+func (c *Comparison) IsComplete() bool {
+	return c.IsLeftComplete() && c.IsOperatorComplete() && c.IsRightComplete()
+}
+
+func (c *Comparison) IsLeftComplete() bool {
+	return c.Left != nil
+}
+
+func (c *Comparison) IsRightComplete() bool {
+	return c.Right != nil
+}
+
+func (c *Comparison) IsOperatorComplete() bool {
+	return c.Operator != nil
+}
+
+func (c *Comparison) GetLeft() MergableNode {
+	if c == nil || c.Left == nil {
+		return nil
+	}
+	return c.Left
+}
+
+func (c *Comparison) GetRight() MergableNode {
+	if c == nil || c.Right == nil {
+		return nil
+	}
+	return c.Right
+}
+
+func (c *Comparison) GetOperator() *Token {
+	if c == nil {
+		return nil
+	}
+	return c.Operator
+}
+
+func (c *Comparison) SetLeft(n MergableNode) {
+	if c == nil {
+		return
+	}
+	c.Left = n.(*Term)
+}
+
+func (c *Comparison) SetRight(n MergableNode) {
+	if c == nil {
+		return
+	}
+	c.Right = n.(*Comparison)
+}
+
+func (c *Comparison) SetOperator(t *Token) {
+	if c == nil {
+		return
+	}
+	c.Operator = t
 }
 
 func (c *Comparison) Print(start string) {
@@ -231,30 +423,68 @@ func (c *Comparison) Print(start string) {
 	c.Right.Print(start + string(LAST_CONNECTOR))
 }
 
-func (eq Comparison) IsComplete() bool {
-	return eq.Left != nil && eq.Operator != nil && eq.Right != nil
-}
-
-func (eq Comparison) IsEmpty() bool {
-	return eq.Left == nil && eq.Operator == nil && eq.Right == nil
-}
-
-func (eq Comparison) IsLeftComplete() bool {
-	return eq.Left != nil
-}
-
-func (eq Comparison) IsRightComplete() bool {
-	return eq.Right != nil && eq.Right.IsComplete()
-}
-
-func (eq Comparison) IsOperatorComplete() bool {
-	return eq.Operator != nil
-}
-
 type Term struct {
 	Left     *Factor
 	Operator *Token
 	Right    *Term
+}
+
+func (t *Term) IsComplete() bool {
+	return t.IsLeftComplete() && t.IsOperatorComplete() && t.IsRightComplete()
+}
+
+func (t *Term) IsLeftComplete() bool {
+	return t.Left != nil
+}
+
+func (t *Term) IsRightComplete() bool {
+	return t.Right != nil
+}
+
+func (t *Term) IsOperatorComplete() bool {
+	return t.Operator != nil
+}
+
+func (t *Term) GetLeft() MergableNode {
+	if t == nil || t.Left == nil {
+		return nil
+	}
+	return t.Left
+}
+
+func (t *Term) GetRight() MergableNode {
+	if t == nil || t.Right == nil {
+		return nil
+	}
+	return t.Right
+}
+
+func (t *Term) GetOperator() *Token {
+	if t == nil {
+		return nil
+	}
+	return t.Operator
+}
+
+func (t *Term) SetLeft(n MergableNode) {
+	if t == nil {
+		return
+	}
+	t.Left = n.(*Factor)
+}
+
+func (t *Term) SetRight(n MergableNode) {
+	if t == nil {
+		return
+	}
+	t.Right = n.(*Term)
+}
+
+func (t *Term) SetOperator(op *Token) {
+	if t == nil {
+		return
+	}
+	t.Operator = op
 }
 
 func (t *Term) Print(start string) {
@@ -271,30 +501,73 @@ func (t *Term) Print(start string) {
 	t.Right.Print(start + string(LAST_CONNECTOR))
 }
 
-func (eq Term) IsComplete() bool {
-	return eq.Left != nil && eq.Operator != nil && eq.Right != nil
-}
-
-func (eq Term) IsEmpty() bool {
-	return eq.Left == nil && eq.Operator == nil && eq.Right == nil
-}
-
-func (eq Term) IsLeftComplete() bool {
-	return eq.Left != nil
-}
-
-func (eq Term) IsRightComplete() bool {
-	return eq.Right != nil && eq.Right.IsComplete()
-}
-
-func (eq Term) IsOperatorComplete() bool {
-	return eq.Operator != nil
-}
-
 type Factor struct {
 	Left     Unary
 	Operator *Token
 	Right    *Factor
+}
+
+func (f *Factor) IsComplete() bool {
+	return f.IsLeftComplete() && f.IsOperatorComplete() && f.IsRightComplete()
+}
+
+func (f *Factor) IsLeftComplete() bool {
+	return f.Left != nil
+}
+
+func (f *Factor) IsRightComplete() bool {
+	return f.Right != nil
+}
+
+func (f *Factor) IsOperatorComplete() bool {
+	return f.Operator != nil
+}
+
+func (f *Factor) GetLeft() MergableNode {
+	if f == nil || f.Left == nil {
+		return nil
+	}
+	if node, ok := f.Left.(MergableNode); ok {
+		return node
+	}
+	return nil
+}
+
+func (f *Factor) GetRight() MergableNode {
+	if f == nil || f.Right == nil {
+		return nil
+	}
+	return f.Right
+}
+
+func (f *Factor) GetOperator() *Token {
+	if f == nil {
+		return nil
+	}
+	return f.Operator
+}
+
+func (f *Factor) SetLeft(n MergableNode) {
+	if f == nil {
+		return
+	}
+	if unary, ok := n.(Unary); ok {
+		f.Left = unary
+	}
+}
+
+func (f *Factor) SetRight(n MergableNode) {
+	if f == nil {
+		return
+	}
+	f.Right = n.(*Factor)
+}
+
+func (f *Factor) SetOperator(op *Token) {
+	if f == nil {
+		return
+	}
+	f.Operator = op
 }
 
 func (f *Factor) Print(start string) {
@@ -311,73 +584,119 @@ func (f *Factor) Print(start string) {
 	f.Right.Print(start + string(LAST_CONNECTOR))
 }
 
-func (eq Factor) IsComplete() bool {
-	return eq.Left != nil && eq.Operator != nil && eq.Right != nil
-}
-
-func (eq Factor) IsEmpty() bool {
-	return eq.Left == nil && eq.Operator == nil && eq.Right == nil
-}
-
-func (eq Factor) IsLeftComplete() bool {
-	return eq.Left != nil
-}
-
-func (eq Factor) IsRightComplete() bool {
-	return eq.Right != nil && eq.Right.IsComplete()
-}
-
-func (eq Factor) IsOperatorComplete() bool {
-	return eq.Operator != nil
-}
-
 type Unary interface {
+	MergableNode
 	Print(start string)
-	IsComplete() bool
-	IsEmpty() bool
-	IsRightComplete() bool
 }
 
 type UnaryWithOperator struct {
 	Operator *Token
-	Right    *Unary
+	Right    Unary
 }
 
 func (uwo UnaryWithOperator) Print(start string) {
 	nodeName := fmt.Sprintf("Unary (%s)", friendlyOperatorName(uwo.Operator, true))
 	fmt.Printf("%s%s\n", start, Colorize(nodeName, COLOR_MAGENTA))
 	start = advanceSuffix(start)
-	(*uwo.Right).Print(start + string(LAST_CONNECTOR))
+	uwo.Right.Print(start + string(LAST_CONNECTOR))
 }
 
-func (uwo UnaryWithOperator) IsComplete() bool {
+func (uwo *UnaryWithOperator) IsComplete() bool {
 	return uwo.Operator != nil && uwo.Right != nil
 }
-func (uwo UnaryWithOperator) IsEmpty() bool {
+func (uwo *UnaryWithOperator) IsEmpty() bool {
 	return uwo.Operator == nil && uwo.Right == nil
 }
-func (uwo UnaryWithOperator) IsRightComplete() bool {
+func (uwo *UnaryWithOperator) IsRightComplete() bool {
 	return uwo.Right != nil
+}
+func (uwo *UnaryWithOperator) IsLeftComplete() bool {
+	return false
+}
+
+func (uwo *UnaryWithOperator) IsOperatorComplete() bool {
+	return uwo.Operator != nil
+}
+
+func (uwo *UnaryWithOperator) GetLeft() MergableNode {
+	return nil
+}
+
+func (uwo *UnaryWithOperator) GetRight() MergableNode {
+	if uwo == nil || uwo.Right == nil {
+		return nil
+	}
+	return uwo.Right
+}
+
+func (uwo *UnaryWithOperator) GetOperator() *Token {
+	return uwo.Operator
+}
+
+func (uwo *UnaryWithOperator) SetLeft(n MergableNode) {
+	// UnaryWithOperator does not have a left node
+}
+
+func (uwo *UnaryWithOperator) SetRight(n MergableNode) {
+	if unary, ok := n.(Unary); ok {
+		uwo.Right = unary
+	}
+}
+
+func (uwo *UnaryWithOperator) SetOperator(t *Token) {
+	uwo.Operator = t
 }
 
 type Primary struct {
 	Value PrimaryValue
 }
 
-func (p Primary) Print(start string) {
+func (p *Primary) Print(start string) {
 	p.Value.Print(start)
 }
 
-func (ip Primary) IsEmpty() bool {
+func (ip *Primary) IsEmpty() bool {
 	return ip.Value == nil
 }
 
-func (ip Primary) IsComplete() bool {
+func (ip *Primary) IsComplete() bool {
 	return ip.Value != nil
 }
 
-func (ip Primary) IsRightComplete() bool {
+func (ip *Primary) IsRightComplete() bool {
 	return ip.Value != nil
+}
+
+func (ip *Primary) IsLeftComplete() bool {
+	return false
+}
+
+func (ip *Primary) IsOperatorComplete() bool {
+	return false
+}
+
+func (ip *Primary) GetLeft() MergableNode {
+	return nil
+}
+
+func (ip *Primary) GetRight() MergableNode {
+	return nil
+}
+
+func (ip *Primary) GetOperator() *Token {
+	return nil
+}
+
+func (ip *Primary) SetLeft(n MergableNode) {
+	// Primary does not have a left node
+}
+
+func (ip *Primary) SetRight(n MergableNode) {
+	// Primary does not have a right node
+}
+
+func (ip *Primary) SetOperator(t *Token) {
+	// Primary does not have an operator
 }
 
 type PrimaryValue interface {
