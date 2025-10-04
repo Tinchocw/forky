@@ -44,7 +44,19 @@ func (current *segment) lastStatement() common.Statement {
 }
 
 func (current *segment) mergeExpressions(leftAst, rightAst *common.Expression) error {
-	return current.merge(leftAst.Root, rightAst.Root)
+	leftDepth := leftAst.ExpresionDepth(true)
+	rightDepth := rightAst.ExpresionDepth(false)
+
+	if leftDepth > rightDepth {
+		subExpr := leftAst.GetSubExpression(leftDepth-rightDepth, true)
+		return current.merge(subExpr, rightAst)
+	} else if rightDepth > leftDepth {
+		subExpr := rightAst.GetSubExpression(rightDepth-leftDepth, false)
+		return current.merge(leftAst, subExpr)
+	} else {
+		return current.merge(leftAst.Root, rightAst.Root)
+	}
+
 }
 
 // 1. izquierda

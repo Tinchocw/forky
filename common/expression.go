@@ -26,6 +26,13 @@ import (
 	GroupingExpression -> '(' Expression ')'
 */
 
+type Direction int
+
+const (
+	Left Direction = iota + 1
+	Right
+)
+
 func friendlyOperatorName(token *Token, isUnary bool) string {
 	if token == nil {
 		return ""
@@ -76,6 +83,9 @@ type MergableNode interface {
 	SetLeft(n MergableNode)
 	SetRight(n MergableNode)
 	SetOperator(t *Token)
+
+	ExpresionDepth(direction Direction) int
+	GetSubExpression(level int, direction Direction) MergableNode
 }
 
 type Expression struct {
@@ -188,6 +198,42 @@ func (bo *BinaryOr) Print(start string) {
 	bo.Right.Print(start + string(LAST_CONNECTOR))
 }
 
+func (bo *BinaryOr) ExpresionDepth(direction Direction) int {
+	if direction == Right {
+		if bo.HasRight() {
+			return bo.Right.ExpresionDepth(direction)
+		}
+
+		if bo.HasOperator() {
+			return 0
+		}
+	}
+
+	if !bo.HasLeft() {
+		return 0
+	}
+
+	return bo.Left.ExpresionDepth(direction)
+}
+
+func (bo *BinaryOr) GetSubExpression(level int, direction Direction) MergableNode {
+	if direction == Right {
+		if bo.HasRight() {
+			return bo.Right.GetSubExpression(level, direction)
+		}
+
+		if bo.HasOperator() {
+			panic("GetSubExpression: no sub-expression found at the specified level")
+		}
+	}
+
+	if !bo.HasLeft() {
+		panic("GetSubExpression: no sub-expression found at the specified level")
+	}
+
+	return bo.Left.GetSubExpression(level, direction)
+}
+
 type BinaryAnd struct {
 	Left     *Equality
 	Operator *Token
@@ -265,6 +311,42 @@ func (ba *BinaryAnd) Print(start string) {
 	start = advanceSuffix(start)
 	ba.Left.Print(start + string(BRANCH_CONNECTOR))
 	ba.Right.Print(start + string(LAST_CONNECTOR))
+}
+
+func (ba *BinaryAnd) ExpresionDepth(direction Direction) int {
+	if direction == Right {
+		if ba.HasRight() {
+			return ba.Right.ExpresionDepth(direction)
+		}
+
+		if ba.HasOperator() {
+			return 0
+		}
+	}
+
+	if !ba.HasLeft() {
+		return 0
+	}
+
+	return ba.Left.ExpresionDepth(direction)
+}
+
+func (ba *BinaryAnd) GetSubExpression(level int, direction Direction) MergableNode {
+	if direction == Right {
+		if ba.HasRight() {
+			return ba.Right.GetSubExpression(level, direction)
+		}
+
+		if ba.HasOperator() {
+			panic("GetSubExpression: no sub-expression found at the specified level")
+		}
+	}
+
+	if !ba.HasLeft() {
+		panic("GetSubExpression: no sub-expression found at the specified level")
+	}
+
+	return ba.Left.GetSubExpression(level, direction)
 }
 
 type Equality struct {
@@ -346,6 +428,42 @@ func (eq *Equality) Print(start string) {
 	eq.Right.Print(start + string(LAST_CONNECTOR))
 }
 
+func (eq *Equality) ExpresionDepth(direction Direction) int {
+	if direction == Right {
+		if eq.HasRight() {
+			return eq.Right.ExpresionDepth(direction)
+		}
+
+		if eq.HasOperator() {
+			return 0
+		}
+	}
+
+	if !eq.HasLeft() {
+		return 0
+	}
+
+	return eq.Left.ExpresionDepth(direction)
+}
+
+func (eq *Equality) GetSubExpression(level int, direction Direction) MergableNode {
+	if direction == Right {
+		if eq.HasRight() {
+			return eq.Right.GetSubExpression(level, direction)
+		}
+
+		if eq.HasOperator() {
+			panic("GetSubExpression: no sub-expression found at the specified level")
+		}
+	}
+
+	if !eq.HasLeft() {
+		panic("GetSubExpression: no sub-expression found at the specified level")
+	}
+
+	return eq.Left.GetSubExpression(level, direction)
+}
+
 type Comparison struct {
 	Left     *Term
 	Operator *Token
@@ -423,6 +541,42 @@ func (c *Comparison) Print(start string) {
 	start = advanceSuffix(start)
 	c.Left.Print(start + string(BRANCH_CONNECTOR))
 	c.Right.Print(start + string(LAST_CONNECTOR))
+}
+
+func (c *Comparison) ExpresionDepth(direction Direction) int {
+	if direction == Right {
+		if c.HasRight() {
+			return c.Right.ExpresionDepth(direction)
+		}
+
+		if c.HasOperator() {
+			return 0
+		}
+	}
+
+	if !c.HasLeft() {
+		return 0
+	}
+
+	return c.Left.ExpresionDepth(direction)
+}
+
+func (c *Comparison) GetSubExpression(level int, direction Direction) MergableNode {
+	if direction == Right {
+		if c.HasRight() {
+			return c.Right.GetSubExpression(level, direction)
+		}
+
+		if c.HasOperator() {
+			panic("GetSubExpression: no sub-expression found at the specified level")
+		}
+	}
+
+	if !c.HasLeft() {
+		panic("GetSubExpression: no sub-expression found at the specified level")
+	}
+
+	return c.Left.GetSubExpression(level, direction)
 }
 
 type Term struct {
@@ -503,6 +657,42 @@ func (t *Term) Print(start string) {
 	start = advanceSuffix(start)
 	t.Left.Print(start + string(BRANCH_CONNECTOR))
 	t.Right.Print(start + string(LAST_CONNECTOR))
+}
+
+func (t *Term) ExpresionDepth(direction Direction) int {
+	if direction == Right {
+		if t.HasRight() {
+			return t.Right.ExpresionDepth(direction)
+		}
+
+		if t.HasOperator() {
+			return 0
+		}
+	}
+
+	if !t.HasLeft() {
+		return 0
+	}
+
+	return t.Left.ExpresionDepth(direction)
+}
+
+func (t *Term) GetSubExpression(level int, direction Direction) MergableNode {
+	if direction == Right {
+		if t.HasRight() {
+			return t.Right.GetSubExpression(level, direction)
+		}
+
+		if t.HasOperator() {
+			panic("GetSubExpression: no sub-expression found at the specified level")
+		}
+	}
+
+	if !t.HasLeft() {
+		panic("GetSubExpression: no sub-expression found at the specified level")
+	}
+
+	return t.Left.GetSubExpression(level, direction)
 }
 
 type Factor struct {
@@ -589,6 +779,42 @@ func (f *Factor) Print(start string) {
 	f.Right.Print(start + string(LAST_CONNECTOR))
 }
 
+func (f *Factor) ExpresionDepth(direction Direction) int {
+	if direction == Right {
+		if f.HasRight() {
+			return f.Right.ExpresionDepth(direction)
+		}
+
+		if f.HasOperator() {
+			return 0
+		}
+	}
+
+	if !f.HasLeft() {
+		return 0
+	}
+
+	return f.Left.ExpresionDepth(direction)
+}
+
+func (f *Factor) GetSubExpression(level int, direction Direction) MergableNode {
+	if direction == Right {
+		if f.HasRight() {
+			return f.Right.GetSubExpression(level, direction)
+		}
+
+		if f.HasOperator() {
+			panic("GetSubExpression: no sub-expression found at the specified level")
+		}
+	}
+
+	if !f.HasLeft() {
+		panic("GetSubExpression: no sub-expression found at the specified level")
+	}
+
+	return f.Left.GetSubExpression(level, direction)
+}
+
 type Unary interface {
 	MergableNode
 	Print(start string)
@@ -658,6 +884,42 @@ func (uwo *UnaryWithOperator) SetOperator(t *Token) {
 	uwo.Operator = t
 }
 
+func (uwo *UnaryWithOperator) ExpresionDepth(direction Direction) int {
+	if direction == Right {
+		if uwo.HasRight() {
+			return uwo.Right.ExpresionDepth(direction)
+		}
+
+		if uwo.HasOperator() {
+			return 0
+		}
+	}
+
+	if !uwo.HasLeft() {
+		return 0
+	}
+
+	return uwo.GetLeft().ExpresionDepth(direction)
+}
+
+func (uwo *UnaryWithOperator) GetSubExpression(level int, direction Direction) MergableNode {
+	if direction == Right {
+		if uwo.HasRight() {
+			return uwo.Right.GetSubExpression(level, direction)
+		}
+
+		if uwo.HasOperator() {
+			panic("GetSubExpression: no sub-expression found at the specified level")
+		}
+	}
+
+	if !uwo.HasLeft() {
+		panic("GetSubExpression: no sub-expression found at the specified level")
+	}
+
+	return uwo.GetLeft().GetSubExpression(level, direction)
+}
+
 type Primary struct {
 	Value PrimaryValue
 }
@@ -687,27 +949,43 @@ func (ip *Primary) HasOperator() bool {
 }
 
 func (ip *Primary) GetLeft() MergableNode {
+	// to be implemented
 	panic("GetLeft: Primary does not have a left node")
 }
 
 func (ip *Primary) GetRight() MergableNode {
+	// to be implemented
 	panic("GetRight: Primary does not have a right node")
 }
 
 func (ip *Primary) GetOperator() *Token {
+	// to be implemented
 	panic("GetOperator: Primary does not have an operator")
 }
 
 func (ip *Primary) SetLeft(n MergableNode) {
+	// to be implemented
 	panic("SetLeft: Primary does not have a left node")
 }
 
 func (ip *Primary) SetRight(n MergableNode) {
+	// to be implemented
 	panic("SetRight: Primary does not have a right node")
 }
 
 func (ip *Primary) SetOperator(t *Token) {
+	// to be implemented
 	panic("SetOperator: Primary does not have an operator")
+}
+
+func (ip *Primary) ExpresionDepth(direction Direction) int {
+	// to be implemented
+	return 0
+}
+
+func (ip *Primary) GetSubExpression(level int, direction Direction) MergableNode {
+	// to be implemented
+	return nil
 }
 
 type PrimaryValue interface {
