@@ -83,6 +83,40 @@ func (t Token) Print(start string) {
 	fmt.Printf("%s%s\n", start, t.ColorString())
 }
 
+func (t *Token) FriendlyOperatorName() string {
+	if t == nil {
+		return ""
+	}
+	switch t.Typ {
+	case EQUAL_EQUAL:
+		return "EQUALS"
+	case BANG_EQUAL:
+		return "NOT_EQUALS"
+	case LESS:
+		return "LESS_THAN"
+	case GREATER:
+		return "GREATER_THAN"
+	case LESS_EQUAL:
+		return "LESS_OR_EQUAL"
+	case GREATER_EQUAL:
+		return "GREATER_OR_EQUAL"
+	case PLUS:
+		return "PLUS"
+	case MINUS:
+		return "MINUS"
+	case ASTERISK:
+		return "MULTIPLY"
+	case SLASH:
+		return "DIVIDE"
+	case TILDE:
+		return "NEGATIVE"
+	case BANG:
+		return "NOT"
+	default:
+		return t.String()
+	}
+}
+
 type TokenType int
 
 var tokenTypeNames = [...]string{

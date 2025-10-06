@@ -2,10 +2,12 @@ package parser
 
 import (
 	"github.com/Tinchocw/Interprete-concurrente/common"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement"
 )
 
 type ForkyParser struct {
 	numWorkers int
+	debug      bool
 }
 
 func ParallelParse(tokens []common.Token, numWorkers int, debug bool) (segment, error) {
@@ -77,6 +79,9 @@ func ParallelParse(tokens []common.Token, numWorkers int, debug bool) (segment, 
 		println("[DEBUG] Merging segments: left tokens =", len(leftRes.sg.Tokens), "right tokens =", len(rightSegment.Tokens))
 	}
 
+	// statement.PrintProgram(leftRes.sg.Program)
+	// statement.PrintProgram(rightSegment.Program)
+
 	err := leftRes.sg.Merge(rightSegment)
 	if err != nil {
 		return segment{}, err
@@ -90,15 +95,14 @@ func ParallelParse(tokens []common.Token, numWorkers int, debug bool) (segment, 
 
 }
 
-func CreateForkyParser(numWorkers int) *ForkyParser {
-	return &ForkyParser{numWorkers: numWorkers}
+func CreateForkyParser(numWorkers int, debug bool) *ForkyParser {
+	return &ForkyParser{numWorkers: numWorkers, debug: debug}
 }
 
-func (fp *ForkyParser) Parse(tokens []common.Token, debug bool) (common.Program, error) {
-
-	sg, err := ParallelParse(tokens, fp.numWorkers, debug)
+func (fp *ForkyParser) Parse(tokens []common.Token) (statement.Program, error) {
+	sg, err := ParallelParse(tokens, fp.numWorkers, fp.debug)
 	if err != nil {
-		return common.Program{}, err
+		return statement.Program{}, err
 	}
 
 	return sg.Program, nil

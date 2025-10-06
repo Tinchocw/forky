@@ -1,8 +1,6 @@
 package interpreter
 
-import (
-	"github.com/Tinchocw/Interprete-concurrente/common"
-)
+import "github.com/Tinchocw/Interprete-concurrente/common/statement"
 
 type Interpreter struct {
 	globalEnv *Env
@@ -14,7 +12,7 @@ func NewInterpreter() Interpreter {
 	}
 }
 
-func (i *Interpreter) Execute(program common.Program) (string, error) {
+func (i *Interpreter) Execute(program statement.Program) (string, error) {
 	value, err := executeStatements(program.Statements, i.globalEnv)
 	return value.Content(), err
 }
