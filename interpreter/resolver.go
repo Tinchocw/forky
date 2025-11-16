@@ -5,14 +5,16 @@ import (
 	"strconv"
 
 	"github.com/Tinchocw/Interprete-concurrente/common"
+	"github.com/Tinchocw/Interprete-concurrente/common/expression"
+	primaryExpression "github.com/Tinchocw/Interprete-concurrente/common/expression/primary"
 )
 
-func resolveExpression(expr common.Expression, env *Env) (Value, error) {
-	return resolveBinaryOr(expr.Root, env)
+func resolveExpression(expr expression.Expression, env *Env) (Value, error) {
+	return resolveBinaryOr(*expr.Root, env)
 }
 
-func resolveBinaryOr(bor common.BinaryOr, env *Env) (Value, error) {
-	left, err := resolveBinaryAnd(bor.Left, env)
+func resolveBinaryOr(bor expression.BinaryOr, env *Env) (Value, error) {
+	left, err := resolveBinaryAnd(*bor.Left, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -33,8 +35,8 @@ func resolveBinaryOr(bor common.BinaryOr, env *Env) (Value, error) {
 	return right, nil
 }
 
-func resolveBinaryAnd(band common.BinaryAnd, env *Env) (Value, error) {
-	left, err := resolveEquality(band.Left, env)
+func resolveBinaryAnd(band expression.BinaryAnd, env *Env) (Value, error) {
+	left, err := resolveEquality(*band.Left, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -55,8 +57,8 @@ func resolveBinaryAnd(band common.BinaryAnd, env *Env) (Value, error) {
 	return right, nil
 }
 
-func resolveEquality(eq common.Equality, env *Env) (Value, error) {
-	left, err := resolveComparison(eq.Left, env)
+func resolveEquality(eq expression.Equality, env *Env) (Value, error) {
+	left, err := resolveComparison(*eq.Left, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -84,8 +86,8 @@ func resolveEquality(eq common.Equality, env *Env) (Value, error) {
 	}
 }
 
-func resolveComparison(cmp common.Comparison, env *Env) (Value, error) {
-	left, err := resolveTerm(cmp.Left, env)
+func resolveComparison(cmp expression.Comparison, env *Env) (Value, error) {
+	left, err := resolveTerm(*cmp.Left, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -141,8 +143,8 @@ func resolveComparison(cmp common.Comparison, env *Env) (Value, error) {
 	}
 }
 
-func resolveTerm(term common.Term, env *Env) (Value, error) {
-	left, err := resolveFactor(term.Left, env)
+func resolveTerm(term expression.Term, env *Env) (Value, error) {
+	left, err := resolveFactor(*term.Left, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -179,7 +181,7 @@ func resolveTerm(term common.Term, env *Env) (Value, error) {
 	}
 }
 
-func resolveFactor(factor common.Factor, env *Env) (Value, error) {
+func resolveFactor(factor expression.Factor, env *Env) (Value, error) {
 	left, err := resolveUnary(factor.Left, env)
 	if err != nil {
 		return Value{}, err
@@ -217,11 +219,11 @@ func resolveFactor(factor common.Factor, env *Env) (Value, error) {
 	}
 }
 
-func resolveUnary(unary common.Unary, env *Env) (Value, error) {
+func resolveUnary(unary expression.Unary, env *Env) (Value, error) {
 	switch u := unary.(type) {
-	case common.Primary:
-		return resolvePrimary(u, env)
-	case common.UnaryWithOperator:
+	case *primaryExpression.Primary:
+		return resolvePrimary(*u, env)
+	case *expression.UnaryWithOperator:
 		right, err := resolveUnary(u.Right, env)
 		if err != nil {
 			return Value{}, err
@@ -242,18 +244,19 @@ func resolveUnary(unary common.Unary, env *Env) (Value, error) {
 	}
 }
 
-func resolvePrimary(primary common.Primary, env *Env) (Value, error) {
+func resolvePrimary(primary primaryExpression.Primary, env *Env) (Value, error) {
 	switch p := primary.Value.(type) {
-	case common.Token:
-		switch p.Typ {
+	case *primaryExpression.TokenValue:
+		token := p.Token
+		switch token.Typ {
 		case common.NUMBER:
-			num, err := strconv.Atoi(p.Value)
+			num, err := strconv.Atoi(token.Value)
 			if err != nil {
-				return Value{}, fmt.Errorf("invalid number: %s", p.Value)
+				return Value{}, fmt.Errorf("invalid number: %s", token.Value)
 			}
 			return Value{Typ: VAL_INT, Data: num}, nil
 		case common.LITERAL:
-			return Value{Typ: VAL_STRING, Data: p.Value}, nil
+			return Value{Typ: VAL_STRING, Data: token.Value}, nil
 		case common.TRUE:
 			return Value{Typ: VAL_BOOL, Data: true}, nil
 		case common.FALSE:
@@ -261,18 +264,18 @@ func resolvePrimary(primary common.Primary, env *Env) (Value, error) {
 		case common.NONE:
 			return Value{Typ: VAL_NONE, Data: nil}, nil
 		case common.IDENTIFIER:
-			value, found := env.GetVariable(p.Value)
+			value, found := env.GetVariable(token.Value)
 			if !found {
-				return Value{}, fmt.Errorf("undefined variable: %s", p.Value)
+				return Value{}, fmt.Errorf("undefined variable: %s", token.Value)
 			}
 			return value, nil
 		default:
-			return Value{}, fmt.Errorf("unknown literal type: %v", p.Typ)
+			return Value{}, fmt.Errorf("unknown literal type: %v", token.Typ)
 		}
-	case common.Call:
-		function, found := env.GetFunction(p.Callee)
+	case *primaryExpression.Call:
+		function, found := env.GetFunction(*p.Callee)
 		if !found {
-			return Value{}, fmt.Errorf("undefined function: %s", p.Callee)
+			return Value{}, fmt.Errorf("undefined function: %s", *p.Callee)
 		}
 
 		if len(p.Arguments) != len(function.Parameters) {
@@ -281,7 +284,7 @@ func resolvePrimary(primary common.Primary, env *Env) (Value, error) {
 
 		args := make([]Value, 0, len(p.Arguments))
 		for _, argExpr := range p.Arguments {
-			argValue, err := resolveExpression(argExpr, env)
+			argValue, err := resolveExpression(*argExpr, env)
 			if err != nil {
 				return Value{}, err
 			}
@@ -296,8 +299,8 @@ func resolvePrimary(primary common.Primary, env *Env) (Value, error) {
 
 		return value, nil
 
-	case common.GroupingExpression:
-		return resolveExpression(p.Expression, env)
+	case *primaryExpression.GroupingExpression:
+		return resolveExpression(*p.Expression, env)
 	default:
 		return Value{}, fmt.Errorf("unknown primary type")
 	}

@@ -3,15 +3,15 @@ package interpreter
 import (
 	"fmt"
 
-	"github.com/Tinchocw/Interprete-concurrente/common"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement"
 )
 
 type Function struct {
 	Parameters []string
-	Statements []common.Statement
+	Statements []statement.Statement
 }
 
-func NewFunction(params []string, statements []common.Statement) Function {
+func NewFunction(params []string, statements []statement.Statement) Function {
 	return Function{
 		Parameters: params,
 		Statements: statements,

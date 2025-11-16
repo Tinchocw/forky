@@ -4,6 +4,7 @@ import (
 	"io"
 
 	"github.com/Tinchocw/Interprete-concurrente/common"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement"
 	"github.com/Tinchocw/Interprete-concurrente/interpreter"
 	parserPackage "github.com/Tinchocw/Interprete-concurrente/parser"
 	scannerPackage "github.com/Tinchocw/Interprete-concurrente/scanner"
@@ -53,17 +54,19 @@ func (forky *Forky) Run(r io.ReaderAt, size int64) (string, error) {
 
 	if forky.mode == ScanningMode {
 		common.PrintTokens(tokens)
+		return "", nil
 	}
 
-	ps := parserPackage.NewParser(tokens, forky.debug)
-	program, err := ps.Parse()
+	ps := parserPackage.CreateForkyParser(forky.workers, forky.debug)
+	program, err := ps.Parse(tokens)
 	if err != nil {
 		return "", err
 	}
 
 	if forky.mode == ParsingMode {
-		common.PrintProgram(program)
+		statement.PrintProgram(program)
+		return "", nil
 	}
 
-	return forky.interpreter.Excecute(program)
+	return forky.interpreter.Execute(program)
 }

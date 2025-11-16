@@ -3,10 +3,10 @@ package interpreter
 import (
 	"fmt"
 
-	"github.com/Tinchocw/Interprete-concurrente/common"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement"
 )
 
-func executeStatements(statements []common.Statement, env *Env) (Value, error) {
+func executeStatements(statements []statement.Statement, env *Env) (Value, error) {
 	var value Value
 	var err error
 
@@ -22,66 +22,66 @@ func executeStatements(statements []common.Statement, env *Env) (Value, error) {
 	return value, nil
 }
 
-func executeStatement(stmt common.Statement, env *Env) (Value, error) {
+func executeStatement(stmt statement.Statement, env *Env) (Value, error) {
 	switch s := stmt.(type) {
-	case common.BlockStatement:
+	case *statement.BlockStatement:
 		return executeBlockStatement(s, env)
-	case common.VarDeclaration:
+	case *statement.VarDeclaration:
 		return executeVarDeclaration(s, env)
-	case common.Assignment:
+	case *statement.Assignment:
 		return executeAssignment(s, env)
-	case common.PrintStatement:
+	case *statement.PrintStatement:
 		return executePrintStatement(s, env)
-	case common.IfStatement:
+	case *statement.IfStatement:
 		return executeIfStatement(s, env)
-	case common.WhileStatement:
+	case *statement.WhileStatement:
 		return executeWhileStatement(s, env)
-	case common.FunctionDef:
+	case *statement.FunctionDef:
 		return executeFunctionDef(s, env)
-	case common.ExpressionStatement:
+	case *statement.ExpressionStatement:
 		return executeExpressionStatement(s, env)
-	case common.ReturnStatement:
+	case *statement.ReturnStatement:
 		return executeReturnStatement(s, env)
-	case common.BreakStatement:
+	case *statement.BreakStatement:
 		return executeBreakStatement(s, env)
 	default:
 		return Value{}, fmt.Errorf("unknown statement type: %T", stmt)
 	}
 }
 
-func executeBlockStatement(stmt common.BlockStatement, env *Env) (Value, error) {
+func executeBlockStatement(stmt *statement.BlockStatement, env *Env) (Value, error) {
 	newEnv := NewEnv(env)
 	return executeStatements(stmt.Statements, newEnv)
 }
 
-func executeVarDeclaration(stmt common.VarDeclaration, env *Env) (Value, error) {
-	value, err := resolveExpression(stmt.Value, env)
+func executeVarDeclaration(stmt *statement.VarDeclaration, env *Env) (Value, error) {
+	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return Value{}, err
 	}
 
-	if !env.DefineVariable(stmt.Name, value) {
-		return Value{}, fmt.Errorf("variable '%s' already defined in this scope", stmt.Name)
+	if !env.DefineVariable(*stmt.Name, value) {
+		return Value{}, fmt.Errorf("variable '%s' already defined in this scope", *stmt.Name)
 	}
 
 	return Value{}, nil
 }
 
-func executeAssignment(stmt common.Assignment, env *Env) (Value, error) {
-	value, err := resolveExpression(stmt.Value, env)
+func executeAssignment(stmt *statement.Assignment, env *Env) (Value, error) {
+	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return Value{}, err
 	}
 
-	if !env.AssignVariable(stmt.Name, value) {
-		return Value{}, fmt.Errorf("variable '%s' not defined", stmt.Name)
+	if !env.AssignVariable(*stmt.Name, value) {
+		return Value{}, fmt.Errorf("variable '%s' not defined", *stmt.Name)
 	}
 
 	return Value{}, nil
 }
 
-func executePrintStatement(stmt common.PrintStatement, env *Env) (Value, error) {
-	value, err := resolveExpression(stmt.Value, env)
+func executePrintStatement(stmt *statement.PrintStatement, env *Env) (Value, error) {
+	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -90,8 +90,8 @@ func executePrintStatement(stmt common.PrintStatement, env *Env) (Value, error) 
 	return Value{}, nil
 }
 
-func executeIfStatement(stmt common.IfStatement, env *Env) (Value, error) {
-	conditionValue, err := resolveExpression(stmt.Condition, env)
+func executeIfStatement(stmt *statement.IfStatement, env *Env) (Value, error) {
+	conditionValue, err := resolveExpression(*stmt.Condition, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -102,7 +102,7 @@ func executeIfStatement(stmt common.IfStatement, env *Env) (Value, error) {
 
 	elseIf := stmt.ElseIf
 	for elseIf != nil {
-		condValue, err := resolveExpression(elseIf.Condition, env)
+		condValue, err := resolveExpression(*elseIf.Condition, env)
 		if err != nil {
 			return Value{}, err
 		}
@@ -119,9 +119,9 @@ func executeIfStatement(stmt common.IfStatement, env *Env) (Value, error) {
 	return Value{}, nil
 }
 
-func executeWhileStatement(stmt common.WhileStatement, env *Env) (Value, error) {
+func executeWhileStatement(stmt *statement.WhileStatement, env *Env) (Value, error) {
 	for {
-		conditionValue, err := resolveExpression(stmt.Condition, env)
+		conditionValue, err := resolveExpression(*stmt.Condition, env)
 		if err != nil {
 			return Value{}, err
 		}
@@ -143,21 +143,21 @@ func executeWhileStatement(stmt common.WhileStatement, env *Env) (Value, error) 
 	return Value{}, nil
 }
 
-func executeFunctionDef(stmt common.FunctionDef, env *Env) (Value, error) {
+func executeFunctionDef(stmt *statement.FunctionDef, env *Env) (Value, error) {
 	function := NewFunction(stmt.Parameters, stmt.Body.Statements)
-	if !env.DefineFunction(stmt.Name, function) {
-		return Value{}, fmt.Errorf("function '%s' already defined in this scope", stmt.Name)
+	if !env.DefineFunction(*stmt.Name, function) {
+		return Value{}, fmt.Errorf("function '%s' already defined in this scope", *stmt.Name)
 	}
 	return Value{}, nil
 }
 
-func executeExpressionStatement(stmt common.ExpressionStatement, env *Env) (Value, error) {
-	value, err := resolveExpression(stmt.Expression, env)
+func executeExpressionStatement(stmt *statement.ExpressionStatement, env *Env) (Value, error) {
+	value, err := resolveExpression(*stmt.Expression, env)
 	return value, err
 }
 
-func executeReturnStatement(stmt common.ReturnStatement, env *Env) (Value, error) {
-	value, err := resolveExpression(stmt.Value, env)
+func executeReturnStatement(stmt *statement.ReturnStatement, env *Env) (Value, error) {
+	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -165,6 +165,6 @@ func executeReturnStatement(stmt common.ReturnStatement, env *Env) (Value, error
 	return value, NewReturnErr()
 }
 
-func executeBreakStatement(_ common.BreakStatement, _ *Env) (Value, error) {
+func executeBreakStatement(_ *statement.BreakStatement, _ *Env) (Value, error) {
 	return Value{}, NewBreakErr()
 }
