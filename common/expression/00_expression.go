@@ -9,16 +9,18 @@ package expression
 	Term 			->	Factor ( ( '-' | '+' ) Factor )*
 	Factor 			->	Unary ( ( '/' | '*' ) Unary )*
 	Unary 			->	( '!' | '~' ) Unary | ArrAccess
-	ArrAccess		->	Primary ( '[' Expression ']' )*
-	Call 			->	Primary ( '(' Arguments? ')' )*
+	ArrAccess		->	FunctionCall ( '[' Expression ']' )*
+	FunctionCall 	->	Primary ( '(' Arguments? ')' )*
 	Primary 		->	IDENTIFIER 				|
 							NUMBER 				|
 							STRING 				|
 							'true' 				|
 							'false' 			|
 							'None' 				|
+							ArrayLiteral 		|
 							GroupingExpression
 
+	ArrayLiteral 	->	'{' ( Expression ( ',' Expression )* )? '}'
 	GroupingExpression -> '(' Expression ')'
 	Arguments 		->	Expression ( ',' Expression )*
 */

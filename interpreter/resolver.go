@@ -9,18 +9,18 @@ import (
 )
 
 func resolveExpression(expr expression.ExpressionNode, env *Env) (Value, error) {
-	return resolveBinaryOr(*expr.Root, env)
+	return resolveLogicalOr(*expr.Root, env)
 }
 
-func resolveBinaryOr(bor expression.LogicalOrNode, env *Env) (Value, error) {
+func resolveLogicalOr(bor expression.LogicalOrNode, env *Env) (Value, error) {
 	var left Value
 	var err error
 
 	switch bor.Left.(type) {
 	case *expression.LogicalOrNode:
-		left, err = resolveBinaryOr(*bor.Left.(*expression.LogicalOrNode), env)
+		left, err = resolveLogicalOr(*bor.Left.(*expression.LogicalOrNode), env)
 	case *expression.LogicalAndNode:
-		left, err = resolveBinaryAnd(*bor.Left.(*expression.LogicalAndNode), env)
+		left, err = resolveLogicalAnd(*bor.Left.(*expression.LogicalAndNode), env)
 	default:
 		return nil, fmt.Errorf("invalid left operand type for BinaryOr")
 	}
@@ -37,7 +37,7 @@ func resolveBinaryOr(bor expression.LogicalOrNode, env *Env) (Value, error) {
 		return left, nil
 	}
 
-	right, err := resolveBinaryAnd(*bor.Right, env)
+	right, err := resolveLogicalAnd(*bor.Right, env)
 	if err != nil {
 		return nil, err
 	}
@@ -45,13 +45,13 @@ func resolveBinaryOr(bor expression.LogicalOrNode, env *Env) (Value, error) {
 	return right, nil
 }
 
-func resolveBinaryAnd(band expression.LogicalAndNode, env *Env) (Value, error) {
+func resolveLogicalAnd(band expression.LogicalAndNode, env *Env) (Value, error) {
 	var left Value
 	var err error
 
 	switch band.Left.(type) {
 	case *expression.LogicalAndNode:
-		left, err = resolveBinaryAnd(*band.Left.(*expression.LogicalAndNode), env)
+		left, err = resolveLogicalAnd(*band.Left.(*expression.LogicalAndNode), env)
 	case *expression.EqualityNode:
 		left, err = resolveEquality(*band.Left.(*expression.EqualityNode), env)
 	default:

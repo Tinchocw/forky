@@ -2,8 +2,8 @@ package interpreter
 
 type Env struct {
 	variables map[string]Value
-	functions map[string]Function
-	parent    *Env
+	// functions map[string]Function
+	parent *Env
 }
 
 func NewEnv(parent *Env) *Env {

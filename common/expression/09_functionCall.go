@@ -40,5 +40,5 @@ func (fc FunctionCallNode) Print(start string) {
 }
 
 func (fc FunctionCallNode) skipPrinting() bool {
-	return fc.Callee == nil
+	return fc.Arguments == nil
 }

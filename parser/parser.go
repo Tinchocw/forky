@@ -412,15 +412,15 @@ func (p *Parser) varStatement() (*statement.VarDeclaration, error) {
 // EXPRESIONES
 
 func (p *Parser) expression() (*expression.ExpressionNode, error) {
-	root, err := p.binaryOr()
+	root, err := p.logicalOr()
 	if err != nil {
 		return &expression.ExpressionNode{}, err
 	}
 	return &expression.ExpressionNode{Root: root}, nil
 }
 
-func (p *Parser) binaryOr() (*expression.LogicalOrNode, error) {
-	left, err := p.binaryAnd()
+func (p *Parser) logicalOr() (*expression.LogicalOrNode, error) {
+	left, err := p.logicalAnd()
 	if err != nil {
 		return nil, err
 	}
@@ -434,7 +434,7 @@ func (p *Parser) binaryOr() (*expression.LogicalOrNode, error) {
 		}
 
 		operator := p.advance()
-		right, err := p.binaryAnd()
+		right, err := p.logicalAnd()
 		if err != nil {
 			return nil, err
 		}
@@ -447,7 +447,7 @@ func (p *Parser) binaryOr() (*expression.LogicalOrNode, error) {
 	return bor, nil
 }
 
-func (p *Parser) binaryAnd() (*expression.LogicalAndNode, error) {
+func (p *Parser) logicalAnd() (*expression.LogicalAndNode, error) {
 	left, err := p.equality()
 	if err != nil {
 		return nil, err
