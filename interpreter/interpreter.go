@@ -14,5 +14,8 @@ func NewInterpreter() Interpreter {
 
 func (i *Interpreter) Execute(program statement.Program) (string, error) {
 	value, err := executeStatements(program.Statements, i.globalEnv)
+	if value == nil {
+		return "", err
+	}
 	return value.Content(), err
 }

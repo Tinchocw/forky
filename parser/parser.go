@@ -590,30 +590,50 @@ func (p *Parser) factor() (*expression.FactorNode, error) {
 	return f, nil
 }
 
-// TODO: @Tinchocw esto está haciendo que se arme al reves el árbol de expresiones unarias !-3 se transforma en -(!3) en vez de !(-3)
 func (p *Parser) unary() (*expression.UnaryNode, error) {
-	u := &expression.UnaryNode{}
-	first := true
-
-	for p.check(common.BANG, common.TILDE) {
-		if !first {
-			u = &expression.UnaryNode{Right: u}
+	if !p.check(common.BANG, common.TILDE) {
+		// No unary operator, just parse the next level
+		right, err := p.arrayAccess()
+		if err != nil {
+			return nil, err
 		}
-
-		operator := p.advance()
-		u.Operator = &operator
-
-		first = false
+		return &expression.UnaryNode{Right: right}, nil
 	}
 
-	right, err := p.arrayAccess()
+	// Collect all unary operators
+	var operators []common.Token
+	for p.check(common.BANG, common.TILDE) {
+		operators = append(operators, p.advance())
+	}
 
+	// Parse the operand
+	right, err := p.arrayAccess()
 	if err != nil {
 		return nil, err
 	}
-	u.Right = right
 
-	return u, nil
+	// Build the tree from right to left (innermost to outermost)
+	// For "!!3", we want: {Op: !, Right: {Op: !, Right: 3}}
+	// So we start from the end of operators array and work backwards
+	var result *expression.UnaryNode
+	for i := len(operators) - 1; i >= 0; i-- {
+		op := operators[i]
+		if result == nil {
+			// Innermost operator
+			result = &expression.UnaryNode{
+				Operator: &op,
+				Right:    right,
+			}
+		} else {
+			// Wrap the previous result
+			result = &expression.UnaryNode{
+				Operator: &op,
+				Right:    result,
+			}
+		}
+	}
+
+	return result, nil
 }
 
 func (p *Parser) arrayAccess() (*expression.ArrayAccessNode, error) {
