@@ -7,7 +7,7 @@ import (
 )
 
 type ArrayAccessNode struct {
-	Left  Expression // ArrayAccessNode or PrimaryNode
+	Left  Expression // ArrayAccessNode or FunctionCallNode
 	Index *ExpressionNode
 }
 

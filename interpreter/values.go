@@ -10,6 +10,7 @@ const (
 	VAL_BOOL
 	VAL_NONE
 	VAL_ARRAY
+	VAL_FUNCTION
 )
 
 // // String implements fmt.Stringer for ValueTypes to provide readable type names in error messages
@@ -38,7 +39,7 @@ type Value interface {
 	Content() string
 	IsTruthy() bool
 	Type() ValueType
-	Data() interface{}
+	Data() any
 }
 
 type IntValue struct {
@@ -57,7 +58,7 @@ func (iv IntValue) Type() ValueType {
 	return VAL_INT
 }
 
-func (iv IntValue) Data() interface{} {
+func (iv IntValue) Data() any {
 	return iv.Value
 }
 
@@ -77,7 +78,7 @@ func (sv StringValue) Type() ValueType {
 	return VAL_STRING
 }
 
-func (sv StringValue) Data() interface{} {
+func (sv StringValue) Data() any {
 	return sv.Value
 }
 
@@ -100,7 +101,7 @@ func (bv BoolValue) Type() ValueType {
 	return VAL_BOOL
 }
 
-func (bv BoolValue) Data() interface{} {
+func (bv BoolValue) Data() any {
 	return bv.Value
 }
 
@@ -118,7 +119,7 @@ func (nv NoneValue) Type() ValueType {
 	return VAL_NONE
 }
 
-func (nv NoneValue) Data() interface{} {
+func (nv NoneValue) Data() any {
 	return nil
 }
 
@@ -146,6 +147,26 @@ func (av ArrayValue) Type() ValueType {
 	return VAL_ARRAY
 }
 
-func (av ArrayValue) Data() interface{} {
+func (av ArrayValue) Data() any {
 	return av.Values
+}
+
+type FunctionValue struct {
+	Function Function
+}
+
+func (fv FunctionValue) Content() string {
+	return "<function>"
+}
+
+func (fv FunctionValue) IsTruthy() bool {
+	return true
+}
+
+func (fv FunctionValue) Type() ValueType {
+	return VAL_FUNCTION
+}
+
+func (fv FunctionValue) Data() any {
+	return fv.Function
 }

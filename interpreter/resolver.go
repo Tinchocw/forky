@@ -329,8 +329,8 @@ func resolveArrayAccess(aa expression.ArrayAccessNode, env *Env) (Value, error) 
 	switch aa.Left.(type) {
 	case *expression.ArrayAccessNode:
 		left, err = resolveArrayAccess(*aa.Left.(*expression.ArrayAccessNode), env)
-	case expression.Primary:
-		left, err = resolvePrimary(aa.Left.(expression.Primary), env)
+	case *expression.FunctionCallNode:
+		left, err = resolveFunctionCall(*aa.Left.(*expression.FunctionCallNode), env)
 	default:
 		return nil, fmt.Errorf("invalid left operand type for ArrayAccess")
 	}
@@ -366,6 +366,44 @@ func resolveArrayAccess(aa expression.ArrayAccessNode, env *Env) (Value, error) 
 	return arrayValues[index], nil
 }
 
+func resolveFunctionCall(fc expression.FunctionCallNode, env *Env) (Value, error) {
+	callee, error := resolvePrimary(fc.Callee, env)
+	if error != nil {
+		return nil, error
+	}
+
+	if fc.Arguments == nil {
+		return callee, nil
+	}
+
+	if callee.Type() != VAL_FUNCTION {
+		return nil, fmt.Errorf("attempted to call a non-function value")
+	}
+
+	function := callee.(FunctionValue).Function
+
+	if len(fc.Arguments) != len(function.Parameters) {
+		return nil, fmt.Errorf("expected %d arguments, got %d", len(function.Parameters), len(fc.Arguments))
+	}
+
+	args := make([]Value, 0, len(fc.Arguments))
+	for _, argExpr := range fc.Arguments {
+		argValue, err := resolveExpression(*argExpr, env)
+		if err != nil {
+			return nil, err
+		}
+		args = append(args, argValue)
+	}
+
+	value, err := function.Call(args, env)
+
+	if err == nil || !IsReturnErr(err) {
+		return nil, err
+	}
+
+	return value, nil
+}
+
 func resolvePrimary(primary expression.Primary, env *Env) (Value, error) {
 	switch p := primary.(type) {
 	case *expression.TokenLiteralNode:
@@ -394,33 +432,6 @@ func resolvePrimary(primary expression.Primary, env *Env) (Value, error) {
 		default:
 			return nil, fmt.Errorf("unknown literal type: %v", token.Typ)
 		}
-
-	case *expression.FunctionCallNode:
-		function, found := env.GetFunction(p.Callee)
-		if !found {
-			return nil, fmt.Errorf("undefined function: %s", p.Callee)
-		}
-
-		if len(p.Arguments) != len(function.Parameters) {
-			return nil, fmt.Errorf("expected %d arguments, got %d", len(function.Parameters), len(p.Arguments))
-		}
-
-		args := make([]Value, 0, len(p.Arguments))
-		for _, argExpr := range p.Arguments {
-			argValue, err := resolveExpression(*argExpr, env)
-			if err != nil {
-				return nil, err
-			}
-			args = append(args, argValue)
-		}
-
-		value, err := function.Call(args, env)
-
-		if err == nil || !IsReturnErr(err) {
-			return nil, err
-		}
-
-		return value, nil
 
 	case *expression.GroupingExpressionNode:
 		return resolveExpression(*p.Expression, env)

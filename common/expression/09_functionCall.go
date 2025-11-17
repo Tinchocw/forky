@@ -7,15 +7,20 @@ import (
 )
 
 type FunctionCallNode struct {
-	Callee    string
+	Callee    Expression // FunctionCallNode or PrimaryNode
 	Arguments []*ExpressionNode
 }
 
 func (fc FunctionCallNode) Print(start string) {
+	if fc.skipPrinting() {
+		fc.Callee.Print(start)
+		return
+	}
+
 	nodeName := "Function Call"
 	fmt.Printf("%s%s\n", start, common.Colorize(nodeName, common.COLOR_GREEN))
 	start = common.AdvanceSuffix(start)
-	fmt.Printf("%sCallee: %s\n", start+string(common.BRANCH_CONNECTOR), common.Colorize(fc.Callee, common.COLOR_WHITE))
+	fc.Callee.Print(start + string(common.BRANCH_CONNECTOR))
 
 	if len(fc.Arguments) > 0 {
 		nodeName := "Arguments"
@@ -32,4 +37,8 @@ func (fc FunctionCallNode) Print(start string) {
 			arg.Print(start + string(identation) + string(common.LAST_CONNECTOR))
 		}
 	}
+}
+
+func (fc FunctionCallNode) skipPrinting() bool {
+	return fc.Callee == nil
 }

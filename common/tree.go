@@ -12,8 +12,7 @@ const (
 	LAST_CONNECTOR   treeConnector = "└── "
 	BRANCH_CONNECTOR treeConnector = "├── "
 	SIMPLE_INDENT    treeConnector = "    "
-	// Additional formatting constants
-	COUNTER_INDENT treeConnector = "      " // 6 spaces for counter alignment
+	COUNTER_INDENT   treeConnector = "      " // 6 spaces for counter alignment
 )
 
 func ReplaceSuffix(start string, old, new treeConnector) string {

@@ -10,17 +10,17 @@ package expression
 	Factor 			->	Unary ( ( '/' | '*' ) Unary )*
 	Unary 			->	( '!' | '~' ) Unary | ArrAccess
 	ArrAccess		->	Primary ( '[' Expression ']' )*
+	Call 			->	Primary ( '(' Arguments? ')' )*
 	Primary 		->	IDENTIFIER 				|
 							NUMBER 				|
 							STRING 				|
 							'true' 				|
 							'false' 			|
 							'None' 				|
-							Call				|
 							GroupingExpression
 
-	Call 	-> IDENTIFIER '(' Arguments? ')'
 	GroupingExpression -> '(' Expression ')'
+	Arguments 		->	Expression ( ',' Expression )*
 */
 
 type Expression interface {

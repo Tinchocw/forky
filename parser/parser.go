@@ -590,34 +590,33 @@ func (p *Parser) factor() (*expression.FactorNode, error) {
 	return f, nil
 }
 
-// TODO: @Tinchocw esto está haciendo que se arme al reves el árbol de expresiones unarias !-3 se transforma en -(!3) en vez de !(-3)
 func (p *Parser) unary() (*expression.UnaryNode, error) {
 	u := &expression.UnaryNode{}
-	first := true
 
-	for p.check(common.BANG, common.TILDE) {
-		if !first {
-			u = &expression.UnaryNode{Right: u}
-		}
-
+	if p.check(common.BANG, common.TILDE) {
 		operator := p.advance()
 		u.Operator = &operator
 
-		first = false
+		if p.check(common.BANG, common.TILDE) {
+			rigth, err := p.unary()
+			if err != nil {
+				return nil, err
+			}
+			u.Right = rigth
+			return u, nil
+		}
 	}
 
 	right, err := p.arrayAccess()
-
 	if err != nil {
 		return nil, err
 	}
 	u.Right = right
-
 	return u, nil
 }
 
 func (p *Parser) arrayAccess() (*expression.ArrayAccessNode, error) {
-	left, err := p.primary()
+	left, err := p.functionCall()
 	if err != nil {
 		return nil, err
 	}
@@ -644,6 +643,46 @@ func (p *Parser) arrayAccess() (*expression.ArrayAccessNode, error) {
 	}
 
 	return aa, nil
+}
+
+func (p *Parser) functionCall() (*expression.FunctionCallNode, error) {
+	left, err := p.primary()
+	if err != nil {
+		return nil, err
+	}
+
+	fc := &expression.FunctionCallNode{Callee: left}
+	first := true
+
+	for p.match(common.OPEN_PARENTHESIS) {
+		if !first {
+			fc = &expression.FunctionCallNode{Callee: fc}
+		}
+
+		var args []*expression.ExpressionNode
+		if !p.match(common.CLOSE_PARENTHESIS) {
+			for {
+				arg, err := p.expression()
+				if err != nil {
+					return nil, err
+				}
+				args = append(args, arg)
+
+				if p.match(common.CLOSE_PARENTHESIS) {
+					break
+				}
+
+				if !p.match(common.COMMA) {
+					return nil, fmt.Errorf("expected ',' or ')' after argument")
+				}
+			}
+		}
+
+		fc.Arguments = args
+		first = false
+	}
+
+	return fc, nil
 }
 
 func (p *Parser) primary() (expression.Primary, error) {
@@ -687,31 +726,7 @@ func (p *Parser) primary() (expression.Primary, error) {
 
 	if p.check(common.IDENTIFIER) {
 		identifier := p.advance()
-
-		if p.match(common.OPEN_PARENTHESIS) {
-			var args []*expression.ExpressionNode
-			if !p.match(common.CLOSE_PARENTHESIS) {
-				for {
-					arg, err := p.expression()
-					if err != nil {
-						return nil, err
-					}
-					args = append(args, arg)
-
-					if p.match(common.CLOSE_PARENTHESIS) {
-						break
-					}
-
-					if !p.match(common.COMMA) {
-						return nil, fmt.Errorf("expected ',' or ')' after argument")
-					}
-				}
-			}
-
-			return &expression.FunctionCallNode{Callee: identifier.Value, Arguments: args}, nil
-		} else {
-			return &expression.TokenLiteralNode{Token: &identifier}, nil
-		}
+		return &expression.TokenLiteralNode{Token: &identifier}, nil
 	}
 
 	return nil, fmt.Errorf("unexpected token: %v", p.peek().String())

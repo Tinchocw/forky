@@ -145,7 +145,7 @@ func executeWhileStatement(stmt *statement.WhileStatement, env *Env) (Value, err
 
 func executeFunctionDef(stmt *statement.FunctionDef, env *Env) (Value, error) {
 	function := NewFunction(stmt.Parameters, stmt.Body.Statements)
-	if !env.DefineFunction(*stmt.Name, function) {
+	if !env.DefineVariable(*stmt.Name, FunctionValue{Function: function}) {
 		return nil, fmt.Errorf("function '%s' already defined in this scope", *stmt.Name)
 	}
 	return nil, nil
