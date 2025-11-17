@@ -14,7 +14,18 @@ func resolveExpression(expr expression.Expression, env *Env) (Value, error) {
 }
 
 func resolveBinaryOr(bor expression.BinaryOr, env *Env) (Value, error) {
-	left, err := resolveBinaryAnd(*bor.Left, env)
+	var left Value
+	var err error
+
+	switch bor.Left.(type) {
+	case *expression.BinaryOr:
+		left, err = resolveBinaryOr(*bor.Left.(*expression.BinaryOr), env)
+	case *expression.BinaryAnd:
+		left, err = resolveBinaryAnd(*bor.Left.(*expression.BinaryAnd), env)
+	default:
+		return Value{}, fmt.Errorf("invalid left operand type for BinaryOr")
+	}
+
 	if err != nil {
 		return Value{}, err
 	}
@@ -24,10 +35,10 @@ func resolveBinaryOr(bor expression.BinaryOr, env *Env) (Value, error) {
 	}
 
 	if isTruthy(left) {
-		return Value{Typ: VAL_BOOL, Data: true}, nil
+		return left, nil
 	}
 
-	right, err := resolveBinaryOr(*bor.Right, env)
+	right, err := resolveBinaryAnd(*bor.Right, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -36,7 +47,18 @@ func resolveBinaryOr(bor expression.BinaryOr, env *Env) (Value, error) {
 }
 
 func resolveBinaryAnd(band expression.BinaryAnd, env *Env) (Value, error) {
-	left, err := resolveEquality(*band.Left, env)
+	var left Value
+	var err error
+
+	switch band.Left.(type) {
+	case *expression.BinaryAnd:
+		left, err = resolveBinaryAnd(*band.Left.(*expression.BinaryAnd), env)
+	case *expression.Equality:
+		left, err = resolveEquality(*band.Left.(*expression.Equality), env)
+	default:
+		return Value{}, fmt.Errorf("invalid left operand type for BinaryAnd")
+	}
+
 	if err != nil {
 		return Value{}, err
 	}
@@ -46,10 +68,10 @@ func resolveBinaryAnd(band expression.BinaryAnd, env *Env) (Value, error) {
 	}
 
 	if !isTruthy(left) {
-		return Value{Typ: VAL_BOOL, Data: false}, nil
+		return left, nil
 	}
 
-	right, err := resolveBinaryAnd(*band.Right, env)
+	right, err := resolveEquality(*band.Right, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -58,16 +80,27 @@ func resolveBinaryAnd(band expression.BinaryAnd, env *Env) (Value, error) {
 }
 
 func resolveEquality(eq expression.Equality, env *Env) (Value, error) {
-	left, err := resolveComparison(*eq.Left, env)
+	var left Value
+	var err error
+
+	switch eq.Left.(type) {
+	case *expression.Equality:
+		left, err = resolveEquality(*eq.Left.(*expression.Equality), env)
+	case *expression.Comparison:
+		left, err = resolveComparison(*eq.Left.(*expression.Comparison), env)
+	default:
+		return Value{}, fmt.Errorf("invalid left operand type for Equality")
+	}
+
 	if err != nil {
 		return Value{}, err
 	}
 
-	if eq.Right == nil || eq.Operator == nil {
+	if eq.Right == nil {
 		return left, nil
 	}
 
-	right, err := resolveEquality(*eq.Right, env)
+	right, err := resolveComparison(*eq.Right, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -87,16 +120,27 @@ func resolveEquality(eq expression.Equality, env *Env) (Value, error) {
 }
 
 func resolveComparison(cmp expression.Comparison, env *Env) (Value, error) {
-	left, err := resolveTerm(*cmp.Left, env)
+	var left Value
+	var err error
+
+	switch cmp.Left.(type) {
+	case *expression.Comparison:
+		left, err = resolveComparison(*cmp.Left.(*expression.Comparison), env)
+	case *expression.Term:
+		left, err = resolveTerm(*cmp.Left.(*expression.Term), env)
+	default:
+		return Value{}, fmt.Errorf("invalid left operand type for Comparison")
+	}
+
 	if err != nil {
 		return Value{}, err
 	}
 
-	if cmp.Right == nil || cmp.Operator == nil {
+	if cmp.Right == nil {
 		return left, nil
 	}
 
-	right, err := resolveComparison(*cmp.Right, env)
+	right, err := resolveTerm(*cmp.Right, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -144,54 +188,83 @@ func resolveComparison(cmp expression.Comparison, env *Env) (Value, error) {
 }
 
 func resolveTerm(term expression.Term, env *Env) (Value, error) {
-	left, err := resolveFactor(*term.Left, env)
+	var left Value
+	var err error
+
+	switch term.Left.(type) {
+	case *expression.Term:
+		left, err = resolveTerm(*term.Left.(*expression.Term), env)
+	case *expression.Factor:
+		left, err = resolveFactor(*term.Left.(*expression.Factor), env)
+	default:
+		return Value{}, fmt.Errorf("invalid left operand type for Term")
+	}
+
 	if err != nil {
 		return Value{}, err
 	}
 
-	if term.Right == nil || term.Operator == nil {
+	if term.Right == nil {
 		return left, nil
 	}
 
-	right, err := resolveTerm(*term.Right, env)
+	right, err := resolveFactor(*term.Right, env)
 	if err != nil {
 		return Value{}, err
-	}
-
-	if left.Typ != right.Typ {
-		return Value{}, fmt.Errorf("type mismatch in term operation: %v vs %v", left.Typ, right.Typ)
 	}
 
 	switch term.Operator.Typ {
 	case common.PLUS:
+		if left.Typ != right.Typ {
+			return Value{Typ: VAL_STRING, Data: left.Content() + right.Content()}, nil
+		}
+
 		if left.Typ == VAL_INT {
 			return Value{Typ: VAL_INT, Data: left.Data.(int) + right.Data.(int)}, nil
 		}
+
 		if left.Typ == VAL_STRING {
 			return Value{Typ: VAL_STRING, Data: left.Data.(string) + right.Data.(string)}, nil
 		}
-		return Value{}, fmt.Errorf("operator '+' not supported for type %v", left.Typ)
+
+		return Value{}, fmt.Errorf("operator '+' not supported for type %v and type %v", left.Typ, right.Typ)
+
 	case common.MINUS:
 		if left.Typ == VAL_INT {
 			return Value{Typ: VAL_INT, Data: left.Data.(int) - right.Data.(int)}, nil
 		}
-		return Value{}, fmt.Errorf("operator '-' not supported for type %v", left.Typ)
+		return Value{}, fmt.Errorf("operator '-' not supported for type %v and type %v", left.Typ, right.Typ)
 	default:
 		return Value{}, fmt.Errorf("unknown term operator: %s", term.Operator.Value)
 	}
 }
 
 func resolveFactor(factor expression.Factor, env *Env) (Value, error) {
-	left, err := resolveUnary(factor.Left, env)
+	var left Value
+	var err error
+
+	switch factor.Left.(type) {
+	case *expression.Factor:
+		left, err = resolveFactor(*factor.Left.(*expression.Factor), env)
+	case expression.Unary:
+		left, err = resolveUnary(factor.Left.(expression.Unary), env)
+	default:
+		if u, ok := factor.Left.(expression.Unary); ok {
+			left, err = resolveUnary(u, env)
+		} else {
+			return Value{}, fmt.Errorf("invalid left operand type for Factor")
+		}
+	}
+
 	if err != nil {
 		return Value{}, err
 	}
 
-	if factor.Right == nil || factor.Operator == nil {
+	if factor.Right == nil {
 		return left, nil
 	}
 
-	right, err := resolveFactor(*factor.Right, env)
+	right, err := resolveUnary(factor.Right, env)
 	if err != nil {
 		return Value{}, err
 	}
@@ -229,11 +302,11 @@ func resolveUnary(unary expression.Unary, env *Env) (Value, error) {
 			return Value{}, err
 		}
 		switch u.Operator.Typ {
-		case common.MINUS:
+		case common.TILDE:
 			if right.Typ == VAL_INT {
 				return Value{Typ: VAL_INT, Data: -right.Data.(int)}, nil
 			}
-			return Value{}, fmt.Errorf("unary '-' not supported for type %v", right.Typ)
+			return Value{}, fmt.Errorf("unary '~' not supported for type %v", right.Typ)
 		case common.BANG:
 			return Value{Typ: VAL_BOOL, Data: !isTruthy(right)}, nil
 		default:
@@ -273,9 +346,9 @@ func resolvePrimary(primary primaryExpression.Primary, env *Env) (Value, error) 
 			return Value{}, fmt.Errorf("unknown literal type: %v", token.Typ)
 		}
 	case *primaryExpression.Call:
-		function, found := env.GetFunction(*p.Callee)
+		function, found := env.GetFunction(p.Callee)
 		if !found {
-			return Value{}, fmt.Errorf("undefined function: %s", *p.Callee)
+			return Value{}, fmt.Errorf("undefined function: %s", p.Callee)
 		}
 
 		if len(p.Arguments) != len(function.Parameters) {
@@ -301,6 +374,55 @@ func resolvePrimary(primary primaryExpression.Primary, env *Env) (Value, error) 
 
 	case *primaryExpression.GroupingExpression:
 		return resolveExpression(*p.Expression, env)
+
+		// foo(a,b)[30]
+		//var a = foo(1,2)
+
+	case *primaryExpression.ArrayAccess:
+		array, found := env.GetVariable(p.ArrayName)
+		if !found {
+			return Value{}, fmt.Errorf("undefined array: %s", p.ArrayName)
+		}
+
+		if array.Typ != VAL_ARRAY {
+			return Value{}, fmt.Errorf("variable %s is not an array", p.ArrayName)
+		}
+
+		indexValues := make([]int, 0, len(p.Indexes))
+		for _, indexExpr := range p.Indexes {
+			indexValue, err := resolveExpression(*indexExpr, env)
+			if err != nil {
+				return Value{}, err
+			}
+			if indexValue.Typ != VAL_INT {
+				return Value{}, fmt.Errorf("array index must be an integer")
+			}
+			indexValues = append(indexValues, indexValue.Data.(int))
+		}
+
+		for _, index := range indexValues {
+			if array.Typ != VAL_ARRAY {
+				return Value{}, fmt.Errorf("attempted to index a non-array value")
+			}
+
+			arrayData := array.Data.([]Value)
+			if index < 0 || index >= len(arrayData) {
+				return Value{}, fmt.Errorf("array index out of bounds")
+			}
+			array = arrayData[index]
+		}
+
+		return array, nil
+	case *primaryExpression.ArrayLiteral:
+		elements := make([]Value, 0, len(p.Elements))
+		for _, elemExpr := range p.Elements {
+			elemValue, err := resolveExpression(*elemExpr, env)
+			if err != nil {
+				return Value{}, err
+			}
+			elements = append(elements, elemValue)
+		}
+		return Value{Typ: VAL_ARRAY, Data: elements}, nil
 	default:
 		return Value{}, fmt.Errorf("unknown primary type")
 	}

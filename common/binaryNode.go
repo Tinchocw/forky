@@ -1,6 +1,6 @@
 package common
 
-// type BinaryNode[T MergableNode] struct {
+// type BinaryNode[T expression.ExpressionNode] struct {
 // 	Left     *T
 // 	Operator *Token
 // 	Right    *BinaryNode[T]
@@ -12,6 +12,7 @@ package common
 // type ComparisonNode = BinaryNode[TermNode]
 // type TermNode = BinaryNode[FactorNode]
 // type FactorNode = BinaryNode[Unary]
+// type
 
 // func (bn *BinaryNode[T]) HasLeft() bool {
 // 	return bn.Left != nil

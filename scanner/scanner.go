@@ -141,6 +141,12 @@ func (s *scanner) scan() (segment, error) {
 		case common.CLOSE_PARENTHESIS_SYMBOL:
 			s.addToken(common.CLOSE_PARENTHESIS)
 
+		case common.OPEN_BRACES_SYMBOL:
+			s.addToken(common.OPEN_BRACES)
+
+		case common.CLOSE_BRACES_SYMBOL:
+			s.addToken(common.CLOSE_BRACES)
+
 		case common.OPEN_BRACKET_SYMBOL:
 			s.addToken(common.OPEN_BRACKET)
 

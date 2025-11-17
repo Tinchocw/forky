@@ -11,10 +11,8 @@ import (
 )
 
 type Parser struct {
-	tokens  []common.Token
-	current int
-	// lastStatement   common.Statement
-	// lastExpression  *expression.Expression
+	tokens          []common.Token
+	current         int
 	CouldMergeStart bool
 	CouldMergeEnd   bool
 	debug           bool
@@ -85,32 +83,26 @@ func (p *Parser) matchs(token_types ...common.TokenType) bool {
 
 // STATEMENTS
 
-func (p *Parser) program() (segment, error) {
+func (p *Parser) program() (statement.Program, error) {
 	var statements []statement.Statement
 	for !p.isAtEnd() {
 		stmt, err := p.statement()
 		if err != nil {
-			return segment{}, err
 		}
 		statements = append(statements, stmt)
 	}
 
-	return segment{
-		Program:         statement.Program{Statements: statements},
-		Tokens:          p.tokens,
-		CouldMergeStart: p.CouldMergeStart,
-		CouldMergeEnd:   p.CouldMergeEnd,
-	}, nil
+	return statement.Program{Statements: statements}, nil
 }
 
 func (p *Parser) blockStatement() (*statement.BlockStatement, error) {
 
-	if !p.match(common.OPEN_BRACKET) {
+	if !p.match(common.OPEN_BRACES) {
 		return &statement.BlockStatement{}, fmt.Errorf("expected '{' at the beginning of block")
 	}
 
 	var statements []statement.Statement
-	for !p.isAtEnd() && !p.check(common.CLOSE_BRACKET) {
+	for !p.isAtEnd() && !p.check(common.CLOSE_BRACES) {
 		stmt, err := p.statement()
 		if err != nil {
 			return &statement.BlockStatement{}, err
@@ -118,7 +110,7 @@ func (p *Parser) blockStatement() (*statement.BlockStatement, error) {
 		statements = append(statements, stmt)
 	}
 
-	if !p.match(common.CLOSE_BRACKET) {
+	if !p.match(common.CLOSE_BRACES) {
 		return &statement.BlockStatement{}, fmt.Errorf("expected '}' at the end of block")
 	}
 
@@ -150,7 +142,7 @@ func (p *Parser) statement() (statement.Statement, error) {
 		return p.varStatement()
 	case common.WHILE:
 		return p.whileStatement()
-	case common.OPEN_BRACKET:
+	case common.OPEN_BRACES:
 		return p.blockStatement()
 
 	default:
@@ -421,282 +413,190 @@ func (p *Parser) varStatement() (*statement.VarDeclaration, error) {
 // EXPRESIONES
 
 func (p *Parser) expression() (*expression.Expression, error) {
-	root, _, err := p.binaryOr()
+	root, err := p.binaryOr()
 	if err != nil {
 		return &expression.Expression{}, err
 	}
-
-	expression := &expression.Expression{Root: root}
-
-	for p.match(common.CLOSE_PARENTHESIS) {
-		expression = createGroupingExpression(expression, false, true)
-	}
-
-	return expression, nil
+	return &expression.Expression{Root: root}, nil
 }
 
-func (p *Parser) binaryOr() (*expression.BinaryOr, bool, error) {
-	if p.isAtEnd() {
-		return nil, false, nil
-	}
-
-	if p.check(common.OR) {
-		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.BinaryOr{Left: nil, Operator: &operator, Right: nil}, true, nil
-		}
-		right, startWithOperator, err := p.binaryOr()
-		if err != nil {
-			return nil, false, err
-		}
-		if startWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
-		}
-
-		return &expression.BinaryOr{Left: nil, Operator: &operator, Right: right}, true, nil
-	}
-
-	left, startWithOperator, err := p.binaryAnd()
+func (p *Parser) binaryOr() (*expression.BinaryOr, error) {
+	left, err := p.binaryAnd()
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
-	if p.check(common.OR) {
+	bor := &expression.BinaryOr{Left: left}
+	first := true
+
+	for p.check(common.OR) {
+		if !first {
+			bor = &expression.BinaryOr{Left: bor}
+		}
+
 		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.BinaryOr{Left: left, Operator: &operator, Right: nil}, startWithOperator, nil
-		}
-		right, startWithOperator, err := p.binaryOr()
+		right, err := p.binaryAnd()
 		if err != nil {
-			return nil, false, err
+			return nil, err
 		}
-		if startWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
-		}
+		bor.Operator = &operator
+		bor.Right = right
 
-		return &expression.BinaryOr{Left: left, Operator: &operator, Right: right}, startWithOperator, nil
+		first = false
 	}
 
-	return &expression.BinaryOr{Left: left, Right: nil}, startWithOperator, nil
+	return bor, nil
 }
 
-func (p *Parser) binaryAnd() (*expression.BinaryAnd, bool, error) {
-
-	if p.check(common.AND) {
-		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.BinaryAnd{Left: nil, Operator: &operator, Right: nil}, true, nil
-		}
-		right, startWithOperator, err := p.binaryAnd()
-		if err != nil {
-			return nil, false, err
-		}
-		if startWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
-		}
-		return &expression.BinaryAnd{Left: nil, Operator: &operator, Right: right}, true, nil
-	}
-
-	left, startWithOperator, err := p.equality()
+func (p *Parser) binaryAnd() (*expression.BinaryAnd, error) {
+	left, err := p.equality()
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
-	if p.check(common.AND) {
+	band := &expression.BinaryAnd{Left: left}
+	first := true
+
+	for p.check(common.AND) {
+		if !first {
+			band = &expression.BinaryAnd{Left: band}
+		}
+
 		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.BinaryAnd{Left: left, Operator: &operator, Right: nil}, startWithOperator, nil
-		}
-		right, rightStartWithOperator, err := p.binaryAnd()
+		right, err := p.equality()
 		if err != nil {
-			return nil, false, err
-		}
-		if rightStartWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
+			return nil, err
 		}
 
-		return &expression.BinaryAnd{Left: left, Operator: &operator, Right: right}, startWithOperator, nil
+		band.Operator = &operator
+		band.Right = right
+
+		first = false
 	}
 
-	return &expression.BinaryAnd{Left: left, Operator: nil, Right: nil}, startWithOperator, nil
+	return band, nil
 }
 
-func (p *Parser) equality() (*expression.Equality, bool, error) {
-
-	if p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
-		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.Equality{Left: nil, Operator: &operator, Right: nil}, true, nil
-		}
-		right, startWithOperator, err := p.equality()
-		if err != nil {
-			return nil, false, err
-		}
-		if startWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
-		}
-		return &expression.Equality{Left: nil, Operator: &operator, Right: right}, true, nil
-	}
-
-	left, startWithOperator, err := p.comparison()
+func (p *Parser) equality() (*expression.Equality, error) {
+	left, err := p.comparison()
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
-	if p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
+	eq := &expression.Equality{Left: left}
+	first := true
+
+	for p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
+		if !first {
+			eq = &expression.Equality{Left: eq}
+		}
+
 		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.Equality{Left: left, Operator: &operator, Right: nil}, startWithOperator, nil
-		}
-		right, rightStartWithOperator, err := p.equality()
+		right, err := p.comparison()
 		if err != nil {
-			return nil, false, err
-		}
-		if rightStartWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
+			return nil, err
 		}
 
-		return &expression.Equality{Left: left, Operator: &operator, Right: right}, startWithOperator, nil
+		eq.Operator = &operator
+		eq.Right = right
+
+		first = false
 	}
 
-	return &expression.Equality{Left: left, Operator: nil, Right: nil}, startWithOperator, nil
+	return eq, nil
 }
 
-func (p *Parser) comparison() (*expression.Comparison, bool, error) {
-
-	if p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
-		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.Comparison{Left: nil, Operator: &operator, Right: nil}, true, nil
-		}
-		right, startWithOperator, err := p.comparison()
-		if err != nil {
-			return nil, false, err
-		}
-		if startWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
-		}
-		return &expression.Comparison{Left: nil, Operator: &operator, Right: right}, true, nil
-	}
-
-	left, startWithOperator, err := p.term()
+func (p *Parser) comparison() (*expression.Comparison, error) {
+	left, err := p.term()
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
-	if p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
+	comp := &expression.Comparison{Left: left}
+	first := true
+
+	for p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
+		if !first {
+			comp = &expression.Comparison{Left: comp}
+		}
+
 		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.Comparison{Left: left, Operator: &operator, Right: nil}, startWithOperator, nil
-		}
-		right, rightStartWithOperator, err := p.comparison()
+		right, err := p.term()
 		if err != nil {
-			return nil, false, err
-		}
-		if rightStartWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
+			return nil, err
 		}
 
-		return &expression.Comparison{Left: left, Operator: &operator, Right: right}, startWithOperator, nil
+		comp.Operator = &operator
+		comp.Right = right
+
+		first = false
 	}
 
-	return &expression.Comparison{Left: left, Operator: nil, Right: nil}, startWithOperator, nil
+	return comp, nil
 }
 
-func (p *Parser) term() (*expression.Term, bool, error) {
-
-	if p.check(common.MINUS, common.PLUS) {
-		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.Term{Left: nil, Operator: &operator, Right: nil}, true, nil
-		}
-
-		right, startWithOperator, err := p.term()
-		if err != nil {
-			return nil, false, err
-		}
-
-		if startWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
-		}
-
-		return &expression.Term{Left: nil, Operator: &operator, Right: right}, true, nil
-	}
-
-	left, startWithOperator, err := p.factor()
+func (p *Parser) term() (*expression.Term, error) {
+	left, err := p.factor()
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
-	if p.check(common.MINUS, common.PLUS) {
+	t := &expression.Term{Left: left}
+	first := true
+
+	for p.check(common.MINUS, common.PLUS) {
+		if !first {
+			t = &expression.Term{Left: t}
+		}
+
 		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.Term{Left: left, Operator: &operator, Right: nil}, startWithOperator, nil
-		}
-
-		right, rightStartWithOperator, err := p.term()
+		right, err := p.factor()
 		if err != nil {
-			return nil, false, err
+			return nil, err
 		}
-		if rightStartWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
-		}
+		t.Operator = &operator
+		t.Right = right
 
-		return &expression.Term{Left: left, Operator: &operator, Right: right}, startWithOperator, nil
+		first = false
 	}
-	return &expression.Term{Left: left, Operator: nil, Right: nil}, startWithOperator, nil
+
+	return t, nil
 }
 
-func (p *Parser) factor() (*expression.Factor, bool, error) {
-
-	if p.check(common.SLASH, common.ASTERISK) {
-		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.Factor{Left: nil, Operator: &operator, Right: nil}, true, nil
-		}
-		right, startWithOperator, err := p.factor()
-		if err != nil {
-			return nil, false, err
-		}
-		if startWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
-		}
-		return &expression.Factor{Left: nil, Operator: &operator, Right: right}, true, nil
-	}
-
+func (p *Parser) factor() (*expression.Factor, error) {
 	left, err := p.unary()
 	if err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
-	if p.check(common.SLASH, common.ASTERISK) {
+	f := &expression.Factor{Left: left}
+	first := true
+
+	for p.check(common.SLASH, common.ASTERISK) {
+		if !first {
+			f = &expression.Factor{Left: f}
+		}
+
 		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.Factor{Left: left, Operator: &operator, Right: nil}, false, nil
-		}
-		right, rightStartWithOperator, err := p.factor()
+		right, err := p.unary()
 		if err != nil {
-			return nil, false, err
+			return nil, err
 		}
-		if rightStartWithOperator {
-			return nil, false, fmt.Errorf("unexpected operator after %s", operator.String())
-		}
+		f.Operator = &operator
+		f.Right = right
 
-		return &expression.Factor{Left: left, Operator: &operator, Right: right}, false, nil
+		first = false
 	}
 
-	return &expression.Factor{Left: left, Operator: nil, Right: nil}, false, nil
+	return f, nil
 }
 
 func (p *Parser) unary() (expression.Unary, error) {
 	if p.check(common.BANG, common.TILDE) {
 		operator := p.advance()
-		if p.isAtEnd() {
-			return &expression.UnaryWithOperator{Operator: &operator, Right: nil}, nil
-		}
 		right, err := p.unary()
 		if err != nil {
-			return &expression.UnaryWithOperator{}, err
+			return nil, err
 		}
 		return &expression.UnaryWithOperator{Operator: &operator, Right: right}, nil
 	}
@@ -729,6 +629,26 @@ func (p *Parser) primary() (expression.Unary, error) {
 		return &primaryExpression.Primary{Value: &primaryExpression.GroupingExpression{Expression: expr, StartingParenthesis: true, ClosingParenthesis: true}}, nil
 	}
 
+	if p.match(common.OPEN_BRACES) {
+		elements := []*expression.Expression{}
+		for !p.match(common.CLOSE_BRACES) {
+			element, err := p.expression()
+			if err != nil {
+				return nil, err
+			}
+			elements = append(elements, element)
+			if !p.match(common.COMMA) {
+				if p.check(common.CLOSE_BRACES) {
+					break
+				}
+
+				return nil, fmt.Errorf("expected ',' or '}' after array element")
+			}
+		}
+
+		return &primaryExpression.Primary{Value: &primaryExpression.ArrayLiteral{Elements: elements}}, nil
+	}
+
 	if p.check(common.IDENTIFIER) {
 		identifier := p.advance()
 
@@ -752,7 +672,28 @@ func (p *Parser) primary() (expression.Unary, error) {
 				}
 			}
 
-			return &primaryExpression.Primary{Value: &primaryExpression.Call{Callee: &identifier.Value, Arguments: args}}, nil
+			return &primaryExpression.Primary{Value: &primaryExpression.Call{Callee: identifier.Value, Arguments: args}}, nil
+		} else if p.check(common.OPEN_BRACKET_SYMBOL) {
+			indexes := []*expression.Expression{}
+
+			for p.match(common.CLOSE_BRACKET_SYMBOL) {
+				if p.isAtEnd() {
+					return nil, fmt.Errorf("expected expression inside brackets")
+				}
+
+				indexExpr, err := p.expression()
+				if err != nil {
+					return nil, err
+				}
+				indexes = append(indexes, indexExpr)
+
+				if !p.match(common.CLOSE_BRACKET_SYMBOL) {
+					return nil, fmt.Errorf("expected ']' after index expression")
+				}
+			}
+
+			return &primaryExpression.Primary{Value: &primaryExpression.ArrayAccess{ArrayName: identifier.Value, Indexes: indexes}}, nil
+
 		} else {
 			return &primaryExpression.Primary{Value: &primaryExpression.TokenValue{Token: &identifier}}, nil
 		}
@@ -766,47 +707,22 @@ func (p *Parser) primary() (expression.Unary, error) {
 	return nil, fmt.Errorf("unexpected token: %v", p.peek().String())
 }
 
-// UTILS
-
-func createGroupingExpression(expr *expression.Expression, startingParenthesis, closingParenthesis bool) *expression.Expression {
-	return &expression.Expression{Root: &expression.BinaryOr{
-		Left: &expression.BinaryAnd{
-			Left: &expression.Equality{
-				Left: &expression.Comparison{
-					Left: &expression.Term{
-						Left: &expression.Factor{
-							Left: &primaryExpression.Primary{
-								Value: &primaryExpression.GroupingExpression{
-									Expression:          expr,
-									StartingParenthesis: startingParenthesis,
-									ClosingParenthesis:  closingParenthesis,
-								},
-							},
-						},
-					},
-				},
-			},
-		},
-	},
-	}
-}
-
 // END UTILS
 
-func (p *Parser) parse() (segment, error) {
+func (p *Parser) parse() (statement.Program, error) {
 	if p.debug {
 		fmt.Printf("[DEBUG] Starting parsing with %d tokens\n", len(p.tokens))
 	}
 
-	sg, err := p.program()
+	program, err := p.program()
 
 	if p.debug {
 		if err != nil {
 			fmt.Printf("[DEBUG] Parsing failed: %v\n", err)
 		} else {
-			fmt.Printf("[DEBUG] Parsing completed successfully with %d statements\n", len(sg.Program.Statements))
+			fmt.Printf("[DEBUG] Parsing completed successfully with %d statements\n", len(program.Statements))
 		}
 	}
 
-	return sg, err
+	return program, err
 }

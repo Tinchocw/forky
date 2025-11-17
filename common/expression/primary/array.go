@@ -7,29 +7,27 @@ import (
 	"github.com/Tinchocw/Interprete-concurrente/common/expression"
 )
 
-type Call struct {
-	Callee    string
-	Arguments []*expression.Expression
+type ArrayLiteral struct {
+	Elements []*expression.Expression
 }
 
-func (c Call) Print(start string) {
-	nodeName := "Call"
+func (a ArrayLiteral) Print(start string) {
+	nodeName := "Array"
 	fmt.Printf("%s%s\n", start, common.Colorize(nodeName, common.COLOR_GREEN))
 	start = common.AdvanceSuffix(start)
-	fmt.Printf("%sCallee: %s\n", start+string(common.BRANCH_CONNECTOR), common.Colorize(c.Callee, common.COLOR_WHITE))
 
-	if len(c.Arguments) > 0 {
-		nodeName := "Arguments"
+	if len(a.Elements) > 0 {
+		nodeName := "Elements"
 		fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize(nodeName, common.COLOR_GREEN))
 		start += string(common.SIMPLE_INDENT)
-		for i, arg := range c.Arguments {
+		for i, arg := range a.Elements {
 			connector := common.BRANCH_CONNECTOR
 			identation := common.SIMPLE_CONNECTOR
-			if i == len(c.Arguments)-1 {
+			if i == len(a.Elements)-1 {
 				connector = common.LAST_CONNECTOR
 				identation = common.SIMPLE_INDENT
 			}
-			fmt.Printf("%sArg[%d]:\n", start+string(connector), i)
+			fmt.Printf("%sElement[%d]:\n", start+string(connector), i)
 			arg.Print(start + string(identation) + string(common.LAST_CONNECTOR))
 		}
 	}
