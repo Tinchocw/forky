@@ -8,7 +8,7 @@ import (
 )
 
 type PrintStatement struct {
-	Value *expression.Expression
+	Value *expression.ExpressionNode
 }
 
 func (ps PrintStatement) Print(start string) {

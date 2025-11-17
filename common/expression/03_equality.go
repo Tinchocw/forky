@@ -6,13 +6,13 @@ import (
 	"github.com/Tinchocw/Interprete-concurrente/common"
 )
 
-type Equality struct {
-	Left     ExpressionNode
+type EqualityNode struct {
+	Left     Expression // EqualityNode or ComparisonNode
 	Operator *common.Token
-	Right    *Comparison
+	Right    *ComparisonNode
 }
 
-func (eq *Equality) Print(start string) {
+func (eq *EqualityNode) Print(start string) {
 	if eq.skipPrinting() {
 		eq.Left.Print(start)
 		return
@@ -25,6 +25,6 @@ func (eq *Equality) Print(start string) {
 	eq.Right.Print(start + string(common.LAST_CONNECTOR))
 }
 
-func (eq *Equality) skipPrinting() bool {
+func (eq *EqualityNode) skipPrinting() bool {
 	return eq.Operator == nil && eq.Right == nil
 }

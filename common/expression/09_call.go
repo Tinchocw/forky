@@ -1,31 +1,30 @@
-package primaryExpression
+package expression
 
 import (
 	"fmt"
 
 	"github.com/Tinchocw/Interprete-concurrente/common"
-	"github.com/Tinchocw/Interprete-concurrente/common/expression"
 )
 
-type Call struct {
+type FunctionCallNode struct {
 	Callee    string
-	Arguments []*expression.Expression
+	Arguments []*ExpressionNode
 }
 
-func (c Call) Print(start string) {
-	nodeName := "Call"
+func (fc FunctionCallNode) Print(start string) {
+	nodeName := "Function Call"
 	fmt.Printf("%s%s\n", start, common.Colorize(nodeName, common.COLOR_GREEN))
 	start = common.AdvanceSuffix(start)
-	fmt.Printf("%sCallee: %s\n", start+string(common.BRANCH_CONNECTOR), common.Colorize(c.Callee, common.COLOR_WHITE))
+	fmt.Printf("%sCallee: %s\n", start+string(common.BRANCH_CONNECTOR), common.Colorize(fc.Callee, common.COLOR_WHITE))
 
-	if len(c.Arguments) > 0 {
+	if len(fc.Arguments) > 0 {
 		nodeName := "Arguments"
 		fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize(nodeName, common.COLOR_GREEN))
 		start += string(common.SIMPLE_INDENT)
-		for i, arg := range c.Arguments {
+		for i, arg := range fc.Arguments {
 			connector := common.BRANCH_CONNECTOR
 			identation := common.SIMPLE_CONNECTOR
-			if i == len(c.Arguments)-1 {
+			if i == len(fc.Arguments)-1 {
 				connector = common.LAST_CONNECTOR
 				identation = common.SIMPLE_INDENT
 			}

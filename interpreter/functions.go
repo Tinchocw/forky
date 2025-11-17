@@ -20,7 +20,7 @@ func NewFunction(params []string, statements []statement.Statement) Function {
 
 func (f Function) Call(args []Value, env *Env) (Value, error) {
 	if len(args) != len(f.Parameters) {
-		return Value{}, fmt.Errorf("expected %d arguments, got %d", len(f.Parameters), len(args))
+		return nil, fmt.Errorf("expected %d arguments, got %d", len(f.Parameters), len(args))
 	}
 
 	functionEnv := NewEnv(env)
