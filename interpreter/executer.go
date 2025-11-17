@@ -16,7 +16,7 @@ func executeStatements(statements []statement.Statement, env *Env) (Value, error
 			if IsReturnErr(err) {
 				return value, err
 			}
-			return Value{}, err
+			return nil, err
 		}
 	}
 	return value, nil
@@ -45,7 +45,7 @@ func executeStatement(stmt statement.Statement, env *Env) (Value, error) {
 	case *statement.BreakStatement:
 		return executeBreakStatement(s, env)
 	default:
-		return Value{}, fmt.Errorf("unknown statement type: %T", stmt)
+		return nil, fmt.Errorf("unknown statement type: %T", stmt)
 	}
 }
 
@@ -57,46 +57,46 @@ func executeBlockStatement(stmt *statement.BlockStatement, env *Env) (Value, err
 func executeVarDeclaration(stmt *statement.VarDeclaration, env *Env) (Value, error) {
 	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
-		return Value{}, err
+		return nil, err
 	}
 
 	if !env.DefineVariable(*stmt.Name, value) {
-		return Value{}, fmt.Errorf("variable '%s' already defined in this scope", *stmt.Name)
+		return nil, fmt.Errorf("variable '%s' already defined in this scope", *stmt.Name)
 	}
 
-	return Value{}, nil
+	return nil, nil
 }
 
 func executeAssignment(stmt *statement.Assignment, env *Env) (Value, error) {
 	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
-		return Value{}, err
+		return nil, err
 	}
 
 	if !env.AssignVariable(*stmt.Name, value) {
-		return Value{}, fmt.Errorf("variable '%s' not defined", *stmt.Name)
+		return nil, fmt.Errorf("variable '%s' not defined", *stmt.Name)
 	}
 
-	return Value{}, nil
+	return nil, nil
 }
 
 func executePrintStatement(stmt *statement.PrintStatement, env *Env) (Value, error) {
 	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
-		return Value{}, err
+		return nil, err
 	}
 
 	fmt.Println(value.Content())
-	return Value{}, nil
+	return nil, nil
 }
 
 func executeIfStatement(stmt *statement.IfStatement, env *Env) (Value, error) {
 	conditionValue, err := resolveExpression(*stmt.Condition, env)
 	if err != nil {
-		return Value{}, err
+		return nil, err
 	}
 
-	if isTruthy(conditionValue) {
+	if conditionValue.IsTruthy() {
 		return executeBlockStatement(stmt.Body, env)
 	}
 
@@ -104,9 +104,9 @@ func executeIfStatement(stmt *statement.IfStatement, env *Env) (Value, error) {
 	for elseIf != nil {
 		condValue, err := resolveExpression(*elseIf.Condition, env)
 		if err != nil {
-			return Value{}, err
+			return nil, err
 		}
-		if isTruthy(condValue) {
+		if condValue.IsTruthy() {
 			return executeBlockStatement(elseIf.Body, env)
 		}
 		elseIf = elseIf.ElseIf
@@ -116,17 +116,17 @@ func executeIfStatement(stmt *statement.IfStatement, env *Env) (Value, error) {
 		return executeBlockStatement(stmt.Else.Body, env)
 	}
 
-	return Value{}, nil
+	return nil, nil
 }
 
 func executeWhileStatement(stmt *statement.WhileStatement, env *Env) (Value, error) {
 	for {
 		conditionValue, err := resolveExpression(*stmt.Condition, env)
 		if err != nil {
-			return Value{}, err
+			return nil, err
 		}
 
-		if !isTruthy(conditionValue) {
+		if !conditionValue.IsTruthy() {
 			break
 		}
 
@@ -140,15 +140,15 @@ func executeWhileStatement(stmt *statement.WhileStatement, env *Env) (Value, err
 		}
 
 	}
-	return Value{}, nil
+	return nil, nil
 }
 
 func executeFunctionDef(stmt *statement.FunctionDef, env *Env) (Value, error) {
 	function := NewFunction(stmt.Parameters, stmt.Body.Statements)
 	if !env.DefineFunction(*stmt.Name, function) {
-		return Value{}, fmt.Errorf("function '%s' already defined in this scope", *stmt.Name)
+		return nil, fmt.Errorf("function '%s' already defined in this scope", *stmt.Name)
 	}
-	return Value{}, nil
+	return nil, nil
 }
 
 func executeExpressionStatement(stmt *statement.ExpressionStatement, env *Env) (Value, error) {
@@ -159,12 +159,12 @@ func executeExpressionStatement(stmt *statement.ExpressionStatement, env *Env) (
 func executeReturnStatement(stmt *statement.ReturnStatement, env *Env) (Value, error) {
 	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
-		return Value{}, err
+		return nil, err
 	}
 
 	return value, NewReturnErr()
 }
 
 func executeBreakStatement(_ *statement.BreakStatement, _ *Env) (Value, error) {
-	return Value{}, NewBreakErr()
+	return nil, NewBreakErr()
 }

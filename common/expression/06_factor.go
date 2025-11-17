@@ -6,13 +6,13 @@ import (
 	"github.com/Tinchocw/Interprete-concurrente/common"
 )
 
-type Factor struct {
-	Left     ExpressionNode
+type FactorNode struct {
+	Left     Expression // FactorNode or Unary
 	Operator *common.Token
-	Right    Unary
+	Right    *UnaryNode
 }
 
-func (f *Factor) Print(start string) {
+func (f *FactorNode) Print(start string) {
 	if f.skipPrinting() {
 		f.Left.Print(start)
 		return
@@ -26,6 +26,6 @@ func (f *Factor) Print(start string) {
 	f.Right.Print(start + string(common.LAST_CONNECTOR))
 }
 
-func (f *Factor) skipPrinting() bool {
+func (f *FactorNode) skipPrinting() bool {
 	return f.Operator == nil && f.Right == nil
 }

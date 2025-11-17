@@ -8,14 +8,14 @@ import (
 )
 
 type IfStatement struct {
-	Condition *expression.Expression
+	Condition *expression.ExpressionNode
 	Body      *BlockStatement
 	ElseIf    *ElseIfStatement
 	Else      *ElseStatement
 }
 
 type ElseIfStatement struct {
-	Condition *expression.Expression
+	Condition *expression.ExpressionNode
 	Body      *BlockStatement
 	ElseIf    *ElseIfStatement
 }

@@ -9,7 +9,7 @@ import (
 
 type Assignment struct {
 	Name  *string
-	Value *expression.Expression
+	Value *expression.ExpressionNode
 }
 
 func (a Assignment) Print(start string) {

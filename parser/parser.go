@@ -6,7 +6,6 @@ import (
 
 	"github.com/Tinchocw/Interprete-concurrente/common"
 	"github.com/Tinchocw/Interprete-concurrente/common/expression"
-	primaryExpression "github.com/Tinchocw/Interprete-concurrente/common/expression/primary"
 	"github.com/Tinchocw/Interprete-concurrente/common/statement"
 )
 
@@ -412,26 +411,26 @@ func (p *Parser) varStatement() (*statement.VarDeclaration, error) {
 
 // EXPRESIONES
 
-func (p *Parser) expression() (*expression.Expression, error) {
+func (p *Parser) expression() (*expression.ExpressionNode, error) {
 	root, err := p.binaryOr()
 	if err != nil {
-		return &expression.Expression{}, err
+		return &expression.ExpressionNode{}, err
 	}
-	return &expression.Expression{Root: root}, nil
+	return &expression.ExpressionNode{Root: root}, nil
 }
 
-func (p *Parser) binaryOr() (*expression.BinaryOr, error) {
+func (p *Parser) binaryOr() (*expression.LogicalOrNode, error) {
 	left, err := p.binaryAnd()
 	if err != nil {
 		return nil, err
 	}
 
-	bor := &expression.BinaryOr{Left: left}
+	bor := &expression.LogicalOrNode{Left: left}
 	first := true
 
 	for p.check(common.OR) {
 		if !first {
-			bor = &expression.BinaryOr{Left: bor}
+			bor = &expression.LogicalOrNode{Left: bor}
 		}
 
 		operator := p.advance()
@@ -448,18 +447,18 @@ func (p *Parser) binaryOr() (*expression.BinaryOr, error) {
 	return bor, nil
 }
 
-func (p *Parser) binaryAnd() (*expression.BinaryAnd, error) {
+func (p *Parser) binaryAnd() (*expression.LogicalAndNode, error) {
 	left, err := p.equality()
 	if err != nil {
 		return nil, err
 	}
 
-	band := &expression.BinaryAnd{Left: left}
+	band := &expression.LogicalAndNode{Left: left}
 	first := true
 
 	for p.check(common.AND) {
 		if !first {
-			band = &expression.BinaryAnd{Left: band}
+			band = &expression.LogicalAndNode{Left: band}
 		}
 
 		operator := p.advance()
@@ -477,18 +476,18 @@ func (p *Parser) binaryAnd() (*expression.BinaryAnd, error) {
 	return band, nil
 }
 
-func (p *Parser) equality() (*expression.Equality, error) {
+func (p *Parser) equality() (*expression.EqualityNode, error) {
 	left, err := p.comparison()
 	if err != nil {
 		return nil, err
 	}
 
-	eq := &expression.Equality{Left: left}
+	eq := &expression.EqualityNode{Left: left}
 	first := true
 
 	for p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
 		if !first {
-			eq = &expression.Equality{Left: eq}
+			eq = &expression.EqualityNode{Left: eq}
 		}
 
 		operator := p.advance()
@@ -506,18 +505,18 @@ func (p *Parser) equality() (*expression.Equality, error) {
 	return eq, nil
 }
 
-func (p *Parser) comparison() (*expression.Comparison, error) {
+func (p *Parser) comparison() (*expression.ComparisonNode, error) {
 	left, err := p.term()
 	if err != nil {
 		return nil, err
 	}
 
-	comp := &expression.Comparison{Left: left}
+	comp := &expression.ComparisonNode{Left: left}
 	first := true
 
 	for p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
 		if !first {
-			comp = &expression.Comparison{Left: comp}
+			comp = &expression.ComparisonNode{Left: comp}
 		}
 
 		operator := p.advance()
@@ -535,18 +534,18 @@ func (p *Parser) comparison() (*expression.Comparison, error) {
 	return comp, nil
 }
 
-func (p *Parser) term() (*expression.Term, error) {
+func (p *Parser) term() (*expression.TermNode, error) {
 	left, err := p.factor()
 	if err != nil {
 		return nil, err
 	}
 
-	t := &expression.Term{Left: left}
+	t := &expression.TermNode{Left: left}
 	first := true
 
 	for p.check(common.MINUS, common.PLUS) {
 		if !first {
-			t = &expression.Term{Left: t}
+			t = &expression.TermNode{Left: t}
 		}
 
 		operator := p.advance()
@@ -563,18 +562,18 @@ func (p *Parser) term() (*expression.Term, error) {
 	return t, nil
 }
 
-func (p *Parser) factor() (*expression.Factor, error) {
+func (p *Parser) factor() (*expression.FactorNode, error) {
 	left, err := p.unary()
 	if err != nil {
 		return nil, err
 	}
 
-	f := &expression.Factor{Left: left}
+	f := &expression.FactorNode{Left: left}
 	first := true
 
 	for p.check(common.SLASH, common.ASTERISK) {
 		if !first {
-			f = &expression.Factor{Left: f}
+			f = &expression.FactorNode{Left: f}
 		}
 
 		operator := p.advance()
@@ -591,46 +590,83 @@ func (p *Parser) factor() (*expression.Factor, error) {
 	return f, nil
 }
 
-func (p *Parser) unary() (expression.Unary, error) {
-	if p.check(common.BANG, common.TILDE) {
+// TODO: @Tinchocw esto está haciendo que se arme al reves el árbol de expresiones unarias !-3 se transforma en -(!3) en vez de !(-3)
+func (p *Parser) unary() (*expression.UnaryNode, error) {
+	u := &expression.UnaryNode{}
+	first := true
+
+	for p.check(common.BANG, common.TILDE) {
+		if !first {
+			u = &expression.UnaryNode{Right: u}
+		}
+
 		operator := p.advance()
-		right, err := p.unary()
+		u.Operator = &operator
+
+		first = false
+	}
+
+	right, err := p.arrayAccess()
+
+	if err != nil {
+		return nil, err
+	}
+	u.Right = right
+
+	return u, nil
+}
+
+func (p *Parser) arrayAccess() (*expression.ArrayAccessNode, error) {
+	left, err := p.primary()
+	if err != nil {
+		return nil, err
+	}
+
+	aa := &expression.ArrayAccessNode{Left: left}
+	first := true
+
+	for p.match(common.OPEN_BRACKET_SYMBOL) {
+		if !first {
+			aa = &expression.ArrayAccessNode{Left: aa}
+		}
+
+		indexExpr, err := p.expression()
 		if err != nil {
 			return nil, err
 		}
-		return &expression.UnaryWithOperator{Operator: &operator, Right: right}, nil
+
+		if !p.match(common.CLOSE_BRACKET_SYMBOL) {
+			return nil, fmt.Errorf("expected ']' after index expression")
+		}
+
+		aa.Index = indexExpr
+		first = false
 	}
-	return p.primary()
+
+	return aa, nil
 }
 
-func (p *Parser) primary() (expression.Unary, error) {
+func (p *Parser) primary() (expression.Primary, error) {
 	if p.check(common.FALSE, common.TRUE, common.NONE, common.NUMBER, common.LITERAL) {
 		token := p.advance()
-		return &primaryExpression.Primary{Value: &primaryExpression.TokenValue{Token: &token}}, nil
+		return &expression.TokenLiteralNode{Token: &token}, nil
 	}
 
 	if p.match(common.OPEN_PARENTHESIS) {
-		if p.isAtEnd() {
-			expr := &expression.Expression{}
-			return &primaryExpression.Primary{Value: &primaryExpression.GroupingExpression{Expression: expr, StartingParenthesis: true, ClosingParenthesis: false}}, nil
-		}
 		expr, err := p.expression()
 		if err != nil {
 			return nil, err
 		}
 
 		if !p.match(common.CLOSE_PARENTHESIS) {
-			if p.isAtEnd() {
-				return &primaryExpression.Primary{Value: &primaryExpression.GroupingExpression{Expression: expr, StartingParenthesis: true, ClosingParenthesis: false}}, nil
-			}
 			return nil, fmt.Errorf("expected ')' after expression")
 		}
 
-		return &primaryExpression.Primary{Value: &primaryExpression.GroupingExpression{Expression: expr, StartingParenthesis: true, ClosingParenthesis: true}}, nil
+		return &expression.GroupingExpressionNode{Expression: expr}, nil
 	}
 
 	if p.match(common.OPEN_BRACES) {
-		elements := []*expression.Expression{}
+		elements := []*expression.ExpressionNode{}
 		for !p.match(common.CLOSE_BRACES) {
 			element, err := p.expression()
 			if err != nil {
@@ -646,14 +682,14 @@ func (p *Parser) primary() (expression.Unary, error) {
 			}
 		}
 
-		return &primaryExpression.Primary{Value: &primaryExpression.ArrayLiteral{Elements: elements}}, nil
+		return &expression.ArrayLiteralNode{Elements: elements}, nil
 	}
 
 	if p.check(common.IDENTIFIER) {
 		identifier := p.advance()
 
 		if p.match(common.OPEN_PARENTHESIS) {
-			var args []*expression.Expression
+			var args []*expression.ExpressionNode
 			if !p.match(common.CLOSE_PARENTHESIS) {
 				for {
 					arg, err := p.expression()
@@ -672,36 +708,10 @@ func (p *Parser) primary() (expression.Unary, error) {
 				}
 			}
 
-			return &primaryExpression.Primary{Value: &primaryExpression.Call{Callee: identifier.Value, Arguments: args}}, nil
-		} else if p.check(common.OPEN_BRACKET_SYMBOL) {
-			indexes := []*expression.Expression{}
-
-			for p.match(common.CLOSE_BRACKET_SYMBOL) {
-				if p.isAtEnd() {
-					return nil, fmt.Errorf("expected expression inside brackets")
-				}
-
-				indexExpr, err := p.expression()
-				if err != nil {
-					return nil, err
-				}
-				indexes = append(indexes, indexExpr)
-
-				if !p.match(common.CLOSE_BRACKET_SYMBOL) {
-					return nil, fmt.Errorf("expected ']' after index expression")
-				}
-			}
-
-			return &primaryExpression.Primary{Value: &primaryExpression.ArrayAccess{ArrayName: identifier.Value, Indexes: indexes}}, nil
-
+			return &expression.FunctionCallNode{Callee: identifier.Value, Arguments: args}, nil
 		} else {
-			return &primaryExpression.Primary{Value: &primaryExpression.TokenValue{Token: &identifier}}, nil
+			return &expression.TokenLiteralNode{Token: &identifier}, nil
 		}
-	}
-
-	if p.match(common.CLOSE_PARENTHESIS) {
-		expr := &expression.Expression{}
-		return &primaryExpression.Primary{Value: &primaryExpression.GroupingExpression{Expression: expr, StartingParenthesis: false, ClosingParenthesis: true}}, nil
 	}
 
 	return nil, fmt.Errorf("unexpected token: %v", p.peek().String())

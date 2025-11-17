@@ -9,7 +9,7 @@ import (
 
 type VarDeclaration struct {
 	Name  *string
-	Value *expression.Expression
+	Value *expression.ExpressionNode
 }
 
 func (vd VarDeclaration) Print(start string) {

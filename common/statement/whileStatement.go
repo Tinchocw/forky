@@ -8,7 +8,7 @@ import (
 )
 
 type WhileStatement struct {
-	Condition *expression.Expression
+	Condition *expression.ExpressionNode
 	Body      *BlockStatement
 }
 

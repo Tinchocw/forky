@@ -1,9 +1,9 @@
 package expression
 
 /*
-	Expression 		->	BinaryOr
-	BinaryOr 		->	BinaryAnd ('or' BinaryAnd )*
-	BinaryAnd 		->	Equality ('and' Equality )*
+	Expression 		->	LogicalOr
+	LogicalOr 		->	LogicalAnd ('or' LogicalAnd )*
+	LogicalAnd 		->	Equality ('and' Equality )*
 	Equality 		->	Comparison ( ( '!=' | '==' ) Comparison )*
 	Comparison 		->	Term ( ( '>' | '>=' | '<' | '<=' ) Term )*
 	Term 			->	Factor ( ( '-' | '+' ) Factor )*
@@ -23,10 +23,14 @@ package expression
 	GroupingExpression -> '(' Expression ')'
 */
 
-type Expression struct {
-	Root *BinaryOr
+type Expression interface {
+	Print(start string)
 }
 
-func (e *Expression) Print(start string) {
+type ExpressionNode struct {
+	Root *LogicalOrNode
+}
+
+func (e *ExpressionNode) Print(start string) {
 	e.Root.Print(start)
 }

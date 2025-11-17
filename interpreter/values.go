@@ -2,81 +2,150 @@ package interpreter
 
 import "fmt"
 
-type ValueTypes int
+type ValueType int
 
 const (
-	VAL_INT ValueTypes = iota + 1
+	VAL_INT ValueType = iota + 1
 	VAL_STRING
 	VAL_BOOL
 	VAL_NONE
 	VAL_ARRAY
 )
 
-// String implements fmt.Stringer for ValueTypes to provide readable type names in error messages
-func (vt ValueTypes) String() string {
-	switch vt {
-	case VAL_INT:
-		return "INT"
-	case VAL_STRING:
-		return "STRING"
-	case VAL_BOOL:
-		return "BOOL"
-	case VAL_NONE:
-		return "NONE"
-	case VAL_ARRAY:
-		return "ARRAY"
-	default:
-		return "UNKNOWN"
+// // String implements fmt.Stringer for ValueTypes to provide readable type names in error messages
+// func (vt ValueTypes) String() string {
+// 	switch vt {
+// 	case VAL_INT:
+// 		return "INT"
+// 	case VAL_STRING:
+// 		return "STRING"
+// 	case VAL_BOOL:
+// 		return "BOOL"
+// 	case VAL_NONE:
+// 		return "NONE"
+// 	case VAL_ARRAY:
+// 		return "ARRAY"
+// 	default:
+// 		return "UNKNOWN"
+// 	}
+// }
+
+// type Value struct {
+// 	Data ValueData
+// }
+
+type Value interface {
+	Content() string
+	IsTruthy() bool
+	Type() ValueType
+	Data() interface{}
+}
+
+type IntValue struct {
+	Value int
+}
+
+func (iv IntValue) Content() string {
+	return fmt.Sprintf("%d", iv.Value)
+}
+
+func (iv IntValue) IsTruthy() bool {
+	return iv.Value != 0
+}
+
+func (iv IntValue) Type() ValueType {
+	return VAL_INT
+}
+
+func (iv IntValue) Data() interface{} {
+	return iv.Value
+}
+
+type StringValue struct {
+	Value string
+}
+
+func (sv StringValue) Content() string {
+	return sv.Value
+}
+
+func (sv StringValue) IsTruthy() bool {
+	return sv.Value != ""
+}
+
+func (sv StringValue) Type() ValueType {
+	return VAL_STRING
+}
+
+func (sv StringValue) Data() interface{} {
+	return sv.Value
+}
+
+type BoolValue struct {
+	Value bool
+}
+
+func (bv BoolValue) Content() string {
+	if bv.Value {
+		return "true"
 	}
+	return "false"
 }
 
-type Value struct {
-	Typ  ValueTypes
-	Data any
+func (bv BoolValue) IsTruthy() bool {
+	return bv.Value
 }
 
-func (v Value) Content() string {
-	switch v.Typ {
-	case VAL_INT:
-		return fmt.Sprintf("%d", v.Data.(int))
-	case VAL_STRING:
-		return v.Data.(string)
-	case VAL_BOOL:
-		if v.Data.(bool) {
-			return "true"
+func (bv BoolValue) Type() ValueType {
+	return VAL_BOOL
+}
+
+func (bv BoolValue) Data() interface{} {
+	return bv.Value
+}
+
+type NoneValue struct{}
+
+func (nv NoneValue) Content() string {
+	return "none"
+}
+
+func (nv NoneValue) IsTruthy() bool {
+	return false
+}
+
+func (nv NoneValue) Type() ValueType {
+	return VAL_NONE
+}
+
+func (nv NoneValue) Data() interface{} {
+	return nil
+}
+
+type ArrayValue struct {
+	Values []Value
+}
+
+func (av ArrayValue) Content() string {
+	str := "["
+	for i, val := range av.Values {
+		str += val.Content()
+		if i < len(av.Values)-1 {
+			str += ", "
 		}
-		return "false"
-	case VAL_NONE:
-		return "none"
-	case VAL_ARRAY:
-		arr := v.Data.([]Value)
-		str := "["
-		for i, val := range arr {
-			str += val.Content()
-			if i < len(arr)-1 {
-				str += ", "
-			}
-		}
-		str += "]"
-		return str
-	default:
-		return ""
 	}
+	str += "]"
+	return str
 }
 
-func isTruthy(value Value) bool {
-	switch value.Typ {
-	case VAL_BOOL:
-		return value.Data.(bool)
-	case VAL_NONE:
-		return false
-	case VAL_INT:
-		return value.Data.(int) != 0
-	case VAL_STRING:
-		return value.Data.(string) != ""
-	case VAL_ARRAY:
-		return len(value.Data.([]Value)) > 0
-	default:
-		return true
-	}
+func (av ArrayValue) IsTruthy() bool {
+	return len(av.Values) > 0
+}
+
+func (av ArrayValue) Type() ValueType {
+	return VAL_ARRAY
+}
+
+func (av ArrayValue) Data() interface{} {
+	return av.Values
 }
