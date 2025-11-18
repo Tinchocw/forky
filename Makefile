@@ -5,17 +5,16 @@ default: run
 
 # Configurable variables (can be overridden on the make command line)
 WORKERS ?= 4
-MODE ?= repl
 FILE ?=
 DEBUG ?= false
 
 .PHONY: run
 run:
-	@echo "Running with MODE=$(MODE) WORKERS=$(WORKERS) FILE=$(FILE) DEBUG=$(DEBUG)"
+	@echo "Running with WORKERS=$(WORKERS) FILE=$(FILE) DEBUG=$(DEBUG)"
 	if [ -z "$(FILE)" ]; then \
 		go run . --workers=$(WORKERS) $(if $(filter true,$(DEBUG)),--debug,); \
 	else \
-		go run . $(if $(MODE),--mode=$(MODE),) --workers=$(WORKERS) $(if $(filter true,$(DEBUG)),--debug,) $(FILE); \
+		go run . --workers=$(WORKERS) $(if $(filter true,$(DEBUG)),--debug,) $(FILE); \
 	fi
 
 .PHONY: build
@@ -33,13 +32,13 @@ test:
 scan:
 	@echo "Running scanner mode (workers=$(WORKERS))"
 	# Pass FILE as positional arg when set
-	go run . --scanning --workers=$(WORKERS) $(if $(FILE),$(FILE),)
+	go run . --mode=scanning --workers=$(WORKERS) $(if $(FILE),$(FILE),)
 
 .PHONY: parse
 parse:
 	@echo "Running parser mode (workers=$(WORKERS))"
 	# Pass FILE as positional arg when set
-	go run . --parsing --workers=$(WORKERS) $(if $(FILE),$(FILE),)
+	go run . --mode=parsing --workers=$(WORKERS) $(if $(FILE),$(FILE),)
 
 
 .PHONY: clean
@@ -53,7 +52,6 @@ help:
 	@echo "Parameters (can be set on the make command line):"
 	@echo "  WORKERS=<n>   Number of workers (default: 4)"
 	@echo "  FILE=<path>   File to process (passed as positional argument)"
-	@echo "  MODE=<mode>   Mode to run (repl|scanning|parsing). Default: repl"
 	@echo "  DEBUG=true    Enable debug output"
 	@echo ""
 	@echo "Usage:"

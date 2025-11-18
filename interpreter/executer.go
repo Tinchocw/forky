@@ -97,7 +97,7 @@ func executeArrayDeclaration(stmt *declaration.ArrayDeclaration, env *Env) (Valu
 		}
 
 		if lenValue.Type() != VAL_INT {
-			return nil, fmt.Errorf("array length must be an integer, got %v", lenValue.Type())
+			return nil, fmt.Errorf("array length must be an integer, got %s", lenValue.TypeName())
 		}
 
 		lengths = append(lengths, lenValue.(IntValue))
@@ -163,7 +163,7 @@ func executeArrayAssignment(stmt *assignment.ArrayAssignment, env *Env) (Value, 
 		}
 
 		if indexValue.Type() != VAL_INT {
-			return nil, fmt.Errorf("array index must be an integer, got %v", indexValue.Type())
+			return nil, fmt.Errorf("array index must be an integer, got %s", indexValue.TypeName())
 		}
 
 		indexes = append(indexes, int(indexValue.(IntValue).Value))
@@ -176,7 +176,7 @@ func executeArrayAssignment(stmt *assignment.ArrayAssignment, env *Env) (Value, 
 
 	for _, idx := range indexes {
 		if (*array).Type() != VAL_ARRAY {
-			return nil, fmt.Errorf("expected array type during assignment, got %v", (*array).Type())
+			return nil, fmt.Errorf("expected array type during assignment, got %s", (*array).TypeName())
 		}
 
 		arrayValue := (*array).(ArrayValue)
@@ -230,7 +230,7 @@ func excecuteForkArrayStatement(stmt *extra.ForkArrayStatement, env *Env) (Value
 	}
 
 	if value.Type() != VAL_ARRAY {
-		return nil, fmt.Errorf("expected array type in fork array statement, got %v", value.Type())
+		return nil, fmt.Errorf("expected array type in fork array statement, got %s", value.TypeName())
 	}
 
 	arrayValue := value.(ArrayValue).Values
