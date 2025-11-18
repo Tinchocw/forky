@@ -2,6 +2,7 @@ package interpreter
 
 import (
 	"fmt"
+	"sync"
 
 	"github.com/Tinchocw/forky/common/statement"
 	"github.com/Tinchocw/forky/common/statement/assignment"
@@ -133,7 +134,7 @@ func createArrayRecursive(lengths []IntValue, cellValue Value) Value {
 		array[i] = createArrayRecursive(lengths[1:], cellValue)
 	}
 
-	return ArrayValue{Values: array}
+	return ArrayValue{Values: array, mu: &sync.RWMutex{}}
 }
 
 func executeVarAssignment(stmt *assignment.VarAssignment, env *Env) (Value, error) {
@@ -174,21 +175,15 @@ func executeArrayAssignment(stmt *assignment.ArrayAssignment, env *Env) (Value, 
 		return nil, err
 	}
 
-	for _, idx := range indexes {
-		if (*array).Type() != VAL_ARRAY {
-			return nil, fmt.Errorf("expected array type during assignment, got %s", (*array).TypeName())
-		}
-
-		arrayValue := (*array).(ArrayValue)
-
-		if idx < 0 || idx >= len(arrayValue.Values) {
-			return nil, fmt.Errorf("array index %d out of bounds", idx)
-		}
-
-		array = &arrayValue.Values[idx]
+	arrayValue, ok := (array).(ArrayValue)
+	if !ok {
+		return nil, fmt.Errorf("variable '%s' is not an array", stmt.Name)
 	}
 
-	*array = value
+	err = arrayValue.SetAt(indexes, value)
+	if err != nil {
+		return nil, err
+	}
 
 	return nil, nil
 }
