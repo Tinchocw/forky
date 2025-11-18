@@ -131,6 +131,13 @@ var matrix[3][3];     // 3x3 matrix, filled with none
 var cube[2][2][2] = 1; // 3D array filled with 1
 ```
 
+#### Accessing
+
+```forky
+var value = arr[0];
+var element = matrix[1][2];
+```
+
 #### Assignment
 
 ```forky
@@ -287,34 +294,34 @@ print(expression);
 
 Forky includes runtime error checking for common programming mistakes:
 
-### Division by Zero
+#### Division by Zero
 
 ```forky
 var result = 10 / 0;  // Runtime error: Division by zero
 ```
 
-### Array Access Out of Bounds
+#### Array Access Out of Bounds
 
 ```forky
 var arr[3];
 print(arr[5]);  // Runtime error: Array index out of bounds
 ```
 
-### Accessing Non-Array as Array
+#### Accessing Non-Array as Array
 
 ```forky
 var x = 5;
 print(x[0]);  // Runtime error: Cannot access index on non-array value
 ```
 
-### Calling Non-Function
+#### Calling Non-Function
 
 ```forky
 var x = 42;
 x();  // Runtime error: Cannot call non-function value
 ```
 
-### Incompatible Types in Operations
+#### Incompatible Types in Operations
 
 ```forky
 var a = "hello';
@@ -322,13 +329,13 @@ var b = 5;
 print(a - b);  // Runtime error: Incompatible types for subtraction
 ```
 
-### Undefined Variable Access
+#### Undefined Variable Access
 
 ```forky
 print(undefined_var);  // Runtime error: Undefined variable
 ```
 
-### Function Call with Wrong Number of Arguments
+#### Function Call with Wrong Number of Arguments
 
 ```forky
 func add(a, b) {
