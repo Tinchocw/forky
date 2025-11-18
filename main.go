@@ -75,7 +75,7 @@ func main() {
 
 	line.SetCtrlCAborts(true)
 
-	fmt.Println("Forky - REPL with arrow key support. Ctrl-D/Ctrl-C to exit.")
+	fmt.Println("Forky - REPL with arrow key support. Ctrl-C or Ctrl-D (on empty line) to exit.")
 	fmt.Println("Use ↑↓ arrows for history, ←→ for line editing.")
 	fmt.Println()
 
@@ -83,8 +83,8 @@ func main() {
 		input, err := line.Prompt("> ")
 		if err != nil {
 			if err == liner.ErrPromptAborted {
-				fmt.Println("^C")
-				continue
+				fmt.Println("Aborted")
+				break
 			} else if err == io.EOF {
 				fmt.Println()
 				break

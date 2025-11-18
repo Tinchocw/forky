@@ -9,20 +9,12 @@ MODE ?= repl
 FILE ?=
 DEBUG ?= false
 
-.PHONY: repl
-repl:
-	@echo "Starting Forky REPL..."
-	go run .
-
 .PHONY: run
 run:
 	@echo "Running with MODE=$(MODE) WORKERS=$(WORKERS) FILE=$(FILE) DEBUG=$(DEBUG)"
-	# If FILE is set, pass it as a positional argument; otherwise run REPL
 	if [ -z "$(FILE)" ]; then \
-		echo "Starting REPL (workers=$(WORKERS))"; \
 		go run . --workers=$(WORKERS) $(if $(filter true,$(DEBUG)),--debug,); \
 	else \
-		# Include MODE if provided, pass FILE as positional arg
 		go run . $(if $(MODE),--mode=$(MODE),) --workers=$(WORKERS) $(if $(filter true,$(DEBUG)),--debug,) $(FILE); \
 	fi
 
