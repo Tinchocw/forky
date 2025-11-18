@@ -1,7 +1,5 @@
 func greet(name) {
-    print("Hola ');
-    print(name);
-    print("!');
+    print("Hello, ' + name + "!');
 }
 
 func add(x, y) {
@@ -16,12 +14,13 @@ func factorial(n) {
     }
 }
 
-greet("Mundo');
-var result = add(5, 3);
-print(result);
+greet("World');
+
+var sum = add(5, 3);
+print("5 + 3 = ' + sum);
 
 var fact = factorial(5);
-print(fact);
+print("5! = ' + fact);
 
 func power(base, exp) {
     if (exp == 0) {
@@ -30,3 +29,6 @@ func power(base, exp) {
         return base * power(base, exp - 1);
     }
 }
+
+var pow = power(2, 3);
+print("2^3 = ' + pow);

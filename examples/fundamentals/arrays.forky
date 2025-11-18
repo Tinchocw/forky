@@ -1,0 +1,27 @@
+var size = 3;
+var arr[size] = 0;
+
+print("Array declaration and initialization:');
+print(arr);
+
+print("Array access:');
+print("arr[0] = ');
+print(arr[0]);
+print("arr[1] = ');
+print(arr[1]);
+
+print("Array assignment:');
+set arr[0] = 10;
+set arr[1] = 20;
+set arr[2] = 30;
+print("After assignment: ');
+print(arr);
+
+print("Multi-dimensional arrays:');
+var matrix[2][2] = 0;
+set matrix[0][0] = 1;
+set matrix[0][1] = 2;
+set matrix[1][0] = 3;
+set matrix[1][1] = 4;
+print("Matrix: ');
+print(matrix);

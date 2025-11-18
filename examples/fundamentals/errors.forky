@@ -1,0 +1,17 @@
+var x = 5
+
+var zero = 0;
+var result = 10 / zero;
+
+print(undefinedVar);
+
+var arr[3] = 0;
+print(arr[5]);
+
+func add(a, b) {
+    return a + b;
+}
+add(1);
+
+var y = 10;
+var y = 20;

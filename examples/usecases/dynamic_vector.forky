@@ -1,0 +1,93 @@
+var VECTOR_CAPACITY = 100;
+var vector_data[VECTOR_CAPACITY];
+var vector_size = 0;
+
+func vector_append(value) {
+    if (vector_size >= VECTOR_CAPACITY) {
+        print("Vector capacity exceeded');
+        return;
+    }
+    set vector_data[vector_size] = value;
+    set vector_size = vector_size + 1;
+}
+
+func vector_get(index) {
+    if (index < 0 or index >= vector_size) {
+        print("Index out of bounds');
+        return none;
+    }
+    return vector_data[index];
+}
+
+func vector_pop() {
+    if (vector_size <= 0) {
+        print("Vector is empty');
+        return none;
+    }
+    set vector_size = vector_size - 1;
+    return vector_data[vector_size];
+}
+
+func vector_size_func() {
+    return vector_size;
+}
+
+func vector_resize(new_size) {
+    if (new_size < 0) {
+        print("Invalid size');
+        return;
+    }
+    if (new_size > VECTOR_CAPACITY) {
+        print("Cannot resize beyond capacity');
+        return;
+    }
+    if (new_size > vector_size) {
+        var i = vector_size;
+        while (i < new_size) {
+            set vector_data[i] = none;
+            set i = i + 1;
+        }
+    }
+    set vector_size = new_size;
+}
+
+func vector_print() {
+    print("[');
+    var i = 0;
+    while (i < vector_size) {
+        print(vector_data[i]);
+        if (i < vector_size - 1) {
+            print(", ');
+        }
+        set i = i + 1;
+    }
+    print("]');
+}
+
+print("Creating dynamic vector');
+
+vector_append(10);
+vector_append(20);
+vector_append(30);
+
+print("Vector after appends:');
+vector_print();
+
+print("Size: ' + vector_size_func());
+
+print("Getting element at index 1: ' + vector_get(1));
+
+print("Popping last element: ' + vector_pop());
+
+print("Vector after pop:');
+vector_print();
+
+print("Size after pop: ' + vector_size_func());
+
+print("Resizing to 5 elements:');
+vector_resize(5);
+
+print("Vector after resize:');
+vector_print();
+
+print("Size after resize: ' + vector_size_func());

@@ -1,0 +1,68 @@
+func task1() {
+    var i = 0;
+    while (i < 5) {
+        print("Task 1: ' + i);
+        set i = i + 1;
+    }
+}
+
+func task2() {
+    var j = 0;
+    while (j < 5) {
+        print("Task 2: ' + j);
+        set j = j + 1;
+    }
+}
+
+print("Case 1: Basic fork usage');
+fork {
+    task1();
+    task2();
+}
+
+print("Case 2: Multiline blocks with direct statements');
+fork {
+    {
+        var x = 10;
+        while (x > 0) {
+            print("Block A: ' + x);
+            set x = x - 1;
+        }
+    }
+    {
+        var y = 20;
+        while (y > 15) {
+            print("Block B: ' + y);
+            set y = y - 1;
+        }
+    }
+}
+
+print("Case 3: Embedded fork (nested parallelism)');
+fork {
+    {
+        print("Outer block 1 start');
+        fork {
+            {
+                var a = 1;
+                while (a <= 3) {
+                    print("Inner A: ' + a);
+                    set a = a + 1;
+                }
+            }
+            {
+                var b = 4;
+                while (b <= 6) {
+                    print("Inner B: ' + b);
+                    set b = b + 1;
+                }
+            }
+        }
+        print("Outer block 1 end');
+    }
+    {
+        print("Outer block 2');
+        var z = 100;
+        print("Value: ' + z);
+    }
+}

@@ -1,68 +1,116 @@
 # Forky Examples
 
-Esta carpeta contiene ejemplos simples del lenguaje Forky para demostrar sus características.
+This folder contains examples demonstrating the features of the Forky programming language. The examples are organized into two main categories:
 
-## Ejemplos disponibles:
+- **fundamentals/**: Basic language features and syntax
+- **usecases/**: Practical applications and data structures
+
+## Fundamentals
+
+The fundamentals folder contains examples that introduce core language concepts in a logical progression.
 
 ### 1. `basic.forky`
-- Asignación de variables básica
-- Operaciones aritméticas
-- Uso de `print()`
+- Basic variable declaration with `var`
+- Printing values with `print()`
+- String literals
 
-### 2. `conditionals.forky`
-- Declaraciones `if/else`
-- Condicionales anidados
-- Comparaciones
+### 2. `math.forky`
+- Arithmetic operations: `+`, `-`, `*`, `/`
+- Operator precedence
+- Variable declarations and assignments
 
-### 3. `boolean.forky`
-- Operaciones booleanas (`and`, `or`, `not`)
-- Comparaciones (`<`, `>`, `==`, `!=`)
-- Expresiones complejas
+### 3. `strings.forky`
+- String literals and concatenation with `+`
+- Combining strings and numbers
 
-### 4. `functions.forky`
-- Definición de funciones con `func`
-- Parámetros y `return`
-- Recursión (factorial)
+### 4. `arrays.forky`
+- Array declaration with `var name[size]`
+- Array access with `arr[index]`
+- Array assignment with `set arr[index] = value`
+- Multi-dimensional arrays
 
-### 5. `loops.forky`
-- Bucles `while`
-- Bucles anidados
-- Contadores
+### 5. `booleans.forky`
+- Comparison operators: `<`, `>`, `==`, `!=`, `<=`, `>=`
+- Logical operators: `and`, `or`
+- Negation with `!`
 
-### 6. `strings.forky`
-- Literales de cadena con formato `"texto'`
-- Manejo de strings
-- Caracteres especiales
+### 6. `variables.forky`
+- Variable scoping (global, local, block)
+- Variable shadowing
+- Variable reassignment with `set`
 
-### 7. `math.forky`
-- Operaciones matemáticas
-- Precedencia de operadores
-- Uso de paréntesis
+### 7. `functions.forky`
+- Function definition with `func name(params)`
+- Function calls
+- Return statements
+- Recursion
 
-### 8. `variables.forky`
-- Declaración de variables con `var`
-- Alcance (scope) de variables
-- Variables locales y globales
+### 8. `conditionals.forky`
+- `if` statements
+- `else if` and `else` clauses
+- Nested conditionals
 
-### 9. `complex.forky`
-- Ejemplo complejo combinando múltiples características
-- Fibonacci recursivo
-- Verificación de números primos
+### 9. `loops.forky`
+- `while` loops
+- `break` statements
+- Nested loops
+- Loop control
 
-## Cómo usar los ejemplos:
+### 10. `fork.forky`
+- Parallel execution with `fork { { block1 } { block2 } ... }`
+- Concurrent block execution
+
+### 11. `forkArray.forky`
+- Parallel array iteration with `fork arr var { ... }`
+- Nested fork statements
+- Array processing in parallel
+
+### 12. `complex.forky`
+- Complex program combining multiple features
+- Integration of functions, loops, and conditionals
+
+### 13. `errors.forky`
+- Common error cases and runtime errors
+- Examples of what causes errors
+
+## Use Cases
+
+The usecases folder contains practical examples showing how to implement common data structures and algorithms.
+
+### 1. `dynamic_vector.forky`
+- Implementation of a dynamic vector (array list)
+- Methods: append, get, pop, size, resize
+- Error handling for bounds checking
+- Demonstration of encapsulation with functions
+
+## Syntax Notes
+
+- Variable declarations: `var name = value;`
+- Assignments: `set name = value;`
+- Array assignments: `set arr[index] = value;`
+- Functions: `func name(params) { statements }`
+- Conditionals: `if (condition) { statements } else if (condition) { statements } else { statements }`
+- Loops: `while (condition) { statements }`
+- Parallel execution: `fork { { block1 } { block2 } }`
+- Strings: `"text'` (starts with `"` and ends with `'`)
+- Negation: `~value`
+- All statements end with `;`
+
+## Running Examples
 
 ```bash
-# Modo parsing (para ver el AST)
-./forky --mode parsing examples/basic.forky
-
-# Modo scanning (para ver los tokens)
-./forky --mode scanning examples/conditionals.forky
-
-# O simplemente usando make
+# Build the interpreter
 make build
-./forky examples/math.forky
+
+# Run a fundamental example
+./forky examples/fundamentals/basic.forky
+
+# Run a use case example
+./forky examples/usecases/dynamic_vector.forky
+
+# Run in parsing mode to see AST
+./forky --mode parsing examples/fundamentals/basic.forky
+
+# Run in scanning mode to see tokens
+./forky --mode scanning examples/fundamentals/basic.forky
 ```
-
-## Formato de strings
-
-Nota que Forky usa un formato especial para strings: `"texto'` (comienza con `"` y termina con `'`).

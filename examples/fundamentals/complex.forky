@@ -11,34 +11,29 @@ func isPrime(num) {
         return false;
     }
     
-    i = 2;
+    var i = 2;
     while (i * i <= num) {
         if (num / i == num / i) {
             return false;
         }
-        i = i + 1;
+        set i = i + 1;
     }
     return true;
 }
 
-print("Primeros 10 números de Fibonacci:');
+print("First 10 Fibonacci numbers:');
 var counter = 0;
 while (counter < 10) {
     var fib = fibonacci(counter);
-    print("F(');
-    print(counter);
-
-    print(") = ');
-    print(fib);
+    print("F(' + counter + ") = ' + fib);
     
     if (isPrime(fib)) {
-        print(" (primo)');
-
-    }else {
-        print(" (no primo)');
+        print(" (prime)');
+    } else {
+        print(" (not prime)');
     }
-
-    counter = counter + 1;
+    
+    set counter = counter + 1;
 }
 
-print("¡Programa terminado!');
+print("Program finished!');

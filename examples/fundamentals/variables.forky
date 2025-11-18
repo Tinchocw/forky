@@ -1,0 +1,29 @@
+var globalVar = "I am global';
+
+func testScope() {
+    var localVar = "I am local';
+    set globalVar = "modified from function';
+    
+    print("Inside function:');
+    print("localVar: ' + localVar);
+    print("globalVar: ' + globalVar);
+}
+
+print("Before function:');
+print("globalVar: ' + globalVar);
+
+testScope();
+
+print("After function:');
+print("globalVar: ' + globalVar);
+
+if (true) {
+    var blockVar = "I am block scoped';
+    var globalVar = "shadowed global';
+    print("Inside block:');
+    print("blockVar: ' + blockVar);
+    print("globalVar: ' + globalVar);
+}
+
+print("Outside block:');
+print("globalVar: ' + globalVar);

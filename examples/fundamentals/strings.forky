@@ -1,0 +1,13 @@
+var firstName = "John';
+var lastName = "Doe';
+
+print("Full name: ' + firstName + " ' + lastName);
+
+var greeting = "Hello';
+var target = "World';
+var message = greeting + ", ' + target + "!';
+print(message);
+
+var number = 42;
+var text = "The answer is ' + number;
+print(text);

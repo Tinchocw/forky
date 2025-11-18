@@ -1,0 +1,26 @@
+var age = 18;
+if (age >= 18) {
+    print("You are an adult');
+} else {
+    print("You are a minor');
+}
+
+var score = 85;
+if (score >= 90) {
+    print("Excellent');
+} else if (score >= 70) {
+    print("Good');
+} else {
+    print("Needs improvement');
+}
+
+var temp = 22;
+if (temp > 30) {
+    print("It's hot');
+} else if (temp >= 20) {
+    print("Nice weather');
+} else if (temp >= 10) {
+    print("It's cool');
+} else {
+    print("It's cold');
+}

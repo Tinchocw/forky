@@ -1,0 +1,30 @@
+var a = 10;
+var b = 20;
+var c = 15;
+
+print("Comparisons:');
+print("a < b: ');
+print(a < b);
+print("b > c: ');
+print(b > c);
+print("a == 10: ');
+print(a == 10);
+print("b != c: ');
+print(b != c);
+
+print("Logical operations:');
+var result1 = a < b and c > a;
+print("a < b and c > a: ');
+print(result1);
+
+var result2 = a > b or c < b;
+print("a > b or c < b: ');
+print(result2);
+
+var result3 = ! (a > b);
+print("not (a > b): ');
+print(result3);
+
+var complex = (a < b) and (c > 5) and ! (b == 15);
+print("(a < b) and (c > 5) and not (b == 15): ');
+print(complex);

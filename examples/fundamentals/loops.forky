@@ -1,0 +1,39 @@
+var counter = 0;
+while (counter < 5) {
+    print("Counter: ' + counter);
+    set counter = counter + 1;
+}
+
+var i = 0;
+while (i < 3) {
+    var j = 0;
+    while (j < 3) {
+        print("i: ' + i + ", j: ' + j);
+        set j = j + 1;
+    }
+    set i = i + 1;
+}
+
+var n = 0;
+while (true) {
+    if (n >= 5) {
+        break;
+    }
+    print("n: ' + n);
+    set n = n + 1;
+}
+
+print("Countdown:');
+
+func countdown(x) {
+    while (true) {
+        print(x);
+        set x = x - 1;
+        if (x == 0) {
+            return "Launch!';
+        }
+    }
+}
+
+var result = countdown(5);
+print(result);
