@@ -6,54 +6,6 @@ import (
 	"github.com/Tinchocw/forky/common"
 )
 
-/*
-	Program				-> 	Statements*
-	Statements			-> 	BlockStatement 			|
-								IfStatement 		|
-								WhileStatement 		|
-								BreakStatement		|
-								FunctionDef 		|
-								ReturnStatement		|
-								VarDeclaration 		|
-								Assignment 			|
-								PrintStatement 		|
-								ExpressionStatement
-
-
-	BlockStatement		-> '{' Statements * '}'
-	IfStatement 		-> 'if' '(' Expression ')' BlockStatement
-							( 'else' 'if' '(' Expression ')' BlockStatement )*
-							( 'else' BlockStatement )?
-	WhileStatement 		-> 'while' '(' Expression ')' BlockStatement
-	BreakStatement  	-> 'break' ';'
-	FunctionDef 		-> 'func' IDENTIFIER '(' Parameters? ')' BlockStatement
-	Return 				-> 'return' Expression ';'
-	VarDeclaration 		-> 'var' IDENTIFIER ( '=' Expression )? ';'
-	ArrayDeclaration	-> 'var' IDENTIFIER ( '[' Expression ']' )+
-	Assignment 			-> 'set' IDENTIFIER '=' Expression ';'
-	ArrayAssignment 	-> 'set' IDENTIFIER ('[' Expression ']')+ '=' Expression ';'
-	PrintStatement 		-> 'print' '(' Expression ')' ';'
-	ForkStatement   	-> 'fork' BlockStatement
-	ForkArrayStatement  -> 'fork' IDENTIFIER ',' IDENTIFIER BlockStatement
-	ExpressionStatement -> Expression ';'
-
-	Arguments 		-> Expression (',' Expression)*
-*/
-
-/*
-
-fork {
-	foo();
-	too();
-}
-
-fork arr index,elem {
-	print(elem);
-	print(index);
-}
-
-*/
-
 type Statement interface {
 	Print(start string)
 	Headline() string
