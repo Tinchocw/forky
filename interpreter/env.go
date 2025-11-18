@@ -56,18 +56,17 @@ func (e *Env) AssignArrayVariable(name string, indexes []int, val Value) error {
 		return err
 	}
 
-	for i := 0; i < len(indexes)-1; i++ {
+	for i, index := range indexes {
 		if arrayVal.Type() != VAL_ARRAY {
 			return fmt.Errorf("variable '%s' is not an array", name)
 		}
 		av := arrayVal.(ArrayValue)
-		index := indexes[i]
 		if index < 0 || index >= len(av.Values) {
 			return fmt.Errorf("array index %d out of bounds", index)
 		}
 
 		if i == len(indexes)-1 {
-			av.Values[indexes[i]] = val
+			av.Values[index] = val
 		} else {
 			arrayVal = av.Values[index]
 		}
