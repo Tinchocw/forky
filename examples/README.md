@@ -128,4 +128,9 @@ make build
 
 # Run in scanning mode to see tokens
 ./forky --mode scanning examples/fundamentals/basic.forky
+
+# Inject an example and continue in REPL for interactive experimentation
+make inject FILE=examples/usecases/dynamic_vector.forky
 ```
+
+The inject mode loads the example code and then starts the REPL, allowing you to interact with the loaded functions and variables. This is particularly useful for the usecases examples like the dynamic vector, where you can test the implemented functions interactively.

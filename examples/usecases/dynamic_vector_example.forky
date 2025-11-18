@@ -1,7 +1,7 @@
-var _INITIAL_CAPACITY = 10;
+var _INITIAL_CAPACITY = 100;
 var _GROW_FACTOR = 2;
 var _SHRINK_FACTOR = 2;
-var _MIN_CAPACITY = 5;
+var _MIN_CAPACITY = 10;
 var _SHRINK_THRESHOLD = 4;
 
 var _vector_capacity = _INITIAL_CAPACITY;
@@ -66,11 +66,67 @@ func vector_print() {
     print(str);
 }
 
-print();
-print("Dynamic Vector initialized');
-print("Available commands:');
-print("  vector_append(value) - Add element to end');
-print("  vector_get(index) - Get element at index');
-print("  vector_pop() - Remove and return last element');
-print("  vector_length() - Get current size');
-print("  vector_print() - Print the vector');
+print("Creating dynamic vector');
+
+vector_append(10);
+vector_append(20);
+vector_append(30);
+
+print("Vector after appends:');
+vector_print();
+
+print("Size: ' + vector_length());
+
+print("Getting element at index 1: ' + vector_get(1));
+
+print("Popping last element: ' + vector_pop());
+
+print("Vector after pop:');
+vector_print();
+
+print("Size after pop: ' + vector_length());
+
+var i = 1;
+while (i <= 50) {
+    vector_append(i);
+    set i = i + 1;
+}
+
+print("After adding numbers 1 to 50:');
+print("Size: ' + vector_length());
+
+var mid = vector_length() / 2;
+var sum1 = 0;
+var sum2 = 0;
+
+fork {
+    {
+        var i = 0;
+        while (i < mid) {
+            set sum1 = sum1 + vector_get(i);
+            set i = i + 1;
+        }
+    }
+    {
+        var i = mid;
+        while (i < vector_length()) {
+            set sum2 = sum2 + vector_get(i);
+            set i = i + 1;
+        }
+    }
+}
+
+var total_sum = sum1 + sum2;
+print("Parallel sum of all elements: ' + total_sum);
+
+var j = 0;
+while (j < 10) {
+    var popped = vector_pop();
+    print("Popped: ' + popped);
+    set j = j + 1;
+}
+
+print("After popping 10 elements:');
+vector_print();
+
+print("Final size: ' + vector_length());

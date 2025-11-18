@@ -16,6 +16,7 @@ func main() {
 	// Flags
 	var (
 		debug   bool
+		inject  bool
 		modeStr string
 		workers int
 	)
@@ -23,6 +24,7 @@ func main() {
 	flag.BoolVar(&debug, "debug", false, "Enable debug output")
 	flag.StringVar(&modeStr, "mode", "normal", "Run mode: normal, scanning, parsing")
 	flag.IntVar(&workers, "workers", DEFAULT_WORKERS, "Number of workers for fork-join scanning")
+	flag.BoolVar(&inject, "inject", false, "Inject input from stdin before REPL")
 	flag.Parse()
 
 	// Determine mode based on string flag
@@ -59,14 +61,19 @@ func main() {
 			fmt.Println(err)
 			os.Exit(1)
 		}
-		var runErr error
-		_, runErr = forky.Run(f, st.Size())
+
+		_, runErr := forky.Run(f, st.Size())
 		if runErr != nil {
 			fmt.Println(runErr)
 			os.Exit(1)
 		}
 
-		return
+		if !inject {
+			return
+		} else {
+			fmt.Println()
+			fmt.Println("File injected. Starting REPL...")
+		}
 	}
 
 	// REPL mode: read from stdin with arrow key support
@@ -75,6 +82,7 @@ func main() {
 
 	line.SetCtrlCAborts(true)
 
+	fmt.Println()
 	fmt.Println("Forky - REPL with arrow key support. Ctrl-C or Ctrl-D (on empty line) to exit.")
 	fmt.Println("Use ↑↓ arrows for history, ←→ for line editing.")
 	fmt.Println()
