@@ -166,6 +166,14 @@ func (p *Parser) printStatement() (*extra.PrintStatement, error) {
 		return nil, fmt.Errorf("expected '(' after 'print'")
 	}
 
+	if p.match(common.CLOSE_PARENTHESIS) {
+		if !p.match(common.SEMICOLON) {
+			return nil, fmt.Errorf("expected ';' after print statement")
+		}
+
+		return &extra.PrintStatement{}, nil
+	}
+
 	expr, err := p.expression()
 	if err != nil {
 		return nil, err

@@ -183,6 +183,11 @@ func executeArrayAssignment(stmt *assignment.ArrayAssignment, env *Env) (Value, 
 }
 
 func executePrintStatement(stmt *extra.PrintStatement, env *Env) (Value, error) {
+	if stmt.Value == nil {
+		fmt.Println()
+		return nil, nil
+	}
+
 	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return nil, err

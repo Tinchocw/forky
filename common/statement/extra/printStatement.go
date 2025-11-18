@@ -12,9 +12,11 @@ type PrintStatement struct {
 }
 
 func (ps PrintStatement) Print(start string) {
-	fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize("Value:", common.COLOR_YELLOW))
-	start += string(common.SIMPLE_INDENT) + string(common.LAST_CONNECTOR)
-	ps.Value.Print(start)
+	if ps.Value != nil {
+		fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize("Value:", common.COLOR_YELLOW))
+		start += string(common.SIMPLE_INDENT) + string(common.LAST_CONNECTOR)
+		ps.Value.Print(start)
+	}
 }
 
 func (ps PrintStatement) Headline() string {
