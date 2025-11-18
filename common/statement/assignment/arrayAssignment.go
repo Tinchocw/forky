@@ -14,76 +14,39 @@ type ArrayAssignment struct {
 }
 
 func (aa ArrayAssignment) Print(start string) {
-	totalChildren := 1 // Name
+	fmt.Printf("%s%s %s\n", start+string(common.BRANCH_CONNECTOR), common.Colorize("Name:", common.COLOR_YELLOW), common.Colorize(aa.Name, common.COLOR_WHITE))
+
 	if len(aa.Indexes) > 0 {
-		totalChildren++ // Indexes group
-	}
-	if aa.Value != nil {
-		totalChildren++
-	}
-
-	childIndex := 0
-	// advance suffix so vertical connectors propagate to child groups
-	start = common.AdvanceSuffix(start)
-	basePrefix := start + string(common.SIMPLE_INDENT)
-
-	// Name
-	nameConn := string(common.BRANCH_CONNECTOR)
-	if totalChildren == 1 { // only name
-		nameConn = string(common.LAST_CONNECTOR)
-	}
-
-	fmt.Printf("%s%s %s\n",
-		basePrefix+nameConn,
-		common.Colorize("Name:", common.COLOR_YELLOW),
-		common.Colorize(aa.Name, common.COLOR_WHITE),
-	)
-	childIndex++
-
-	// Indexes (as a group)
-	if len(aa.Indexes) > 0 {
-		isLast := (childIndex == totalChildren-1)
-		indexesConn := string(common.BRANCH_CONNECTOR)
-		if isLast {
-			indexesConn = string(common.LAST_CONNECTOR)
+		headerConn := string(common.BRANCH_CONNECTOR)
+		if aa.Value == nil {
+			headerConn = string(common.LAST_CONNECTOR)
 		}
+		fmt.Printf("%s%s\n", start+headerConn, common.Colorize("Indexes:", common.COLOR_YELLOW))
 
-		fmt.Printf("%s%s\n",
-			basePrefix+indexesConn,
-			common.Colorize("Indexes:", common.COLOR_YELLOW),
-		)
-
-		// Individual indexes
+		start = common.AdvanceSuffix(start)
+		indexesBase := start + string(common.SIMPLE_CONNECTOR)
 		for i, indexExpr := range aa.Indexes {
-			indexIsLast := (i == len(aa.Indexes)-1)
-			indexConn := string(common.BRANCH_CONNECTOR)
-			if indexIsLast {
-				indexConn = string(common.LAST_CONNECTOR)
+			isLast := i == len(aa.Indexes)-1
+			conn := string(common.BRANCH_CONNECTOR)
+			nextLevel := string(common.SIMPLE_CONNECTOR)
+			if isLast {
+				conn = string(common.LAST_CONNECTOR)
+				nextLevel = string(common.SIMPLE_INDENT)
 			}
 
-			// print index label
-			fmt.Printf("%s%s\n",
-				basePrefix+string(common.SIMPLE_INDENT)+indexConn,
-				common.Colorize(fmt.Sprintf("%d:", i), common.COLOR_CYAN),
-			)
+			fmt.Printf("%s%s\n", indexesBase+conn, common.Colorize(fmt.Sprintf("Index %d:", i+1), common.COLOR_YELLOW))
 
-			// render the index expression
-			exprPrefix := basePrefix + string(common.SIMPLE_INDENT) + string(common.SIMPLE_INDENT) + string(common.LAST_CONNECTOR)
+			indexStart := indexesBase + nextLevel + string(common.LAST_CONNECTOR)
 			if indexExpr != nil {
-				(*indexExpr).Print(exprPrefix)
+				indexExpr.Print(indexStart)
 			}
 		}
-		childIndex++
 	}
 
-	// Value (always last if exists)
 	if aa.Value != nil {
-		fmt.Printf("%s%s\n",
-			basePrefix+string(common.LAST_CONNECTOR),
-			common.Colorize("Value:", common.COLOR_YELLOW),
-		)
-		valuePrefix := basePrefix + string(common.SIMPLE_INDENT) + string(common.LAST_CONNECTOR)
-		(*aa.Value).Print(valuePrefix)
+		fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize("Value:", common.COLOR_YELLOW))
+		valueStart := start + string(common.SIMPLE_INDENT) + string(common.LAST_CONNECTOR)
+		aa.Value.Print(valueStart)
 	}
 }
 

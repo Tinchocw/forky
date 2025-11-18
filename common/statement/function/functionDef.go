@@ -18,13 +18,16 @@ func (fd FunctionDef) Print(start string) {
 
 	if len(fd.Parameters) > 0 {
 		fmt.Printf("%s%s\n", start+string(common.BRANCH_CONNECTOR), common.Colorize("Parameters:", common.COLOR_YELLOW))
+		start = common.AdvanceSuffix(start)
+		paramsBase := start + string(common.SIMPLE_CONNECTOR)
 		for i, param := range fd.Parameters {
 			isLast := i == len(fd.Parameters)-1
-			connector := string(common.BRANCH_CONNECTOR)
+			conn := string(common.BRANCH_CONNECTOR)
 			if isLast {
-				connector = string(common.LAST_CONNECTOR)
+				conn = string(common.LAST_CONNECTOR)
 			}
-			fmt.Printf("%s%s\n", start+string(common.SIMPLE_CONNECTOR)+connector, common.Colorize(param, common.COLOR_WHITE))
+
+			fmt.Printf("%s%s %s\n", paramsBase+conn, common.Colorize(fmt.Sprintf("Parameter %d:", i+1), common.COLOR_YELLOW), common.Colorize(param, common.COLOR_WHITE))
 		}
 	}
 
