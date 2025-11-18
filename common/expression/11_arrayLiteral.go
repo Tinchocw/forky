@@ -17,7 +17,7 @@ func (al ArrayLiteralNode) Print(start string) {
 
 	if len(al.Elements) > 0 {
 		nodeName := "Elements"
-		fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize(nodeName, common.COLOR_GREEN))
+		fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize(nodeName, common.COLOR_YELLOW))
 		start += string(common.SIMPLE_INDENT)
 		for i, arg := range al.Elements {
 			connector := common.BRANCH_CONNECTOR
@@ -26,7 +26,7 @@ func (al ArrayLiteralNode) Print(start string) {
 				connector = common.LAST_CONNECTOR
 				identation = common.SIMPLE_INDENT
 			}
-			fmt.Printf("%sElement[%d]:\n", start+string(connector), i)
+			fmt.Printf("%s%s\n", start+string(connector), common.Colorize(fmt.Sprintf("Element %d:", i+1), common.COLOR_YELLOW))
 			arg.Print(start + string(identation) + string(common.LAST_CONNECTOR))
 		}
 	}
