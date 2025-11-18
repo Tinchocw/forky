@@ -4,11 +4,14 @@ var arr[size] = 0;
 print("Array declaration and initialization:');
 print(arr);
 
+print("Literal array declaration:');
+var literal_arr = [1, 2, 3, 4, 5];
+print(literal_arr);
+print(literal_arr[2]);
+
 print("Array access:');
-print("arr[0] = ');
-print(arr[0]);
-print("arr[1] = ');
-print(arr[1]);
+print("arr[0] = ' + arr[0]);
+print("arr[1] = ' + arr[1]);
 
 print("Array assignment:');
 set arr[0] = 10;

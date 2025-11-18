@@ -1,0 +1,40 @@
+func compute_order_total(items, prices) {
+    var total = 0;
+    var i = 0;
+    while (i < 3) {
+        set total = total + items[i] * prices[i];
+        set i = i + 1;
+    }
+    return total;
+}
+
+var customer_totals[3];
+
+fork {
+    {
+        var items1 = [2, 1, 3];
+        var prices1 = [10, 20, 5];
+        set customer_totals[0] = compute_order_total(items1, prices1);
+        print("Customer 1 order processed');
+    }
+    {
+        var items2 = [1, 4, 2];
+        var prices2 = [15, 8, 12];
+        set customer_totals[1] = compute_order_total(items2, prices2);
+        print("Customer 2 order processed');
+    }
+    {
+        var items3 = [3, 2, 1];
+        var prices3 = [7, 25, 30];
+        set customer_totals[2] = compute_order_total(items3, prices3);
+        print("Customer 3 order processed');
+    }
+}
+
+var total_revenue = 0;
+fork customer_totals i, val {
+    set total_revenue = total_revenue + val;
+    print("Customer ' + (i + 1) + " total added to revenue');
+}
+
+print("Total revenue from all customers: ' + total_revenue);

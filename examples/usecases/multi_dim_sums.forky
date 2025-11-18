@@ -1,0 +1,106 @@
+var DEPTH = 4;
+var SIZE = 20;
+
+func power(base, exp) {
+    if (exp == 0) {
+        return 1;
+    }
+    var result = 1;
+    var i = 0;
+    while (i < exp) {
+        set result = result * base;
+        set i = i + 1;
+    }
+    return result;
+}
+
+var total_elements = power(SIZE, DEPTH);
+var expected_sum = (total_elements - 1) * total_elements / 2;
+
+var size_str = "';
+var size_i = 0;
+
+while (size_i < DEPTH) {
+    if (size_i > 0) {
+        set size_str = size_str + "x';
+    }
+    set size_str = size_str + SIZE;
+    set size_i = size_i + 1;
+}
+
+print("Creating ' + DEPTH + "D array of size ' + size_str + " (' + total_elements + " elements)');
+print("Expected total sum: ' + expected_sum);
+
+print("Filling array with sequential values using recursive parallel fork...');
+
+func create_array(depth, size) {
+    if (depth == 1) {
+        var arr[size];
+        return arr;
+    } else {
+        var arr[size];
+        var i = 0;
+        while (i < size) {
+            set arr[i] = create_array(depth - 1, size);
+            set i = i + 1;
+        }
+        return arr;
+    }
+}
+
+func fill_array(arr, depth, size, base_index) {
+    if (depth == 1) {
+        var i = 0;
+        while (i < size) {
+            set arr[i] = base_index * size + i;
+            set i = i + 1;
+        }
+    } else {
+        fork arr idx, sub_arr {
+            fill_array(sub_arr, depth - 1, size, base_index * size + idx);
+        }
+    }
+}
+
+func sum_array(arr, depth, size) {
+    if (depth == 1) {
+        var s = 0;
+        var i = 0;
+        while (i < size) {
+            set s = s + arr[i];
+            set i = i + 1;
+        }
+        return s;
+    } else {
+        var temp_sums[size];
+        fork arr idx, sub_arr {
+            set temp_sums[idx] = sum_array(sub_arr, depth - 1, size);
+        }
+        var total = 0;
+        var i = 0;
+        while (i < size) {
+            set total = total + temp_sums[i];
+            set i = i + 1;
+        }
+        return total;
+    }
+}
+
+var multidimentional_matrix = create_array(DEPTH, SIZE);
+fill_array(multidimentional_matrix, DEPTH, SIZE, 0);
+
+print("Array filled. Computing sum of each slice in parallel using recursive fork...');
+
+var slice_sums[SIZE];
+fork multidimentional_matrix slice_index, slice {
+    var slice_sum = sum_array(slice, DEPTH - 1, SIZE);
+    set slice_sums[slice_index] = slice_sum;
+    print("Sum of slice ' + slice_index + ": ' + slice_sum);
+}
+
+var total_sum = 0;
+print("Computing total sum by summing slice sums in parallel...');
+fork slice_sums k, val {
+    set total_sum = total_sum + val;
+}
+print("Total sum: ' + total_sum);

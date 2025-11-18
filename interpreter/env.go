@@ -1,50 +1,77 @@
 package interpreter
 
-import "sync"
+import (
+	"fmt"
+	"sync"
+)
 
 type Env struct {
-	variables map[string]Value
+	variables *sync.Map
 	parent    *Env
-	mu        *sync.RWMutex
 }
 
 func NewEnv(parent *Env) *Env {
 	return &Env{
-		variables: make(map[string]Value),
+		variables: &sync.Map{},
 		parent:    parent,
-		mu:        &sync.RWMutex{},
 	}
 }
 
-func (e *Env) GetVariable(name string) (Value, bool) {
-	e.mu.RLock()
-	val, ok := e.variables[name]
-	e.mu.RUnlock()
-	if !ok && e.parent != nil {
+func (e *Env) GetVariable(name string) (Value, error) {
+	if val, ok := e.variables.Load(name); ok {
+		return val.(Value), nil
+	}
+	if e.parent != nil {
 		return e.parent.GetVariable(name)
 	}
-	return val, ok
+	return nil, fmt.Errorf("variable '%s' not defined", name)
 }
 
-func (e *Env) DefineVariable(name string, val Value) bool {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	if _, exists := e.variables[name]; exists {
-		return false
+func (e *Env) DefineVariable(name string, val Value) error {
+	_, loaded := e.variables.LoadOrStore(name, val)
+	if loaded {
+		return fmt.Errorf("variable '%s' already defined in this scope", name)
 	}
-	e.variables[name] = val
-	return true
+	return nil
 }
 
-func (e *Env) AssignVariable(name string, val Value) bool {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	if _, exists := e.variables[name]; exists {
-		e.variables[name] = val
-		return true
+func (e *Env) AssignVariable(name string, val Value) error {
+	if _, ok := e.variables.Load(name); ok {
+		e.variables.Store(name, val)
+		return nil
 	}
 	if e.parent != nil {
 		return e.parent.AssignVariable(name, val)
 	}
-	return false
+	return fmt.Errorf("variable '%s' not defined", name)
+}
+
+func (e *Env) AssignArrayVariable(name string, indexes []int, val Value) error {
+	if len(indexes) == 0 {
+		return fmt.Errorf("no indexes provided")
+	}
+
+	arrayVal, err := e.GetVariable(name)
+	if err != nil {
+		return err
+	}
+
+	for i := 0; i < len(indexes)-1; i++ {
+		if arrayVal.Type() != VAL_ARRAY {
+			return fmt.Errorf("variable '%s' is not an array", name)
+		}
+		av := arrayVal.(ArrayValue)
+		index := indexes[i]
+		if index < 0 || index >= len(av.Values) {
+			return fmt.Errorf("array index %d out of bounds", index)
+		}
+
+		if i == len(indexes)-1 {
+			av.Values[indexes[i]] = val
+		} else {
+			arrayVal = av.Values[index]
+		}
+	}
+
+	return nil
 }

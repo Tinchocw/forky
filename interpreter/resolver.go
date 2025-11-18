@@ -3,7 +3,6 @@ package interpreter
 import (
 	"fmt"
 	"strconv"
-	"sync"
 
 	"github.com/Tinchocw/forky/common"
 	"github.com/Tinchocw/forky/common/expression"
@@ -360,11 +359,12 @@ func resolveArrayAccess(aa expression.ArrayAccessNode, env *Env) (Value, error) 
 
 	index := indexValue.(IntValue).Value
 	av := left.(ArrayValue)
-	val, ok := (&av).Get(int(index))
-	if !ok {
-		return nil, fmt.Errorf("array index out of bounds: %d", index)
+
+	if index < 0 || index >= len(av.Values) {
+		return nil, fmt.Errorf("array index %d out of bounds", index)
 	}
 
+	val := av.Values[index]
 	return val, nil
 }
 
@@ -426,9 +426,9 @@ func resolvePrimary(primary expression.Primary, env *Env) (Value, error) {
 		case common.NONE:
 			return NoneValue{}, nil
 		case common.IDENTIFIER:
-			value, found := env.GetVariable(token.Value)
-			if !found {
-				return nil, fmt.Errorf("undefined variable: %s", token.Value)
+			value, err := env.GetVariable(token.Value)
+			if err != nil {
+				return nil, err
 			}
 			return value, nil
 		default:
@@ -447,7 +447,7 @@ func resolvePrimary(primary expression.Primary, env *Env) (Value, error) {
 			}
 			elements = append(elements, elemValue)
 		}
-		return &ArrayValue{Values: elements, mu: &sync.RWMutex{}}, nil
+		return ArrayValue{Values: elements}, nil
 	default:
 		return nil, fmt.Errorf("unknown primary type")
 	}

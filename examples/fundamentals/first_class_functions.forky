@@ -1,0 +1,20 @@
+func add(a, b) {
+    return a + b;
+}
+
+func multiply(a, b) {
+    return a * b;
+}
+
+func apply_operation(op, x, y) {
+    return op(x, y);
+}
+
+var operation = add;
+print("Using function as variable: add(5, 3) = ' + operation(5, 3));
+
+set operation = multiply;
+print("Changed to multiply: multiply(5, 3) = ' + operation(5, 3));
+
+print("Passing function as argument: apply_operation(add, 10, 20) = ' + apply_operation(add, 10, 20));
+print("Passing function as argument: apply_operation(multiply, 10, 20) = ' + apply_operation(multiply, 10, 20));

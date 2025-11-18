@@ -2,7 +2,6 @@ package interpreter
 
 import (
 	"fmt"
-	"sync"
 
 	"github.com/Tinchocw/forky/common/statement"
 	"github.com/Tinchocw/forky/common/statement/assignment"
@@ -81,8 +80,10 @@ func executeVarDeclaration(stmt *declaration.VarDeclaration, env *Env) (Value, e
 		}
 	}
 
-	if !env.DefineVariable(stmt.Name, value) {
-		return nil, fmt.Errorf("variable '%s' already defined in this scope", stmt.Name)
+	err := env.DefineVariable(stmt.Name, value)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return nil, nil
@@ -116,8 +117,10 @@ func executeArrayDeclaration(stmt *declaration.ArrayDeclaration, env *Env) (Valu
 
 	array := createArrayRecursive(lengths, value)
 
-	if !env.DefineVariable(stmt.Name, array) {
-		return nil, fmt.Errorf("array '%s' already defined in this scope", stmt.Name)
+	err := env.DefineVariable(stmt.Name, array)
+
+	if err != nil {
+		return nil, err
 	}
 
 	return nil, nil
@@ -134,7 +137,7 @@ func createArrayRecursive(lengths []IntValue, cellValue Value) Value {
 		array[i] = createArrayRecursive(lengths[1:], cellValue)
 	}
 
-	return ArrayValue{Values: array, mu: &sync.RWMutex{}}
+	return ArrayValue{Values: array}
 }
 
 func executeVarAssignment(stmt *assignment.VarAssignment, env *Env) (Value, error) {
@@ -143,19 +146,15 @@ func executeVarAssignment(stmt *assignment.VarAssignment, env *Env) (Value, erro
 		return nil, err
 	}
 
-	if !env.AssignVariable(stmt.Name, value) {
-		return nil, fmt.Errorf("variable '%s' not defined", stmt.Name)
+	err = env.AssignVariable(stmt.Name, value)
+	if err != nil {
+		return nil, err
 	}
 
 	return nil, nil
 }
 
 func executeArrayAssignment(stmt *assignment.ArrayAssignment, env *Env) (Value, error) {
-	array, ok := env.GetVariable(stmt.Name)
-	if !ok {
-		return nil, fmt.Errorf("array '%s' not defined", stmt.Name)
-	}
-
 	indexes := []int{}
 	for _, indexExpr := range stmt.Indexes {
 		indexValue, err := resolveExpression(*indexExpr, env)
@@ -175,12 +174,7 @@ func executeArrayAssignment(stmt *assignment.ArrayAssignment, env *Env) (Value, 
 		return nil, err
 	}
 
-	arrayValue, ok := (array).(ArrayValue)
-	if !ok {
-		return nil, fmt.Errorf("variable '%s' is not an array", stmt.Name)
-	}
-
-	err = arrayValue.SetAt(indexes, value)
+	err = env.AssignArrayVariable(stmt.Name, indexes, value)
 	if err != nil {
 		return nil, err
 	}
@@ -236,14 +230,16 @@ func excecuteForkArrayStatement(stmt *extra.ForkArrayStatement, env *Env) (Value
 		newEnv := NewEnv(env)
 
 		if stmt.IndexName != nil {
-			if !newEnv.DefineVariable(*stmt.IndexName, IntValue{Value: index}) {
-				return nil, fmt.Errorf("variable '%s' already defined in this scope", *stmt.IndexName)
+			err := newEnv.DefineVariable(*stmt.IndexName, IntValue{Value: index})
+			if err != nil {
+				return nil, err
 			}
 		}
 
 		if stmt.ElemName != nil {
-			if !newEnv.DefineVariable(*stmt.ElemName, elem) {
-				return nil, fmt.Errorf("variable '%s' already defined in this scope", *stmt.ElemName)
+			err := newEnv.DefineVariable(*stmt.ElemName, elem)
+			if err != nil {
+				return nil, err
 			}
 		}
 
@@ -317,8 +313,9 @@ func executeWhileStatement(stmt *flow.WhileStatement, env *Env) (Value, error) {
 
 func executeFunctionDef(stmt *function.FunctionDef, env *Env) (Value, error) {
 	function := NewFunction(stmt.Parameters, stmt.Body.Statements)
-	if !env.DefineVariable(*stmt.Name, FunctionValue{Function: function}) {
-		return nil, fmt.Errorf("function '%s' already defined in this scope", *stmt.Name)
+	err := env.DefineVariable(*stmt.Name, FunctionValue{Function: function})
+	if err != nil {
+		return nil, err
 	}
 	return nil, nil
 }

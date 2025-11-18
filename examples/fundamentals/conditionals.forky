@@ -16,11 +16,11 @@ if (score >= 90) {
 
 var temp = 22;
 if (temp > 30) {
-    print("It's hot');
+    print("Its hot');
 } else if (temp >= 20) {
     print("Nice weather');
 } else if (temp >= 10) {
-    print("It's cool');
+    print("Its cool');
 } else {
-    print("It's cold');
+    print("Its cold');
 }
