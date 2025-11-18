@@ -29,7 +29,7 @@ go build -o forky main.go
 ### Usage
 
 ```bash
-./forky <filename>.forky
+./forky [<filename>.forky] [options]
 ```
 
 #### Command Line Options
@@ -38,7 +38,7 @@ Forky supports several command-line flags to control its behavior:
 
 - `-debug`: Enable debug output for troubleshooting
 - `-mode <mode>`: Set the run mode
-  - `normal`: Full interpretation (default)
+  - `normal`: Full execution (default)
   - `scanning`: Only perform lexical analysis
   - `parsing`: Only perform parsing (no execution)
 - `-workers <number>`: Number of workers for parallel scanning (default: 4)
@@ -377,9 +377,7 @@ print(arr[2]);  // 3
 
 ```forky
 func greet(name) {
-    print("Hola ');
-    print(name);
-    print("!');
+    print("Hola ' + name + "!');
 }
 
 func add(x, y) {
@@ -415,8 +413,7 @@ func power(base, exp) {
 ```forky
 var counter = 0;
 while (counter < 5) {
-    print("Contador: ');
-    print(counter);
+    print("Contador: ' + counter);
     set counter = counter + 1;
 }
 
@@ -424,10 +421,7 @@ var i = 0;
 while (i < 3) {
     var j = 0;
     while (j < 3) {
-        print("i: ');
-        print(i);
-        print(" j: ');
-        print(j);
+        print("i: ' + i + ", j: ' + j);
         set j = j + 1;
     }
     set i = i + 1;
@@ -438,8 +432,7 @@ while (true) {
     if (n >= 5) {
         break;
     }
-    print("n: ');
-    print(n);
+    print("n: ' + n);
     set n = n + 1;
 }
 
@@ -475,15 +468,9 @@ func worker(id) {
 }
 
 fork {
-    {
-        worker(1);
-    }
-    {
-        worker(2);
-    }
-    {
-        worker(3);
-    }
+    worker(1);
+    worker(2);
+    worker(3);
 }
 ```
 
@@ -514,10 +501,6 @@ fork arr i, e {
     }
 }
 print(arr);
-
-fork arr {
-    print("Array State');
-}
 ```
 
 ### Boolean Operations
@@ -583,14 +566,6 @@ The interpreter consists of several components:
 - **Parser**: Recursive descent parser building AST
 - **Interpreter**: Tree-walking interpreter with concurrent execution support
 - **Resolver**: Static analysis for variable resolution
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Submit a pull request
 
 ## License
 
