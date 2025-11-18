@@ -327,6 +327,10 @@ func (p *Parser) returnStatement() (*function.ReturnStatement, error) {
 		return nil, fmt.Errorf("expected 'return'")
 	}
 
+	if p.match(common.SEMICOLON) {
+		return &function.ReturnStatement{}, nil
+	}
+
 	expr, err := p.expression()
 	if err != nil {
 		return nil, err
