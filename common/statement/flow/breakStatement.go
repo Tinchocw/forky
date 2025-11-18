@@ -3,7 +3,7 @@ package flow
 import (
 	"fmt"
 
-	"github.com/Tinchocw/Interprete-concurrente/common"
+	"github.com/Tinchocw/forky/common"
 )
 
 type BreakStatement struct{}

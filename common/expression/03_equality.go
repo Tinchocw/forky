@@ -3,7 +3,7 @@ package expression
 import (
 	"fmt"
 
-	"github.com/Tinchocw/Interprete-concurrente/common"
+	"github.com/Tinchocw/forky/common"
 )
 
 type EqualityNode struct {

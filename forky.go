@@ -3,11 +3,11 @@ package main
 import (
 	"io"
 
-	"github.com/Tinchocw/Interprete-concurrente/common"
-	"github.com/Tinchocw/Interprete-concurrente/common/statement"
-	"github.com/Tinchocw/Interprete-concurrente/interpreter"
-	parserPackage "github.com/Tinchocw/Interprete-concurrente/parser"
-	scannerPackage "github.com/Tinchocw/Interprete-concurrente/scanner"
+	"github.com/Tinchocw/forky/common"
+	"github.com/Tinchocw/forky/common/statement"
+	"github.com/Tinchocw/forky/interpreter"
+	parserPackage "github.com/Tinchocw/forky/parser"
+	scannerPackage "github.com/Tinchocw/forky/scanner"
 )
 
 type InterpreterMode int

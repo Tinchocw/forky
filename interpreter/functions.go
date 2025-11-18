@@ -3,7 +3,7 @@ package interpreter
 import (
 	"fmt"
 
-	"github.com/Tinchocw/Interprete-concurrente/common/statement"
+	"github.com/Tinchocw/forky/common/statement"
 )
 
 type Function struct {

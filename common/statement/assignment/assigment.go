@@ -1,6 +1,6 @@
 package assignment
 
-import "github.com/Tinchocw/Interprete-concurrente/common/statement"
+import "github.com/Tinchocw/forky/common/statement"
 
 type Assignment interface {
 	statement.Statement

@@ -1,8 +1,8 @@
 package parser
 
 import (
-	"github.com/Tinchocw/Interprete-concurrente/common"
-	"github.com/Tinchocw/Interprete-concurrente/common/statement"
+	"github.com/Tinchocw/forky/common"
+	"github.com/Tinchocw/forky/common/statement"
 )
 
 type ForkyParser struct {

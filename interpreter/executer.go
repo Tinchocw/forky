@@ -3,14 +3,14 @@ package interpreter
 import (
 	"fmt"
 
-	"github.com/Tinchocw/Interprete-concurrente/common/statement"
-	"github.com/Tinchocw/Interprete-concurrente/common/statement/assignment"
-	"github.com/Tinchocw/Interprete-concurrente/common/statement/block"
-	"github.com/Tinchocw/Interprete-concurrente/common/statement/declaration"
-	"github.com/Tinchocw/Interprete-concurrente/common/statement/extra"
-	"github.com/Tinchocw/Interprete-concurrente/common/statement/flow"
-	"github.com/Tinchocw/Interprete-concurrente/common/statement/function"
-	"github.com/Tinchocw/Interprete-concurrente/interpreter/errors"
+	"github.com/Tinchocw/forky/common/statement"
+	"github.com/Tinchocw/forky/common/statement/assignment"
+	"github.com/Tinchocw/forky/common/statement/block"
+	"github.com/Tinchocw/forky/common/statement/declaration"
+	"github.com/Tinchocw/forky/common/statement/extra"
+	"github.com/Tinchocw/forky/common/statement/flow"
+	"github.com/Tinchocw/forky/common/statement/function"
+	"github.com/Tinchocw/forky/interpreter/errors"
 )
 
 func executeStatements(statements []statement.Statement, env *Env) (Value, error) {

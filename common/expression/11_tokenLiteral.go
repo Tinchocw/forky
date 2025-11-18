@@ -1,7 +1,7 @@
 package expression
 
 import (
-	"github.com/Tinchocw/Interprete-concurrente/common"
+	"github.com/Tinchocw/forky/common"
 )
 
 type TokenLiteralNode struct {

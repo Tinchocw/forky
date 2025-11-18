@@ -3,8 +3,8 @@ package statement
 import (
 	"fmt"
 
-	"github.com/Tinchocw/Interprete-concurrente/common"
-	"github.com/Tinchocw/Interprete-concurrente/common/expression"
+	"github.com/Tinchocw/forky/common"
+	"github.com/Tinchocw/forky/common/expression"
 )
 
 type ExpressionStatement struct {

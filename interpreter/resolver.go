@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"strconv"
 
-	"github.com/Tinchocw/Interprete-concurrente/common"
-	"github.com/Tinchocw/Interprete-concurrente/common/expression"
-	"github.com/Tinchocw/Interprete-concurrente/interpreter/errors"
+	"github.com/Tinchocw/forky/common"
+	"github.com/Tinchocw/forky/common/expression"
+	"github.com/Tinchocw/forky/interpreter/errors"
 )
 
 func resolveExpression(expr expression.ExpressionNode, env *Env) (Value, error) {

@@ -1,4 +1,4 @@
-module github.com/Tinchocw/Interprete-concurrente
+module github.com/Tinchocw/forky
 
 go 1.25.0
 

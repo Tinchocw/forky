@@ -3,7 +3,7 @@ package scanner
 import (
 	"testing"
 
-	"github.com/Tinchocw/Interprete-concurrente/common"
+	"github.com/Tinchocw/forky/common"
 )
 
 type expectedToken struct {

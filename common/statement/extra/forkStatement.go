@@ -1,6 +1,6 @@
 package extra
 
-import "github.com/Tinchocw/Interprete-concurrente/common/statement"
+import "github.com/Tinchocw/forky/common/statement"
 
 type ForkStatement interface {
 	statement.Statement
