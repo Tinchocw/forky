@@ -157,6 +157,7 @@ var tokenTypeNames = [...]string{
 	FUNC:              "FUNC",
 	VAR:               "VAR",
 	SET:               "SET",
+	FORK:              "FORK",
 	STARTED_LITERAL:   "STARTED_LITERAL",
 	ENDED_LITERAL:     "ENDED_LITERAL",
 	OR:                "OR",
@@ -225,6 +226,7 @@ const (
 
 	// SPECIAL TOKENS
 	PRINT
+	FORK
 
 	// PRE MERGE
 	STARTED_LITERAL
@@ -272,6 +274,7 @@ const (
 	OR_KEYWORD       = "or"
 	AND_KEYWORD      = "and"
 	PRINT_KEYWORD    = "print"
+	FORK_KEYWORD     = "fork"
 )
 
 var KEYWORDS = map[string]TokenType{
@@ -290,6 +293,7 @@ var KEYWORDS = map[string]TokenType{
 	OR_KEYWORD:       OR,
 	AND_KEYWORD:      AND,
 	PRINT_KEYWORD:    PRINT,
+	FORK_KEYWORD:     FORK,
 }
 
 var KEYWORDS_VALUES = map[TokenType]string{
@@ -308,6 +312,7 @@ var KEYWORDS_VALUES = map[TokenType]string{
 	OR:       OR_KEYWORD,
 	AND:      AND_KEYWORD,
 	PRINT:    PRINT_KEYWORD,
+	FORK:     FORK_KEYWORD,
 }
 
 func IsNumber(r rune) bool {

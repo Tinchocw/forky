@@ -136,6 +136,8 @@ func (p *Parser) statement() (statement.Statement, error) {
 		return p.returnStatement()
 	case common.PRINT:
 		return p.printStatement()
+	case common.FORK:
+		return p.forkStatement()
 	case common.IF:
 		return p.ifStatement()
 	case common.BREAK:
@@ -178,6 +180,61 @@ func (p *Parser) printStatement() (*extra.PrintStatement, error) {
 	}
 
 	return &extra.PrintStatement{Value: expr}, nil
+}
+
+func (p *Parser) forkStatement() (extra.ForkStatement, error) {
+	if !p.match(common.FORK) {
+		return &extra.ForkBlockStatement{}, fmt.Errorf("expected 'fork'")
+	}
+
+	if p.check(common.OPEN_BRACES) {
+		return p.forkBlockStatement()
+	} else {
+		return p.forkArrayStatement()
+	}
+}
+
+func (p *Parser) forkBlockStatement() (*extra.ForkBlockStatement, error) {
+	body, err := p.blockStatement()
+	if err != nil {
+		return nil, err
+	}
+
+	return &extra.ForkBlockStatement{Block: body}, nil
+}
+
+func (p *Parser) forkArrayStatement() (*extra.ForkArrayStatement, error) {
+	array, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	// fork array index,elem {
+
+	var elemName *string
+	var indexName *string
+
+	if p.check(common.IDENTIFIER) {
+		firstToken := p.advance()
+		elemName = &firstToken.Value
+
+		if p.match(common.COMMA) {
+			if !p.check(common.IDENTIFIER) {
+				return nil, fmt.Errorf("expected identifier after ',' in fork array statement")
+			}
+			secondToken := p.advance()
+
+			indexName = &firstToken.Value
+			elemName = &secondToken.Value
+		}
+	}
+
+	block, err := p.blockStatement()
+	if err != nil {
+		return nil, err
+	}
+
+	return &extra.ForkArrayStatement{Array: array, ElemName: elemName, IndexName: indexName, Block: block}, nil
 }
 
 func (p *Parser) ifStatement() (*flow.IfStatement, error) {

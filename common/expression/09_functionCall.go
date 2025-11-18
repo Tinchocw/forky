@@ -20,9 +20,13 @@ func (fc FunctionCallNode) Print(start string) {
 	nodeName := "Function Call"
 	fmt.Printf("%s%s\n", start, common.Colorize(nodeName, common.COLOR_GREEN))
 	start = common.AdvanceSuffix(start)
-	fc.Callee.Print(start + string(common.BRANCH_CONNECTOR))
 
+	// If there are arguments, print callee with a branch connector so the
+	// Arguments header can be the last connector. If there are no
+	// arguments, print callee with the last connector.
 	if len(fc.Arguments) > 0 {
+		fc.Callee.Print(start + string(common.BRANCH_CONNECTOR))
+
 		nodeName := "Arguments"
 		fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize(nodeName, common.COLOR_GREEN))
 		start += string(common.SIMPLE_INDENT)
@@ -36,6 +40,8 @@ func (fc FunctionCallNode) Print(start string) {
 			fmt.Printf("%sArg[%d]:\n", start+string(connector), i)
 			arg.Print(start + string(identation) + string(common.LAST_CONNECTOR))
 		}
+	} else {
+		fc.Callee.Print(start + string(common.LAST_CONNECTOR))
 	}
 }
 

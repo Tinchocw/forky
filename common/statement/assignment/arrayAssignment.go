@@ -14,40 +14,38 @@ type ArrayAssignment struct {
 }
 
 func (aa ArrayAssignment) Print(start string) {
-
-	// Contar hijos totales (Name + Indexes (como grupo) + Value)
 	totalChildren := 1 // Name
 	if len(aa.Indexes) > 0 {
-		totalChildren++ // Indexes como grupo
+		totalChildren++ // Indexes group
 	}
 	if aa.Value != nil {
 		totalChildren++
 	}
 
 	childIndex := 0
+	// advance suffix so vertical connectors propagate to child groups
+	start = common.AdvanceSuffix(start)
 	basePrefix := start + string(common.SIMPLE_INDENT)
 
 	// Name
 	nameConn := string(common.BRANCH_CONNECTOR)
-	if totalChildren == 1 { // solo name
+	if totalChildren == 1 { // only name
 		nameConn = string(common.LAST_CONNECTOR)
 	}
 
 	fmt.Printf("%s%s %s\n",
 		basePrefix+nameConn,
 		common.Colorize("Name:", common.COLOR_YELLOW),
-		common.Colorize(aa.Name, common.COLOR_CYAN),
+		common.Colorize(aa.Name, common.COLOR_WHITE),
 	)
 	childIndex++
 
-	// Indexes (como grupo padre)
+	// Indexes (as a group)
 	if len(aa.Indexes) > 0 {
 		isLast := (childIndex == totalChildren-1)
 		indexesConn := string(common.BRANCH_CONNECTOR)
-		indexesBasePrefix := basePrefix + "│   "
 		if isLast {
 			indexesConn = string(common.LAST_CONNECTOR)
-			indexesBasePrefix = basePrefix + "    "
 		}
 
 		fmt.Printf("%s%s\n",
@@ -55,37 +53,36 @@ func (aa ArrayAssignment) Print(start string) {
 			common.Colorize("Indexes:", common.COLOR_YELLOW),
 		)
 
-		// Índices individuales
+		// Individual indexes
 		for i, indexExpr := range aa.Indexes {
 			indexIsLast := (i == len(aa.Indexes)-1)
 			indexConn := string(common.BRANCH_CONNECTOR)
-			nextPrefix := indexesBasePrefix + "│   "
 			if indexIsLast {
 				indexConn = string(common.LAST_CONNECTOR)
-				nextPrefix = indexesBasePrefix + "    "
 			}
 
+			// print index label
 			fmt.Printf("%s%s\n",
-				indexesBasePrefix+indexConn,
+				basePrefix+string(common.SIMPLE_INDENT)+indexConn,
 				common.Colorize(fmt.Sprintf("%d:", i), common.COLOR_CYAN),
 			)
 
-			// Renderizar el árbol de la expresión del índice
+			// render the index expression
+			exprPrefix := basePrefix + string(common.SIMPLE_INDENT) + string(common.SIMPLE_INDENT) + string(common.LAST_CONNECTOR)
 			if indexExpr != nil {
-				(*indexExpr).Print(nextPrefix)
+				(*indexExpr).Print(exprPrefix)
 			}
 		}
 		childIndex++
 	}
 
-	// Value (siempre último si existe)
+	// Value (always last if exists)
 	if aa.Value != nil {
 		fmt.Printf("%s%s\n",
 			basePrefix+string(common.LAST_CONNECTOR),
 			common.Colorize("Value:", common.COLOR_YELLOW),
 		)
-		// Renderizar el árbol de la expresión del valor
-		valuePrefix := basePrefix + "    "
+		valuePrefix := basePrefix + string(common.SIMPLE_INDENT) + string(common.LAST_CONNECTOR)
 		(*aa.Value).Print(valuePrefix)
 	}
 }

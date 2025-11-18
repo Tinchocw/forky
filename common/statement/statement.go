@@ -33,9 +33,25 @@ import (
 	Assignment 			-> 'set' IDENTIFIER '=' Expression ';'
 	ArrayAssignment 	-> 'set' IDENTIFIER ('[' Expression ']')+ '=' Expression ';'
 	PrintStatement 		-> 'print' '(' Expression ')' ';'
+	ForkStatement   	-> 'fork' BlockStatement
+	ForkArrayStatement  -> 'fork' IDENTIFIER ',' IDENTIFIER BlockStatement
 	ExpressionStatement -> Expression ';'
 
 	Arguments 		-> Expression (',' Expression)*
+*/
+
+/*
+
+fork {
+	foo();
+	too();
+}
+
+fork arr index,elem {
+	print(elem);
+	print(index);
+}
+
 */
 
 type Statement interface {

@@ -1,0 +1,15 @@
+var size = 3;
+var arr[size][size] = 0;
+
+fork arr i, e {
+    fork e j, f {
+        set arr[i][j] = i + j + f;
+        print("Row: ' + i + ", Col: ' + j + ", Value: ' + arr[i][j]);  
+    }
+}
+print(arr);
+
+fork arr {
+    print("Array State');
+}
+

@@ -42,6 +42,10 @@ func executeStatement(stmt statement.Statement, env *Env) (Value, error) {
 		return executeArrayAssignment(s, env)
 	case *extra.PrintStatement:
 		return executePrintStatement(s, env)
+	case *extra.ForkBlockStatement:
+		return executeForkBlockStatement(s, env)
+	case *extra.ForkArrayStatement:
+		return excecuteForkArrayStatement(s, env)
 	case *flow.IfStatement:
 		return executeIfStatement(s, env)
 	case *flow.WhileStatement:
@@ -144,7 +148,6 @@ func executeVarAssignment(stmt *assignment.VarAssignment, env *Env) (Value, erro
 	return nil, nil
 }
 
-// TODO: Implement array assignment
 func executeArrayAssignment(stmt *assignment.ArrayAssignment, env *Env) (Value, error) {
 	array, ok := env.GetVariable(stmt.Name)
 	if !ok {
@@ -196,6 +199,70 @@ func executePrintStatement(stmt *extra.PrintStatement, env *Env) (Value, error) 
 	}
 
 	fmt.Println(value.Content())
+	return nil, nil
+}
+
+func executeForkBlockStatement(stmt *extra.ForkBlockStatement, env *Env) (Value, error) {
+	done := make(chan error)
+
+	for _, s := range stmt.Block.Statements {
+		newEnv := NewEnv(env)
+		go func(st statement.Statement, e *Env) {
+			_, err := executeStatement(st, e)
+			done <- err
+		}(s, newEnv)
+	}
+
+	for range stmt.Block.Statements {
+		if err := <-done; err != nil {
+			return nil, err
+		}
+	}
+
+	return nil, nil
+}
+
+func excecuteForkArrayStatement(stmt *extra.ForkArrayStatement, env *Env) (Value, error) {
+	value, err := resolveExpression(*stmt.Array, env)
+	if err != nil {
+		return nil, err
+	}
+
+	if value.Type() != VAL_ARRAY {
+		return nil, fmt.Errorf("expected array type in fork array statement, got %v", value.Type())
+	}
+
+	arrayValue := value.(ArrayValue).Values
+
+	done := make(chan error)
+
+	for index, elem := range arrayValue {
+		newEnv := NewEnv(env)
+
+		if stmt.IndexName != nil {
+			if !newEnv.DefineVariable(*stmt.IndexName, IntValue{Value: index}) {
+				return nil, fmt.Errorf("variable '%s' already defined in this scope", *stmt.IndexName)
+			}
+		}
+
+		if stmt.ElemName != nil {
+			if !newEnv.DefineVariable(*stmt.ElemName, elem) {
+				return nil, fmt.Errorf("variable '%s' already defined in this scope", *stmt.ElemName)
+			}
+		}
+
+		go func(e *Env) {
+			_, err := executeBlockStatement(stmt.Block, e)
+			done <- err
+		}(newEnv)
+	}
+
+	for range arrayValue {
+		if err := <-done; err != nil {
+			return nil, err
+		}
+	}
+
 	return nil, nil
 }
 
