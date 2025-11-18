@@ -1,4 +1,4 @@
-package statement
+package function
 
 import (
 	"fmt"
@@ -7,12 +7,16 @@ import (
 	"github.com/Tinchocw/Interprete-concurrente/common/expression"
 )
 
-type PrintStatement struct {
+type ReturnStatement struct {
 	Value *expression.ExpressionNode
 }
 
-func (ps PrintStatement) Print(start string) {
+func (r ReturnStatement) Print(start string) {
 	fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize("Value:", common.COLOR_YELLOW))
 	start += string(common.SIMPLE_INDENT) + string(common.LAST_CONNECTOR)
-	ps.Value.Print(start)
+	r.Value.Print(start)
+}
+
+func (r ReturnStatement) Headline() string {
+	return common.Colorize("Return Statement", common.COLOR_CYAN)
 }

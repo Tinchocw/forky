@@ -16,3 +16,7 @@ func (es ExpressionStatement) Print(start string) {
 	start += string(common.SIMPLE_INDENT) + string(common.LAST_CONNECTOR)
 	es.Expression.Print(start)
 }
+
+func (es ExpressionStatement) Headline() string {
+	return common.Colorize("Expression Statement", common.COLOR_YELLOW)
+}

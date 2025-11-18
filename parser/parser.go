@@ -7,6 +7,12 @@ import (
 	"github.com/Tinchocw/Interprete-concurrente/common"
 	"github.com/Tinchocw/Interprete-concurrente/common/expression"
 	"github.com/Tinchocw/Interprete-concurrente/common/statement"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/assignment"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/block"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/declaration"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/extra"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/flow"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/function"
 )
 
 type Parser struct {
@@ -93,26 +99,26 @@ func (p *Parser) program() (statement.Program, error) {
 	return statement.Program{Statements: statements}, nil
 }
 
-func (p *Parser) blockStatement() (*statement.BlockStatement, error) {
+func (p *Parser) blockStatement() (*block.BlockStatement, error) {
 
 	if !p.match(common.OPEN_BRACES) {
-		return &statement.BlockStatement{}, fmt.Errorf("expected '{' at the beginning of block")
+		return &block.BlockStatement{}, fmt.Errorf("expected '{' at the beginning of block")
 	}
 
 	statements := []statement.Statement{}
 	for !p.isAtEnd() && !p.check(common.CLOSE_BRACES) {
 		stmt, err := p.statement()
 		if err != nil {
-			return &statement.BlockStatement{}, err
+			return &block.BlockStatement{}, err
 		}
 		statements = append(statements, stmt)
 	}
 
 	if !p.match(common.CLOSE_BRACES) {
-		return &statement.BlockStatement{}, fmt.Errorf("expected '}' at the end of block")
+		return &block.BlockStatement{}, fmt.Errorf("expected '}' at the end of block")
 	}
 
-	return &statement.BlockStatement{Statements: statements}, nil
+	return &block.BlockStatement{Statements: statements}, nil
 }
 
 func (p *Parser) statement() (statement.Statement, error) {
@@ -138,74 +144,71 @@ func (p *Parser) statement() (statement.Statement, error) {
 		return p.funcStatement()
 	case common.VAR:
 		return p.declarationStatement()
+	case common.SET:
+		return p.assignmentStatement()
 	case common.WHILE:
 		return p.whileStatement()
 	case common.OPEN_BRACES:
 		return p.blockStatement()
-
 	default:
-		if p.checkAll(common.IDENTIFIER, common.EQUAL) {
-			return p.assignmentStatement()
-		}
-
 		return p.expressionStatement()
 	}
 }
 
-func (p *Parser) printStatement() (*statement.PrintStatement, error) {
+func (p *Parser) printStatement() (*extra.PrintStatement, error) {
 	if !p.match(common.PRINT) {
-		return &statement.PrintStatement{}, fmt.Errorf("expected 'print'")
+		return &extra.PrintStatement{}, fmt.Errorf("expected 'print'")
 	}
 
 	if !p.match(common.OPEN_PARENTHESIS) {
-		return &statement.PrintStatement{}, fmt.Errorf("expected '(' after 'print'")
+		return &extra.PrintStatement{}, fmt.Errorf("expected '(' after 'print'")
 	}
 
 	expr, err := p.expression()
 	if err != nil {
-		return &statement.PrintStatement{}, err
+		return &extra.PrintStatement{}, err
 	}
 
 	if !p.match(common.CLOSE_PARENTHESIS) {
-		return &statement.PrintStatement{}, fmt.Errorf("expected ')' after expression")
+		return &extra.PrintStatement{}, fmt.Errorf("expected ')' after expression")
 	}
 
 	if !p.match(common.SEMICOLON) {
-		return &statement.PrintStatement{}, fmt.Errorf("expected ';' after print statement")
+		return &extra.PrintStatement{}, fmt.Errorf("expected ';' after print statement")
 	}
 
-	return &statement.PrintStatement{Value: expr}, nil
+	return &extra.PrintStatement{Value: expr}, nil
 }
 
-func (p *Parser) ifStatement() (*statement.IfStatement, error) {
+func (p *Parser) ifStatement() (*flow.IfStatement, error) {
 	if !p.match(common.IF) {
-		return &statement.IfStatement{}, fmt.Errorf("expected 'if'")
+		return &flow.IfStatement{}, fmt.Errorf("expected 'if'")
 	}
 
 	if !p.match(common.OPEN_PARENTHESIS) {
-		return &statement.IfStatement{}, fmt.Errorf("expected '(' after 'if'")
+		return &flow.IfStatement{}, fmt.Errorf("expected '(' after 'if'")
 	}
 
 	condition, err := p.expression()
 	if err != nil {
-		return &statement.IfStatement{}, err
+		return &flow.IfStatement{}, err
 	}
 
 	if !p.match(common.CLOSE_PARENTHESIS) {
-		return &statement.IfStatement{}, fmt.Errorf("expected ')' after if condition")
+		return &flow.IfStatement{}, fmt.Errorf("expected ')' after if condition")
 	}
 
 	body, err := p.blockStatement()
 	if err != nil {
-		return &statement.IfStatement{}, err
+		return &flow.IfStatement{}, err
 	}
 
-	ifStatement := &statement.IfStatement{Condition: condition, Body: body}
+	ifStatement := &flow.IfStatement{Condition: condition, Body: body}
 
 	if p.matchs(common.ELSE, common.IF) {
 		elseIf, err := p.elseIfStatement()
 		if err != nil {
-			return &statement.IfStatement{}, err
+			return &flow.IfStatement{}, err
 		}
 
 		ifStatement.ElseIf = elseIf
@@ -214,81 +217,81 @@ func (p *Parser) ifStatement() (*statement.IfStatement, error) {
 	if p.match(common.ELSE) {
 		elseBody, err := p.blockStatement()
 		if err != nil {
-			return &statement.IfStatement{}, err
+			return &flow.IfStatement{}, err
 		}
-		ifStatement.Else = &statement.ElseStatement{Body: elseBody}
+		ifStatement.Else = &flow.ElseStatement{Body: elseBody}
 	}
 
 	return ifStatement, nil
 }
 
-func (p *Parser) elseIfStatement() (*statement.ElseIfStatement, error) {
+func (p *Parser) elseIfStatement() (*flow.ElseIfStatement, error) {
 	if !p.match(common.OPEN_PARENTHESIS) {
-		return &statement.ElseIfStatement{}, fmt.Errorf("expected '(' after 'else if'")
+		return &flow.ElseIfStatement{}, fmt.Errorf("expected '(' after 'else if'")
 	}
 
 	condition, err := p.expression()
 	if err != nil {
-		return &statement.ElseIfStatement{}, err
+		return &flow.ElseIfStatement{}, err
 	}
 
 	if !p.match(common.CLOSE_PARENTHESIS) {
-		return &statement.ElseIfStatement{}, fmt.Errorf("expected ')' after else if condition")
+		return &flow.ElseIfStatement{}, fmt.Errorf("expected ')' after else if condition")
 	}
 
 	body, err := p.blockStatement()
 	if err != nil {
-		return &statement.ElseIfStatement{}, err
+		return &flow.ElseIfStatement{}, err
 	}
 
 	if p.matchs(common.ELSE, common.IF) {
 		elseIf, err := p.elseIfStatement()
 		if err != nil {
-			return &statement.ElseIfStatement{}, err
+			return &flow.ElseIfStatement{}, err
 		}
-		return &statement.ElseIfStatement{Condition: condition, Body: body, ElseIf: elseIf}, nil
+		return &flow.ElseIfStatement{Condition: condition, Body: body, ElseIf: elseIf}, nil
 	}
 
-	return &statement.ElseIfStatement{Condition: condition, Body: body}, nil
+	return &flow.ElseIfStatement{Condition: condition, Body: body}, nil
 }
 
-func (p *Parser) breakStatement() (*statement.BreakStatement, error) {
+func (p *Parser) breakStatement() (*flow.BreakStatement, error) {
 	if !p.match(common.BREAK) {
-		return &statement.BreakStatement{}, fmt.Errorf("expected 'break'")
+		return &flow.BreakStatement{}, fmt.Errorf("expected 'break'")
 	}
 	if !p.match(common.SEMICOLON) {
-		return &statement.BreakStatement{}, fmt.Errorf("expected ';' after 'break'")
+		return &flow.BreakStatement{}, fmt.Errorf("expected ';' after 'break'")
 	}
-	return &statement.BreakStatement{}, nil
+	return &flow.BreakStatement{}, nil
 }
 
-func (p *Parser) returnStatement() (*statement.ReturnStatement, error) {
+func (p *Parser) returnStatement() (*function.ReturnStatement, error) {
 	if !p.match(common.RETURN) {
-		return &statement.ReturnStatement{}, fmt.Errorf("expected 'return'")
+		return &function.ReturnStatement{}, fmt.Errorf("expected 'return'")
 	}
 
 	expr, err := p.expression()
 	if err != nil {
-		return &statement.ReturnStatement{}, err
+		return &function.ReturnStatement{}, err
 	}
 	if !p.match(common.SEMICOLON) {
-		return &statement.ReturnStatement{}, fmt.Errorf("expected ';' after 'return'")
+		return &function.ReturnStatement{}, fmt.Errorf("expected ';' after 'return'")
 	}
-	return &statement.ReturnStatement{Value: expr}, nil
+	return &function.ReturnStatement{Value: expr}, nil
 }
 
-func (p *Parser) funcStatement() (*statement.FunctionDef, error) {
+func (p *Parser) funcStatement() (*function.FunctionDef, error) {
 	if !p.match(common.FUNC) {
-		return &statement.FunctionDef{}, fmt.Errorf("expected 'func'")
+		return &function.FunctionDef{}, fmt.Errorf("expected 'func'")
 	}
 
 	if !p.check(common.IDENTIFIER) {
-		return &statement.FunctionDef{}, fmt.Errorf("expected function name after 'func'")
+		return &function.FunctionDef{}, fmt.Errorf("expected function name after 'func'")
 	}
 	name := p.advance()
 
 	if !p.match(common.OPEN_PARENTHESIS) {
-		return &statement.FunctionDef{}, fmt.Errorf("expected '(' after function name")
+		return &function.FunctionDef{}, fmt.Errorf("expected '(' after function name")
 	}
 
 	parameters := []string{}
@@ -296,7 +299,7 @@ func (p *Parser) funcStatement() (*statement.FunctionDef, error) {
 	if !p.match(common.CLOSE_PARENTHESIS) {
 		for {
 			if !p.check(common.IDENTIFIER) {
-				return &statement.FunctionDef{}, fmt.Errorf("expected parameter name")
+				return &function.FunctionDef{}, fmt.Errorf("expected parameter name")
 			}
 			parameters = append(parameters, p.advance().Value)
 
@@ -305,52 +308,56 @@ func (p *Parser) funcStatement() (*statement.FunctionDef, error) {
 			}
 
 			if !p.match(common.COMMA) {
-				return &statement.FunctionDef{}, fmt.Errorf("expected ',' or ')' after parameter")
+				return &function.FunctionDef{}, fmt.Errorf("expected ',' or ')' after parameter")
 			}
 		}
 	}
 
 	body, err := p.blockStatement()
 	if err != nil {
-		return &statement.FunctionDef{}, err
+		return &function.FunctionDef{}, err
 	}
 
-	return &statement.FunctionDef{Name: &name.Value, Parameters: parameters, Body: body}, nil
+	return &function.FunctionDef{Name: &name.Value, Parameters: parameters, Body: body}, nil
 }
 
-func (p *Parser) whileStatement() (*statement.WhileStatement, error) {
+func (p *Parser) whileStatement() (*flow.WhileStatement, error) {
 	if !p.match(common.WHILE) {
-		return &statement.WhileStatement{}, fmt.Errorf("expected 'while' at the beginning of while statement")
+		return &flow.WhileStatement{}, fmt.Errorf("expected 'while' at the beginning of while statement")
 	}
 
 	if !p.match(common.OPEN_PARENTHESIS) {
-		return &statement.WhileStatement{}, fmt.Errorf("expected '(' after 'while'")
+		return &flow.WhileStatement{}, fmt.Errorf("expected '(' after 'while'")
 	}
 
 	condition, err := p.expression()
 	if err != nil {
-		return &statement.WhileStatement{}, err
+		return &flow.WhileStatement{}, err
 	}
 
 	if !p.match(common.CLOSE_PARENTHESIS) {
-		return &statement.WhileStatement{}, fmt.Errorf("expected ')' after while condition")
+		return &flow.WhileStatement{}, fmt.Errorf("expected ')' after while condition")
 	}
 
 	body, err := p.blockStatement()
 	if err != nil {
-		return &statement.WhileStatement{}, err
+		return &flow.WhileStatement{}, err
 	}
 
-	return &statement.WhileStatement{Condition: condition, Body: body}, nil
+	return &flow.WhileStatement{Condition: condition, Body: body}, nil
 }
 
-func (p *Parser) assignmentStatement() (statement.Assignment, error) {
+func (p *Parser) assignmentStatement() (assignment.Assignment, error) {
+	if !p.match(common.SET) {
+		return nil, fmt.Errorf("expected 'set' at the beginning of assignment")
+	}
+
 	if !p.check(common.IDENTIFIER) {
-		return &statement.VarAssignment{}, fmt.Errorf("expected variable name")
+		return nil, fmt.Errorf("expected variable name")
 	}
 
 	name := p.advance()
-	var assigment statement.Assignment
+	var assigment assignment.Assignment
 	var err error
 
 	if p.check(common.OPEN_BRACKET) {
@@ -362,78 +369,77 @@ func (p *Parser) assignmentStatement() (statement.Assignment, error) {
 	return assigment, err
 }
 
-func (p *Parser) varAssigmentStatement(name common.Token) (statement.Assignment, error) {
-
+func (p *Parser) varAssigmentStatement(name common.Token) (assignment.Assignment, error) {
 	if !p.match(common.EQUAL) {
-		return &statement.VarAssignment{}, fmt.Errorf("expected '=' after variable name")
+		return nil, fmt.Errorf("expected '=' after variable name")
 	}
 
 	value, err := p.expression()
 	if err != nil {
-		return &statement.VarAssignment{}, err
+		return nil, err
 	}
 
 	if !p.match(common.SEMICOLON) {
-		return &statement.VarAssignment{}, fmt.Errorf("expected ';' after assignment")
+		return nil, fmt.Errorf("expected ';' after assignment")
 	}
 
-	return &statement.VarAssignment{Name: name.Value, Value: value}, nil
+	return &assignment.VarAssignment{Name: name.Value, Value: value}, nil
 }
 
-func (p *Parser) arrayAssignmentStatement(name common.Token) (statement.Assignment, error) {
+func (p *Parser) arrayAssignmentStatement(name common.Token) (assignment.Assignment, error) {
 	indexes := []*expression.ExpressionNode{}
 
 	for p.match(common.OPEN_BRACKET) {
 		index, err := p.expression()
 		if err != nil {
-			return &statement.ArrayAssignment{}, err
+			return nil, err
 		}
 		indexes = append(indexes, index)
 		if !p.match(common.CLOSE_BRACKET) {
-			return &statement.ArrayAssignment{}, fmt.Errorf("expected ']' after index expression")
+			return nil, fmt.Errorf("expected ']' after index expression")
 		}
 	}
 
 	if !p.match(common.EQUAL) {
-		return &statement.ArrayAssignment{}, fmt.Errorf("expected '=' after array name and indexes")
+		return nil, fmt.Errorf("expected '=' after array name and indexes")
 	}
 
 	value, err := p.expression()
 	if err != nil {
-		return &statement.ArrayAssignment{}, err
+		return nil, err
 	}
 
 	if !p.match(common.SEMICOLON) {
-		return &statement.ArrayAssignment{}, fmt.Errorf("expected ';' after assignment")
+		return nil, fmt.Errorf("expected ';' after assignment")
 	}
 
-	return &statement.ArrayAssignment{Name: name.Value, Indexes: indexes, Value: value}, nil
+	return &assignment.ArrayAssignment{Name: name.Value, Indexes: indexes, Value: value}, nil
 }
 
 func (p *Parser) expressionStatement() (*statement.ExpressionStatement, error) {
 	expr, err := p.expression()
 	if err != nil {
-		return &statement.ExpressionStatement{}, err
+		return nil, err
 	}
 
 	if !p.match(common.SEMICOLON) {
-		return &statement.ExpressionStatement{}, fmt.Errorf("expected ';' after expression")
+		return nil, fmt.Errorf("expected ';' after expression")
 	}
 
 	return &statement.ExpressionStatement{Expression: expr}, nil
 }
 
-func (p *Parser) declarationStatement() (statement.DeclarationStatement, error) {
+func (p *Parser) declarationStatement() (declaration.DeclarationStatement, error) {
 	if !p.match(common.VAR) {
-		return &statement.VarDeclaration{}, fmt.Errorf("expected 'var' at the beginning of a declaration")
+		return nil, fmt.Errorf("expected 'var' at the beginning of a declaration")
 	}
 
 	if !p.check(common.IDENTIFIER) {
-		return &statement.VarDeclaration{}, fmt.Errorf("expected variable name after '%s'", common.VAR_KEYWORD)
+		return nil, fmt.Errorf("expected variable name after '%s'", common.VAR_KEYWORD)
 	}
 
 	name := p.advance()
-	var declaration statement.DeclarationStatement
+	var declaration declaration.DeclarationStatement
 	var err error
 
 	if p.check(common.OPEN_BRACKET) {
@@ -449,12 +455,12 @@ func (p *Parser) declarationStatement() (statement.DeclarationStatement, error) 
 	return declaration, nil
 }
 
-func (p *Parser) varDeclarationStatement(name common.Token) (*statement.VarDeclaration, error) {
+func (p *Parser) varDeclarationStatement(name common.Token) (*declaration.VarDeclaration, error) {
 	if !p.match(common.EQUAL) {
 		if !p.match(common.SEMICOLON) {
 			return nil, fmt.Errorf("expected '=' or ';' after variable name")
 		}
-		return &statement.VarDeclaration{Name: &name.Value}, nil
+		return &declaration.VarDeclaration{Name: name.Value}, nil
 
 	}
 
@@ -467,10 +473,10 @@ func (p *Parser) varDeclarationStatement(name common.Token) (*statement.VarDecla
 		return nil, fmt.Errorf("expected ';' after variable declaration")
 	}
 
-	return &statement.VarDeclaration{Name: &name.Value, Value: value}, nil
+	return &declaration.VarDeclaration{Name: name.Value, Value: value}, nil
 }
 
-func (p *Parser) arrayDeclarationStatement(name common.Token) (*statement.ArrayDeclaration, error) {
+func (p *Parser) arrayDeclarationStatement(name common.Token) (*declaration.ArrayDeclaration, error) {
 	lengths := []*expression.ExpressionNode{}
 
 	for p.match(common.OPEN_BRACKET) {
@@ -490,7 +496,7 @@ func (p *Parser) arrayDeclarationStatement(name common.Token) (*statement.ArrayD
 			return nil, fmt.Errorf("expected '=' or ';' after variable name")
 		}
 
-		return &statement.ArrayDeclaration{Name: &name.Value, Lengths: lengths}, nil
+		return &declaration.ArrayDeclaration{Name: name.Value, Lengths: lengths}, nil
 	}
 
 	value, err := p.expression()
@@ -502,7 +508,7 @@ func (p *Parser) arrayDeclarationStatement(name common.Token) (*statement.ArrayD
 		return nil, fmt.Errorf("expected ';' after variable declaration")
 	}
 
-	return &statement.ArrayDeclaration{Name: &name.Value, Lengths: lengths, Value: value}, nil
+	return &declaration.ArrayDeclaration{Name: name.Value, Lengths: lengths, Value: value}, nil
 }
 
 // EXPRESIONES
@@ -782,6 +788,10 @@ func (p *Parser) functionCall() (*expression.FunctionCallNode, error) {
 }
 
 func (p *Parser) primary() (expression.Primary, error) {
+	if p.isAtEnd() {
+		return nil, fmt.Errorf("unexpected end of input")
+	}
+
 	if p.check(common.FALSE, common.TRUE, common.NONE, common.NUMBER, common.LITERAL) {
 		token := p.advance()
 		return &expression.TokenLiteralNode{Token: &token}, nil

@@ -4,6 +4,12 @@ import (
 	"fmt"
 
 	"github.com/Tinchocw/Interprete-concurrente/common/statement"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/assignment"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/block"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/declaration"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/extra"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/flow"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/function"
 )
 
 func executeStatements(statements []statement.Statement, env *Env) (Value, error) {
@@ -24,41 +30,41 @@ func executeStatements(statements []statement.Statement, env *Env) (Value, error
 
 func executeStatement(stmt statement.Statement, env *Env) (Value, error) {
 	switch s := stmt.(type) {
-	case *statement.BlockStatement:
+	case *block.BlockStatement:
 		return executeBlockStatement(s, env)
-	case *statement.VarDeclaration:
+	case *declaration.VarDeclaration:
 		return executeVarDeclaration(s, env)
-	case *statement.ArrayDeclaration:
+	case *declaration.ArrayDeclaration:
 		return executeArrayDeclaration(s, env)
-	case *statement.VarAssignment:
+	case *assignment.VarAssignment:
 		return executeVarAssignment(s, env)
-	// case *statement.ArrayAssignment:
-	// 	return executeArrayAssignment(s, env)
-	case *statement.PrintStatement:
+	case *assignment.ArrayAssignment:
+		return executeArrayAssignment(s, env)
+	case *extra.PrintStatement:
 		return executePrintStatement(s, env)
-	case *statement.IfStatement:
+	case *flow.IfStatement:
 		return executeIfStatement(s, env)
-	case *statement.WhileStatement:
+	case *flow.WhileStatement:
 		return executeWhileStatement(s, env)
-	case *statement.FunctionDef:
+	case *function.FunctionDef:
 		return executeFunctionDef(s, env)
 	case *statement.ExpressionStatement:
 		return executeExpressionStatement(s, env)
-	case *statement.ReturnStatement:
+	case *function.ReturnStatement:
 		return executeReturnStatement(s, env)
-	case *statement.BreakStatement:
+	case *flow.BreakStatement:
 		return executeBreakStatement(s, env)
 	default:
 		return nil, fmt.Errorf("unknown statement type: %T", stmt)
 	}
 }
 
-func executeBlockStatement(stmt *statement.BlockStatement, env *Env) (Value, error) {
+func executeBlockStatement(stmt *block.BlockStatement, env *Env) (Value, error) {
 	newEnv := NewEnv(env)
 	return executeStatements(stmt.Statements, newEnv)
 }
 
-func executeVarDeclaration(stmt *statement.VarDeclaration, env *Env) (Value, error) {
+func executeVarDeclaration(stmt *declaration.VarDeclaration, env *Env) (Value, error) {
 	var value Value = NoneValue{}
 
 	if stmt.Value != nil {
@@ -69,14 +75,14 @@ func executeVarDeclaration(stmt *statement.VarDeclaration, env *Env) (Value, err
 		}
 	}
 
-	if !env.DefineVariable(*stmt.Name, value) {
-		return nil, fmt.Errorf("variable '%s' already defined in this scope", *stmt.Name)
+	if !env.DefineVariable(stmt.Name, value) {
+		return nil, fmt.Errorf("variable '%s' already defined in this scope", stmt.Name)
 	}
 
 	return nil, nil
 }
 
-func executeArrayDeclaration(stmt *statement.ArrayDeclaration, env *Env) (Value, error) {
+func executeArrayDeclaration(stmt *declaration.ArrayDeclaration, env *Env) (Value, error) {
 	lengths := []IntValue{}
 
 	for _, lenExpr := range stmt.Lengths {
@@ -104,8 +110,8 @@ func executeArrayDeclaration(stmt *statement.ArrayDeclaration, env *Env) (Value,
 
 	array := createArrayRecursive(lengths, value)
 
-	if !env.DefineVariable(*stmt.Name, array) {
-		return nil, fmt.Errorf("array '%s' already defined in this scope", *stmt.Name)
+	if !env.DefineVariable(stmt.Name, array) {
+		return nil, fmt.Errorf("array '%s' already defined in this scope", stmt.Name)
 	}
 
 	return nil, nil
@@ -125,7 +131,7 @@ func createArrayRecursive(lengths []IntValue, cellValue Value) Value {
 	return ArrayValue{Values: array}
 }
 
-func executeVarAssignment(stmt *statement.VarAssignment, env *Env) (Value, error) {
+func executeVarAssignment(stmt *assignment.VarAssignment, env *Env) (Value, error) {
 	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return nil, err
@@ -138,27 +144,52 @@ func executeVarAssignment(stmt *statement.VarAssignment, env *Env) (Value, error
 	return nil, nil
 }
 
-// TODO
-// func executeArrayAssignment(stmt *statement.ArrayAssignment, env *Env) (Value, error) {
+// TODO: Implement array assignment
+func executeArrayAssignment(stmt *assignment.ArrayAssignment, env *Env) (Value, error) {
+	array, ok := env.GetVariable(stmt.Name)
+	if !ok {
+		return nil, fmt.Errorf("array '%s' not defined", stmt.Name)
+	}
 
-// 	indexes := []int{}
-// 	for _, indexExpr := range stmt.Indexes {
-// 		indexValue, err := resolveExpression(*indexExpr, env)
-// 		if err != nil {
-// 			return nil, err
-// 		}
+	indexes := []int{}
+	for _, indexExpr := range stmt.Indexes {
+		indexValue, err := resolveExpression(*indexExpr, env)
+		if err != nil {
+			return nil, err
+		}
 
-// 		if indexValue.Type() != VAL_INT {
-// 			return nil, fmt.Errorf("array index must be an integer, got %v", indexValue.Type())
-// 		}
+		if indexValue.Type() != VAL_INT {
+			return nil, fmt.Errorf("array index must be an integer, got %v", indexValue.Type())
+		}
 
-// 		indexes = append(indexes, int(indexValue.(IntValue).Value))
-// 	}
+		indexes = append(indexes, int(indexValue.(IntValue).Value))
+	}
 
-// 	value, err := resolveExpression(*stmt.Value, env)
-// }
+	value, err := resolveExpression(*stmt.Value, env)
+	if err != nil {
+		return nil, err
+	}
 
-func executePrintStatement(stmt *statement.PrintStatement, env *Env) (Value, error) {
+	for _, idx := range indexes {
+		if (*array).Type() != VAL_ARRAY {
+			return nil, fmt.Errorf("expected array type during assignment, got %v", (*array).Type())
+		}
+
+		arrayValue := (*array).(ArrayValue)
+
+		if idx < 0 || idx >= len(arrayValue.Values) {
+			return nil, fmt.Errorf("array index %d out of bounds", idx)
+		}
+
+		array = &arrayValue.Values[idx]
+	}
+
+	*array = value
+
+	return nil, nil
+}
+
+func executePrintStatement(stmt *extra.PrintStatement, env *Env) (Value, error) {
 	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return nil, err
@@ -168,7 +199,7 @@ func executePrintStatement(stmt *statement.PrintStatement, env *Env) (Value, err
 	return nil, nil
 }
 
-func executeIfStatement(stmt *statement.IfStatement, env *Env) (Value, error) {
+func executeIfStatement(stmt *flow.IfStatement, env *Env) (Value, error) {
 	conditionValue, err := resolveExpression(*stmt.Condition, env)
 	if err != nil {
 		return nil, err
@@ -197,7 +228,7 @@ func executeIfStatement(stmt *statement.IfStatement, env *Env) (Value, error) {
 	return nil, nil
 }
 
-func executeWhileStatement(stmt *statement.WhileStatement, env *Env) (Value, error) {
+func executeWhileStatement(stmt *flow.WhileStatement, env *Env) (Value, error) {
 	for {
 		conditionValue, err := resolveExpression(*stmt.Condition, env)
 		if err != nil {
@@ -221,7 +252,7 @@ func executeWhileStatement(stmt *statement.WhileStatement, env *Env) (Value, err
 	return nil, nil
 }
 
-func executeFunctionDef(stmt *statement.FunctionDef, env *Env) (Value, error) {
+func executeFunctionDef(stmt *function.FunctionDef, env *Env) (Value, error) {
 	function := NewFunction(stmt.Parameters, stmt.Body.Statements)
 	if !env.DefineVariable(*stmt.Name, FunctionValue{Function: function}) {
 		return nil, fmt.Errorf("function '%s' already defined in this scope", *stmt.Name)
@@ -234,7 +265,7 @@ func executeExpressionStatement(stmt *statement.ExpressionStatement, env *Env) (
 	return value, err
 }
 
-func executeReturnStatement(stmt *statement.ReturnStatement, env *Env) (Value, error) {
+func executeReturnStatement(stmt *function.ReturnStatement, env *Env) (Value, error) {
 	if stmt.Value == nil {
 		return nil, NewReturnErr()
 	}
@@ -247,6 +278,6 @@ func executeReturnStatement(stmt *statement.ReturnStatement, env *Env) (Value, e
 	return value, NewReturnErr()
 }
 
-func executeBreakStatement(_ *statement.BreakStatement, _ *Env) (Value, error) {
+func executeBreakStatement(_ *flow.BreakStatement, _ *Env) (Value, error) {
 	return nil, NewBreakErr()
 }

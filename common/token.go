@@ -156,6 +156,7 @@ var tokenTypeNames = [...]string{
 	IDENTIFIER:        "IDENTIFIER",
 	FUNC:              "FUNC",
 	VAR:               "VAR",
+	SET:               "SET",
 	STARTED_LITERAL:   "STARTED_LITERAL",
 	ENDED_LITERAL:     "ENDED_LITERAL",
 	OR:                "OR",
@@ -220,6 +221,7 @@ const (
 	IDENTIFIER
 	FUNC
 	VAR
+	SET
 
 	// SPECIAL TOKENS
 	PRINT
@@ -264,6 +266,7 @@ const (
 	FUNC_KEYWORD     = "func"
 	RETURN_KEYWORD   = "return"
 	VAR_KEYWORD      = "var"
+	SET_KEYWORD      = "set"
 	CONTINUE_KEYWORD = "continue"
 	BREAK_KEYWORD    = "break"
 	OR_KEYWORD       = "or"
@@ -281,6 +284,7 @@ var KEYWORDS = map[string]TokenType{
 	FUNC_KEYWORD:     FUNC,
 	RETURN_KEYWORD:   RETURN,
 	VAR_KEYWORD:      VAR,
+	SET_KEYWORD:      SET,
 	CONTINUE_KEYWORD: CONTINUE,
 	BREAK_KEYWORD:    BREAK,
 	OR_KEYWORD:       OR,
@@ -298,6 +302,7 @@ var KEYWORDS_VALUES = map[TokenType]string{
 	FUNC:     FUNC_KEYWORD,
 	RETURN:   RETURN_KEYWORD,
 	VAR:      VAR_KEYWORD,
+	SET:      SET_KEYWORD,
 	CONTINUE: CONTINUE_KEYWORD,
 	BREAK:    BREAK_KEYWORD,
 	OR:       OR_KEYWORD,

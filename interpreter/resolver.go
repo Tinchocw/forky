@@ -428,7 +428,7 @@ func resolvePrimary(primary expression.Primary, env *Env) (Value, error) {
 			if !found {
 				return nil, fmt.Errorf("undefined variable: %s", token.Value)
 			}
-			return value, nil
+			return *value, nil
 		default:
 			return nil, fmt.Errorf("unknown literal type: %v", token.Typ)
 		}

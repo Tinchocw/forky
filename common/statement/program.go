@@ -11,7 +11,7 @@ type Program struct {
 }
 
 func (p *Program) Print() {
-	printStatements("", p.Statements)
+	PrintStatements("", p.Statements)
 }
 
 func PrintProgram(program Program) {

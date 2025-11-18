@@ -1,27 +1,28 @@
-package statement
+package flow
 
 import (
 	"fmt"
 
 	"github.com/Tinchocw/Interprete-concurrente/common"
 	"github.com/Tinchocw/Interprete-concurrente/common/expression"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/block"
 )
 
 type IfStatement struct {
 	Condition *expression.ExpressionNode
-	Body      *BlockStatement
+	Body      *block.BlockStatement
 	ElseIf    *ElseIfStatement
 	Else      *ElseStatement
 }
 
 type ElseIfStatement struct {
 	Condition *expression.ExpressionNode
-	Body      *BlockStatement
+	Body      *block.BlockStatement
 	ElseIf    *ElseIfStatement
 }
 
 type ElseStatement struct {
-	Body *BlockStatement
+	Body *block.BlockStatement
 }
 
 func (ifs IfStatement) Print(start string) {
@@ -65,4 +66,8 @@ func (eis ElseIfStatement) Print(start string, hasElse bool) {
 func (es ElseStatement) Print(start string) {
 	fmt.Printf("%s%s%s\n", start, string(common.LAST_CONNECTOR), common.Colorize("Else Body:", common.COLOR_YELLOW))
 	es.Body.Print(start + string(common.SIMPLE_INDENT))
+}
+
+func (ifs IfStatement) Headline() string {
+	return common.Colorize("If Statement", common.COLOR_BLUE)
 }

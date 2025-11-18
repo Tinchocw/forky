@@ -1,15 +1,16 @@
-package statement
+package function
 
 import (
 	"fmt"
 
 	"github.com/Tinchocw/Interprete-concurrente/common"
+	"github.com/Tinchocw/Interprete-concurrente/common/statement/block"
 )
 
 type FunctionDef struct {
 	Name       *string
 	Parameters []string
-	Body       *BlockStatement
+	Body       *block.BlockStatement
 }
 
 func (fd FunctionDef) Print(start string) {
@@ -29,4 +30,8 @@ func (fd FunctionDef) Print(start string) {
 
 	fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize("Body:", common.COLOR_YELLOW))
 	fd.Body.Print(start + string(common.SIMPLE_INDENT))
+}
+
+func (fd FunctionDef) Headline() string {
+	return common.Colorize("Function Definition", common.COLOR_CYAN)
 }
