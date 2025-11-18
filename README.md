@@ -99,7 +99,7 @@ Forky does not support comments. The `//` comments shown in the examples below a
 ### Data Types
 
 - **Numbers**: Integer literals (e.g., `42`)
-- **Strings**: Delimited by `"` at start and `'` at end (e.g., `"hello'`)
+- **Strings**: Delimited by `"` at start and `'` at end, supporting Unicode characters (e.g., `"hello'`)
 - **Booleans**: `true`, `false`
 - **None**: `none` (null value)
 - **Arrays**: Multi-dimensional arrays
@@ -289,6 +289,70 @@ print(expression);
 - Strings: non-empty is true
 - `none` is false
 - `false` is false
+
+## Formal Grammar
+
+### Expressions
+
+```
+Expression 		->	LogicalOr
+LogicalOr 		->	LogicalAnd ('or' LogicalAnd )*
+LogicalAnd 		->	Equality ('and' Equality )*
+Equality 		->	Comparison ( ( '!=' | '==' ) Comparison )*
+Comparison 		->	Term ( ( '>' | '>=' | '<' | '<=' ) Term )*
+Term 			->	Factor ( ( '-' | '+' ) Factor )*
+Factor 			->	Unary ( ( '/' | '*' ) Unary )*
+Unary 			->	( '!' | '~' ) Unary | ArrAccess
+ArrAccess		->	FunctionCall ( '[' Expression ']' )*
+FunctionCall 	->	Primary ( ( Expression ( ',' Expression )* )? )?
+Primary 		->	IDENTIFIER 				|
+                        NUMBER 				|
+                        STRING 				|
+                        'true' 				|
+                        'false' 			|
+                        'None' 				|
+                        ArrayLiteral 		|
+                        GroupingExpression
+
+NUMBER         ->	'-'? [0-9]+
+STRING         ->	'"' ( ~'"'' )* "'"
+ArrayLiteral 	->	'{' ( Expression ( ',' Expression )* )? '}'
+GroupingExpression -> '(' Expression ')'
+```
+
+### Statements
+
+```
+Program				-> 	Statements*
+Statements			-> 	BlockStatement 			|
+                            IfStatement 		|
+                            WhileStatement 		|
+                            BreakStatement		|
+                            FunctionDef 		|
+                            ReturnStatement		|
+                            VarDeclaration 		|
+                            Assignment 			|
+                            PrintStatement 		|
+                            ExpressionStatement
+
+
+BlockStatement		-> '{' Statements * '}'
+IfStatement 		-> 'if' '(' Expression ')' BlockStatement
+                        ( 'else' 'if' '(' Expression ')' BlockStatement )*
+                        ( 'else' BlockStatement )?
+WhileStatement 		-> 'while' '(' Expression ')' BlockStatement
+BreakStatement  	-> 'break' ';'
+FunctionDef 		-> 'func' IDENTIFIER '(' Parameters? ')' BlockStatement
+Return 				-> 'return' Expression ';'
+VarDeclaration 		-> 'var' IDENTIFIER ( '=' Expression )? ';'
+ArrayDeclaration	-> 'var' IDENTIFIER ( '[' Expression ']' )+
+Assignment 			-> 'set' IDENTIFIER '=' Expression ';'
+ArrayAssignment 	-> 'set' IDENTIFIER ('[' Expression ']')+ '=' Expression ';'
+PrintStatement 		-> 'print' '(' Expression ')' ';'
+ForkStatement   	-> 'fork' BlockStatement
+ForkArrayStatement  -> 'fork' Expression ( IDENTIFIER ( ',' IDENTIFIER )? )? BlockStatement
+ExpressionStatement -> Expression ';'
+```
 
 ## Error Handling
 
