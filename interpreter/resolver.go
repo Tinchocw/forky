@@ -229,7 +229,7 @@ func resolveTerm(term expression.TermNode, env *Env) (Value, error) {
 
 		return nil, fmt.Errorf("operator '+' not supported for type %s and type %s", left.TypeName(), right.TypeName())
 	case common.MINUS:
-		if left.Type() == VAL_INT {
+		if left.Type() == VAL_INT && right.Type() == VAL_INT {
 			return IntValue{Value: left.Data().(int) - right.Data().(int)}, nil
 		}
 		return nil, fmt.Errorf("operator '-' not supported for type %s and type %s", left.TypeName(), right.TypeName())
