@@ -90,6 +90,31 @@ Use ↑↓ arrows for history, ←→ for line editing.
 
 The REPL maintains a history of your commands and supports all Forky language features including functions, variables, and parallel execution.
 
+## Makefile Reference
+
+El Makefile simplifica el uso del intérprete Forky. Aquí va una guía breve de los comandos principales:
+
+### Variables Configurables
+- `WORKERS=<n>`: Número de workers para escaneo paralelo (por defecto: 4)
+- `FILE=<ruta>`: Archivo .forky a procesar
+- `DEBUG=true`: Habilita salida de debug
+
+### Comandos Principales
+- `make` o `make run`: Ejecuta el REPL o el archivo especificado en `FILE`
+- `make scan`: Solo escanea el archivo (modo scanning)
+- `make parse`: Solo parsea el archivo (modo parsing)
+- `make build`: Construye el binario `forky`
+- `make test`: Ejecuta las pruebas con `go test`
+- `make clean`: Limpia artefactos de build
+- `make help`: Muestra ayuda completa
+
+### Ejemplos de Uso
+- Ejecutar un archivo: `make run FILE=examples/fundamentals/basic.forky`
+- Con debug: `make run FILE=test.forky DEBUG=true`
+- Escanear con 8 workers: `make scan WORKERS=8 FILE=mi_archivo.forky`
+
+Usa `make help` para más detalles.
+
 ## Language Syntax
 
 ### Comments

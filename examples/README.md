@@ -45,31 +45,36 @@ The fundamentals folder contains examples that introduce core language concepts 
 - Return statements
 - Recursion
 
-### 8. `conditionals.forky`
+### 8. `first_class_functions.forky`
+- First-class functions
+- Passing functions as arguments
+- Function expressions
+
+### 9. `conditionals.forky`
 - `if` statements
 - `else if` and `else` clauses
 - Nested conditionals
 
-### 9. `loops.forky`
+### 10. `loops.forky`
 - `while` loops
 - `break` statements
 - Nested loops
 - Loop control
 
-### 10. `fork.forky`
+### 11. `fork.forky`
 - Parallel execution with `fork { { block1 } { block2 } ... }`
 - Concurrent block execution
 
-### 11. `forkArray.forky`
+### 12. `forkArray.forky`
 - Parallel array iteration with `fork arr var { ... }`
 - Nested fork statements
 - Array processing in parallel
 
-### 12. `complex.forky`
+### 13. `complex.forky`
 - Complex program combining multiple features
 - Integration of functions, loops, and conditionals
 
-### 13. `errors.forky`
+### 14. `errors.forky`
 - Common error cases and runtime errors
 - Examples of what causes errors
 
@@ -82,6 +87,16 @@ The usecases folder contains practical examples showing how to implement common 
 - Methods: append, get, pop, size, resize
 - Error handling for bounds checking
 - Demonstration of encapsulation with functions
+
+### 2. `multi_dim_sums.forky`
+- Parallel computation of sums in multi-dimensional arrays
+- Use of nested fork statements for parallel processing
+- Array manipulation and aggregation
+
+### 3. `parallel_fork_usecase.forky`
+- Practical example of parallel processing with fork
+- Concurrent execution of independent tasks
+- Performance demonstration with parallel blocks
 
 ## Syntax Notes
 
