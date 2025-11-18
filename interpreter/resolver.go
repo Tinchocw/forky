@@ -6,6 +6,7 @@ import (
 
 	"github.com/Tinchocw/Interprete-concurrente/common"
 	"github.com/Tinchocw/Interprete-concurrente/common/expression"
+	"github.com/Tinchocw/Interprete-concurrente/interpreter/errors"
 )
 
 func resolveExpression(expr expression.ExpressionNode, env *Env) (Value, error) {
@@ -397,7 +398,7 @@ func resolveFunctionCall(fc expression.FunctionCallNode, env *Env) (Value, error
 
 	value, err := function.Call(args, env)
 
-	if err == nil || !IsReturnErr(err) {
+	if err == nil || !errors.IsReturnErr(err) {
 		return nil, err
 	}
 

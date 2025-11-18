@@ -1,7 +1,6 @@
 package common
 
 import (
-	"fmt"
 	"strings"
 )
 
@@ -30,8 +29,4 @@ func AdvanceSuffix(start string) string {
 	} else {
 		return start
 	}
-}
-
-func PrintStatementHeadline(start string, index int, stmtName string, color Color) {
-	fmt.Printf("%s%4d: %s\n", start, index+1, Colorize(stmtName, color))
 }

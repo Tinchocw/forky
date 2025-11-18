@@ -10,6 +10,7 @@ import (
 	"github.com/Tinchocw/Interprete-concurrente/common/statement/extra"
 	"github.com/Tinchocw/Interprete-concurrente/common/statement/flow"
 	"github.com/Tinchocw/Interprete-concurrente/common/statement/function"
+	"github.com/Tinchocw/Interprete-concurrente/interpreter/errors"
 )
 
 func executeStatements(statements []statement.Statement, env *Env) (Value, error) {
@@ -19,7 +20,7 @@ func executeStatements(statements []statement.Statement, env *Env) (Value, error
 	for _, stmt := range statements {
 		value, err = executeStatement(stmt, env)
 		if err != nil {
-			if IsReturnErr(err) {
+			if errors.IsReturnErr(err) {
 				return value, err
 			}
 			return nil, err
@@ -308,7 +309,7 @@ func executeWhileStatement(stmt *flow.WhileStatement, env *Env) (Value, error) {
 
 		result, err := executeBlockStatement(stmt.Body, env)
 		if err != nil {
-			if IsBreakErr(err) {
+			if errors.IsBreakErr(err) {
 				break
 			} else {
 				return result, err
@@ -334,7 +335,7 @@ func executeExpressionStatement(stmt *statement.ExpressionStatement, env *Env) (
 
 func executeReturnStatement(stmt *function.ReturnStatement, env *Env) (Value, error) {
 	if stmt.Value == nil {
-		return nil, NewReturnErr()
+		return nil, errors.NewReturnErr()
 	}
 
 	value, err := resolveExpression(*stmt.Value, env)
@@ -342,9 +343,9 @@ func executeReturnStatement(stmt *function.ReturnStatement, env *Env) (Value, er
 		return nil, err
 	}
 
-	return value, NewReturnErr()
+	return value, errors.NewReturnErr()
 }
 
 func executeBreakStatement(_ *flow.BreakStatement, _ *Env) (Value, error) {
-	return nil, NewBreakErr()
+	return nil, errors.NewBreakErr()
 }
