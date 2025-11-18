@@ -7,33 +7,45 @@ import (
 )
 
 /*
-	Program			-> 	Statements*
-	Statements		-> 	BlockStatement 			|
-							IfStatement 		|
-							WhileStatement 		|
-							BreakStatement		|
-							FunctionDef 		|
-							ReturnStatement		|
-							VarDeclaration 		|
-							Assignment 			|
-							PrintStatement 		|
-							ExpressionStatement
+	Program				-> 	Statements*
+	Statements			-> 	BlockStatement 			|
+								IfStatement 		|
+								WhileStatement 		|
+								BreakStatement		|
+								FunctionDef 		|
+								ReturnStatement		|
+								VarDeclaration 		|
+								Assignment 			|
+								PrintStatement 		|
+								ExpressionStatement
 
 
-	BlockStatement	-> '{' Statements * '}'
-	IfStatement 	-> 'if' '(' Expression ')' BlockStatement
-						( 'else' 'if' '(' Expression ')' BlockStatement )*
-						( 'else' BlockStatement )?
-	WhileStatement 	-> 'while' '(' Expression ')' BlockStatement
-	BreakStatement  -> 'break' ';'
-	FunctionDef 	-> 'func' IDENTIFIER '(' Parameters? ')' BlockStatement
-	Return 			-> 'return' Expression ';'
-	VarDeclaration 	-> 'var' IDENTIFIER ( '=' Expression )? ';'
-	Assignment 		-> IDENTIFIER '=' Expression ';'
-	PrintStatement 	-> 'print' '(' Expression ')' ';'
+	BlockStatement		-> '{' Statements * '}'
+	IfStatement 		-> 'if' '(' Expression ')' BlockStatement
+							( 'else' 'if' '(' Expression ')' BlockStatement )*
+							( 'else' BlockStatement )?
+	WhileStatement 		-> 'while' '(' Expression ')' BlockStatement
+	BreakStatement  	-> 'break' ';'
+	FunctionDef 		-> 'func' IDENTIFIER '(' Parameters? ')' BlockStatement
+	Return 				-> 'return' Expression ';'
+	VarDeclaration 		-> 'var' IDENTIFIER ( '=' Expression )? ';'
+	ArrayDeclaration	-> 'var' IDENTIFIER ( '[' Expression ']' )+
+	Assignment 			-> IDENTIFIER '=' Expression ';'
+	ArrayAssignment 	-> IDENTIFIER ('[' Expression ']')+ '=' Expression ';'
+	PrintStatement 		-> 'print' '(' Expression ')' ';'
 	ExpressionStatement -> Expression ';'
 
 	Arguments 		-> Expression (',' Expression)*
+*/
+
+/*
+var arr[3]; 		-> arr = [None, None, None]
+var arr[3] = 1 		-> arr = [1,1,1]
+var arr[3][3] = 1 	-> arr = [[1,1,1],[1,1,1],[1,1,1]]
+var arr = [1,2,3]; 	-> arr = [1,2,3]
+
+arr[0] = 5;
+arr[1][2] = 10;
 */
 
 func statementHeadline(s Statement) string {
@@ -48,8 +60,10 @@ func statementHeadline(s Statement) string {
 		return common.Colorize("FunctionDef", common.COLOR_CYAN)
 	case *VarDeclaration:
 		return common.Colorize("VarDeclaration", common.COLOR_GREEN)
-	case *Assignment:
-		return common.Colorize("Assignment", common.COLOR_GREEN)
+	case *ArrayDeclaration:
+		return common.Colorize("ArrayDeclaration", common.COLOR_GREEN)
+	case *ArrayAssignment:
+		return common.Colorize("ArrayAssignment", common.COLOR_GREEN)
 	case *PrintStatement:
 		return common.Colorize("PrintStatement", common.COLOR_RED)
 	case *ReturnStatement:
@@ -58,6 +72,8 @@ func statementHeadline(s Statement) string {
 		return common.Colorize("BreakStatement", common.COLOR_CYAN)
 	case *ExpressionStatement:
 		return common.Colorize("ExpressionStatement", common.COLOR_YELLOW)
+	case Assignment:
+		return common.Colorize("Assignment", common.COLOR_GREEN)
 	default:
 		return common.Colorize("UnknownStatement", common.COLOR_RED)
 	}
@@ -69,7 +85,6 @@ type Statement interface {
 
 func printStatements(start string, statements []Statement) {
 	for i, stmt := range statements {
-
 		fmt.Printf("%s%4d: %s\n", start, i+1, statementHeadline(stmt))
 		stmt.Print(common.AdvanceSuffix(start + string(common.COUNTER_INDENT)))
 	}

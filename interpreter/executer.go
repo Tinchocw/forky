@@ -28,8 +28,12 @@ func executeStatement(stmt statement.Statement, env *Env) (Value, error) {
 		return executeBlockStatement(s, env)
 	case *statement.VarDeclaration:
 		return executeVarDeclaration(s, env)
-	case *statement.Assignment:
-		return executeAssignment(s, env)
+	case *statement.ArrayDeclaration:
+		return executeArrayDeclaration(s, env)
+	case *statement.VarAssignment:
+		return executeVarAssignment(s, env)
+	// case *statement.ArrayAssignment:
+	// 	return executeArrayAssignment(s, env)
 	case *statement.PrintStatement:
 		return executePrintStatement(s, env)
 	case *statement.IfStatement:
@@ -55,9 +59,14 @@ func executeBlockStatement(stmt *statement.BlockStatement, env *Env) (Value, err
 }
 
 func executeVarDeclaration(stmt *statement.VarDeclaration, env *Env) (Value, error) {
-	value, err := resolveExpression(*stmt.Value, env)
-	if err != nil {
-		return nil, err
+	var value Value = NoneValue{}
+
+	if stmt.Value != nil {
+		var err error
+		value, err = resolveExpression(*stmt.Value, env)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	if !env.DefineVariable(*stmt.Name, value) {
@@ -67,18 +76,87 @@ func executeVarDeclaration(stmt *statement.VarDeclaration, env *Env) (Value, err
 	return nil, nil
 }
 
-func executeAssignment(stmt *statement.Assignment, env *Env) (Value, error) {
+func executeArrayDeclaration(stmt *statement.ArrayDeclaration, env *Env) (Value, error) {
+	lengths := []IntValue{}
+
+	for _, lenExpr := range stmt.Lengths {
+		lenValue, err := resolveExpression(*lenExpr, env)
+		if err != nil {
+			return nil, err
+		}
+
+		if lenValue.Type() != VAL_INT {
+			return nil, fmt.Errorf("array length must be an integer, got %v", lenValue.Type())
+		}
+
+		lengths = append(lengths, lenValue.(IntValue))
+	}
+
+	var value Value = NoneValue{}
+
+	if stmt.Value != nil {
+		var err error
+		value, err = resolveExpression(*stmt.Value, env)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	array := createArrayRecursive(lengths, value)
+
+	if !env.DefineVariable(*stmt.Name, array) {
+		return nil, fmt.Errorf("array '%s' already defined in this scope", *stmt.Name)
+	}
+
+	return nil, nil
+}
+
+func createArrayRecursive(lengths []IntValue, cellValue Value) Value {
+	if len(lengths) == 0 {
+		return cellValue
+	}
+
+	size := int(lengths[0].Value)
+	array := make([]Value, size)
+	for i := range size {
+		array[i] = createArrayRecursive(lengths[1:], cellValue)
+	}
+
+	return ArrayValue{Values: array}
+}
+
+func executeVarAssignment(stmt *statement.VarAssignment, env *Env) (Value, error) {
 	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return nil, err
 	}
 
-	if !env.AssignVariable(*stmt.Name, value) {
-		return nil, fmt.Errorf("variable '%s' not defined", *stmt.Name)
+	if !env.AssignVariable(stmt.Name, value) {
+		return nil, fmt.Errorf("variable '%s' not defined", stmt.Name)
 	}
 
 	return nil, nil
 }
+
+// TODO
+// func executeArrayAssignment(stmt *statement.ArrayAssignment, env *Env) (Value, error) {
+
+// 	indexes := []int{}
+// 	for _, indexExpr := range stmt.Indexes {
+// 		indexValue, err := resolveExpression(*indexExpr, env)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+
+// 		if indexValue.Type() != VAL_INT {
+// 			return nil, fmt.Errorf("array index must be an integer, got %v", indexValue.Type())
+// 		}
+
+// 		indexes = append(indexes, int(indexValue.(IntValue).Value))
+// 	}
+
+// 	value, err := resolveExpression(*stmt.Value, env)
+// }
 
 func executePrintStatement(stmt *statement.PrintStatement, env *Env) (Value, error) {
 	value, err := resolveExpression(*stmt.Value, env)
@@ -157,6 +235,10 @@ func executeExpressionStatement(stmt *statement.ExpressionStatement, env *Env) (
 }
 
 func executeReturnStatement(stmt *statement.ReturnStatement, env *Env) (Value, error) {
+	if stmt.Value == nil {
+		return nil, NewReturnErr()
+	}
+
 	value, err := resolveExpression(*stmt.Value, env)
 	if err != nil {
 		return nil, err

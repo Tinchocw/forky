@@ -10,15 +10,13 @@ import (
 )
 
 type Parser struct {
-	tokens          []common.Token
-	current         int
-	CouldMergeStart bool
-	CouldMergeEnd   bool
-	debug           bool
+	tokens  []common.Token
+	current int
+	debug   bool
 }
 
 func NewParser(tokens []common.Token, debug bool) *Parser {
-	return &Parser{tokens: tokens, current: 0, CouldMergeStart: true, CouldMergeEnd: true, debug: debug}
+	return &Parser{tokens: tokens, current: 0, debug: debug}
 }
 
 func (p *Parser) isAtEnd() bool {
@@ -83,10 +81,11 @@ func (p *Parser) matchs(token_types ...common.TokenType) bool {
 // STATEMENTS
 
 func (p *Parser) program() (statement.Program, error) {
-	var statements []statement.Statement
+	statements := []statement.Statement{}
 	for !p.isAtEnd() {
 		stmt, err := p.statement()
 		if err != nil {
+			return statement.Program{}, err
 		}
 		statements = append(statements, stmt)
 	}
@@ -100,7 +99,7 @@ func (p *Parser) blockStatement() (*statement.BlockStatement, error) {
 		return &statement.BlockStatement{}, fmt.Errorf("expected '{' at the beginning of block")
 	}
 
-	var statements []statement.Statement
+	statements := []statement.Statement{}
 	for !p.isAtEnd() && !p.check(common.CLOSE_BRACES) {
 		stmt, err := p.statement()
 		if err != nil {
@@ -138,7 +137,7 @@ func (p *Parser) statement() (statement.Statement, error) {
 	case common.FUNC:
 		return p.funcStatement()
 	case common.VAR:
-		return p.varStatement()
+		return p.declarationStatement()
 	case common.WHILE:
 		return p.whileStatement()
 	case common.OPEN_BRACES:
@@ -292,7 +291,7 @@ func (p *Parser) funcStatement() (*statement.FunctionDef, error) {
 		return &statement.FunctionDef{}, fmt.Errorf("expected '(' after function name")
 	}
 
-	var parameters []string
+	parameters := []string{}
 
 	if !p.match(common.CLOSE_PARENTHESIS) {
 		for {
@@ -345,27 +344,70 @@ func (p *Parser) whileStatement() (*statement.WhileStatement, error) {
 	return &statement.WhileStatement{Condition: condition, Body: body}, nil
 }
 
-func (p *Parser) assignmentStatement() (*statement.Assignment, error) {
+func (p *Parser) assignmentStatement() (statement.Assignment, error) {
 	if !p.check(common.IDENTIFIER) {
-		return &statement.Assignment{}, fmt.Errorf("expected variable name")
+		return &statement.VarAssignment{}, fmt.Errorf("expected variable name")
 	}
 
-	name := p.advance().Value
+	name := p.advance()
+	var assigment statement.Assignment
+	var err error
+
+	if p.check(common.OPEN_BRACKET) {
+		assigment, err = p.arrayAssignmentStatement(name)
+	} else {
+		assigment, err = p.varAssigmentStatement(name)
+	}
+
+	return assigment, err
+}
+
+func (p *Parser) varAssigmentStatement(name common.Token) (statement.Assignment, error) {
 
 	if !p.match(common.EQUAL) {
-		return &statement.Assignment{}, fmt.Errorf("expected '=' after variable name")
+		return &statement.VarAssignment{}, fmt.Errorf("expected '=' after variable name")
 	}
 
 	value, err := p.expression()
 	if err != nil {
-		return &statement.Assignment{}, err
+		return &statement.VarAssignment{}, err
 	}
 
 	if !p.match(common.SEMICOLON) {
-		return &statement.Assignment{}, fmt.Errorf("expected ';' after assignment")
+		return &statement.VarAssignment{}, fmt.Errorf("expected ';' after assignment")
 	}
 
-	return &statement.Assignment{Name: &name, Value: value}, nil
+	return &statement.VarAssignment{Name: name.Value, Value: value}, nil
+}
+
+func (p *Parser) arrayAssignmentStatement(name common.Token) (statement.Assignment, error) {
+	indexes := []*expression.ExpressionNode{}
+
+	for p.match(common.OPEN_BRACKET) {
+		index, err := p.expression()
+		if err != nil {
+			return &statement.ArrayAssignment{}, err
+		}
+		indexes = append(indexes, index)
+		if !p.match(common.CLOSE_BRACKET) {
+			return &statement.ArrayAssignment{}, fmt.Errorf("expected ']' after index expression")
+		}
+	}
+
+	if !p.match(common.EQUAL) {
+		return &statement.ArrayAssignment{}, fmt.Errorf("expected '=' after array name and indexes")
+	}
+
+	value, err := p.expression()
+	if err != nil {
+		return &statement.ArrayAssignment{}, err
+	}
+
+	if !p.match(common.SEMICOLON) {
+		return &statement.ArrayAssignment{}, fmt.Errorf("expected ';' after assignment")
+	}
+
+	return &statement.ArrayAssignment{Name: name.Value, Indexes: indexes, Value: value}, nil
 }
 
 func (p *Parser) expressionStatement() (*statement.ExpressionStatement, error) {
@@ -374,17 +416,16 @@ func (p *Parser) expressionStatement() (*statement.ExpressionStatement, error) {
 		return &statement.ExpressionStatement{}, err
 	}
 
-	if p.match(common.SEMICOLON) {
-		// It's supposed to be a valid expression statement in the right side
-		p.CouldMergeEnd = false
+	if !p.match(common.SEMICOLON) {
+		return &statement.ExpressionStatement{}, fmt.Errorf("expected ';' after expression")
 	}
 
 	return &statement.ExpressionStatement{Expression: expr}, nil
 }
 
-func (p *Parser) varStatement() (*statement.VarDeclaration, error) {
+func (p *Parser) declarationStatement() (statement.DeclarationStatement, error) {
 	if !p.match(common.VAR) {
-		return &statement.VarDeclaration{}, fmt.Errorf("expected 'var' at the beginning of variable declaration")
+		return &statement.VarDeclaration{}, fmt.Errorf("expected 'var' at the beginning of a declaration")
 	}
 
 	if !p.check(common.IDENTIFIER) {
@@ -392,21 +433,76 @@ func (p *Parser) varStatement() (*statement.VarDeclaration, error) {
 	}
 
 	name := p.advance()
+	var declaration statement.DeclarationStatement
+	var err error
 
+	if p.check(common.OPEN_BRACKET) {
+		declaration, err = p.arrayDeclarationStatement(name)
+	} else {
+		declaration, err = p.varDeclarationStatement(name)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return declaration, nil
+}
+
+func (p *Parser) varDeclarationStatement(name common.Token) (*statement.VarDeclaration, error) {
 	if !p.match(common.EQUAL) {
-		return &statement.VarDeclaration{}, fmt.Errorf("expected '=' after variable name")
+		if !p.match(common.SEMICOLON) {
+			return nil, fmt.Errorf("expected '=' or ';' after variable name")
+		}
+		return &statement.VarDeclaration{Name: &name.Value}, nil
+
 	}
 
 	value, err := p.expression()
 	if err != nil {
-		return &statement.VarDeclaration{}, err
+		return nil, err
 	}
 
 	if !p.match(common.SEMICOLON) {
-		return &statement.VarDeclaration{}, fmt.Errorf("expected ';' after variable declaration")
+		return nil, fmt.Errorf("expected ';' after variable declaration")
 	}
 
 	return &statement.VarDeclaration{Name: &name.Value, Value: value}, nil
+}
+
+func (p *Parser) arrayDeclarationStatement(name common.Token) (*statement.ArrayDeclaration, error) {
+	lengths := []*expression.ExpressionNode{}
+
+	for p.match(common.OPEN_BRACKET) {
+		length, err := p.expression()
+		if err != nil {
+			return nil, err
+		}
+		lengths = append(lengths, length)
+
+		if !p.match(common.CLOSE_BRACKET) {
+			return nil, fmt.Errorf("expected ']' after size expression")
+		}
+	}
+
+	if !p.match(common.EQUAL) {
+		if !p.match(common.SEMICOLON) {
+			return nil, fmt.Errorf("expected '=' or ';' after variable name")
+		}
+
+		return &statement.ArrayDeclaration{Name: &name.Value, Lengths: lengths}, nil
+	}
+
+	value, err := p.expression()
+	if err != nil {
+		return nil, err
+	}
+
+	if !p.match(common.SEMICOLON) {
+		return nil, fmt.Errorf("expected ';' after variable declaration")
+	}
+
+	return &statement.ArrayDeclaration{Name: &name.Value, Lengths: lengths, Value: value}, nil
 }
 
 // EXPRESIONES
@@ -624,7 +720,7 @@ func (p *Parser) arrayAccess() (*expression.ArrayAccessNode, error) {
 	aa := &expression.ArrayAccessNode{Left: left}
 	first := true
 
-	for p.match(common.OPEN_BRACKET_SYMBOL) {
+	for p.match(common.OPEN_BRACKET) {
 		if !first {
 			aa = &expression.ArrayAccessNode{Left: aa}
 		}
@@ -634,7 +730,7 @@ func (p *Parser) arrayAccess() (*expression.ArrayAccessNode, error) {
 			return nil, err
 		}
 
-		if !p.match(common.CLOSE_BRACKET_SYMBOL) {
+		if !p.match(common.CLOSE_BRACKET) {
 			return nil, fmt.Errorf("expected ']' after index expression")
 		}
 
@@ -658,8 +754,8 @@ func (p *Parser) functionCall() (*expression.FunctionCallNode, error) {
 		if !first {
 			fc = &expression.FunctionCallNode{Callee: fc}
 		}
+		args := []*expression.ExpressionNode{}
 
-		var args []*expression.ExpressionNode
 		if !p.match(common.CLOSE_PARENTHESIS) {
 			for {
 				arg, err := p.expression()
@@ -704,20 +800,20 @@ func (p *Parser) primary() (expression.Primary, error) {
 		return &expression.GroupingExpressionNode{Expression: expr}, nil
 	}
 
-	if p.match(common.OPEN_BRACES) {
+	if p.match(common.OPEN_BRACKET) {
 		elements := []*expression.ExpressionNode{}
-		for !p.match(common.CLOSE_BRACES) {
+		for !p.match(common.CLOSE_BRACKET) && !p.isAtEnd() {
 			element, err := p.expression()
 			if err != nil {
 				return nil, err
 			}
 			elements = append(elements, element)
 			if !p.match(common.COMMA) {
-				if p.check(common.CLOSE_BRACES) {
+				if p.match(common.CLOSE_BRACKET) {
 					break
 				}
 
-				return nil, fmt.Errorf("expected ',' or '}' after array element")
+				return nil, fmt.Errorf("expected ',' or ']' after array element")
 			}
 		}
 

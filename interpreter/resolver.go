@@ -22,7 +22,7 @@ func resolveLogicalOr(bor expression.LogicalOrNode, env *Env) (Value, error) {
 	case *expression.LogicalAndNode:
 		left, err = resolveLogicalAnd(*bor.Left.(*expression.LogicalAndNode), env)
 	default:
-		return nil, fmt.Errorf("invalid left operand type for BinaryOr")
+		return nil, fmt.Errorf("invalid left operand type for LogicalOr")
 	}
 
 	if err != nil {
@@ -55,7 +55,7 @@ func resolveLogicalAnd(band expression.LogicalAndNode, env *Env) (Value, error) 
 	case *expression.EqualityNode:
 		left, err = resolveEquality(*band.Left.(*expression.EqualityNode), env)
 	default:
-		return nil, fmt.Errorf("invalid left operand type for BinaryAnd")
+		return nil, fmt.Errorf("invalid left operand type for LogicalAnd")
 	}
 
 	if err != nil {

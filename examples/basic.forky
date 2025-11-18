@@ -1,5 +1,1 @@
-func hola() {
-    print("Hola, mundo!');
-}
-
-hola();
+var a;
