@@ -1,67 +1,69 @@
-var VECTOR_CAPACITY = 100;
-var vector_data[VECTOR_CAPACITY];
-var vector_size = 0;
+var _INITIAL_CAPACITY = 100;
+var _GROW_FACTOR = 2;
+var _SHRINK_FACTOR = 2;
+var _MIN_CAPACITY = 10;
+var _SHRINK_THRESHOLD = 4;
+
+var _vector_capacity = _INITIAL_CAPACITY;
+var _vector_data[_vector_capacity];
+var _vector_length = 0;
+
+func _vector_resize(new_capacity) {
+    var new_data[new_capacity];
+    var i = 0;
+    while (i < _vector_length) {
+        set new_data[i] = _vector_data[i];
+        set i = i + 1;
+    }
+    set _vector_data = new_data;
+    set _vector_length = new_capacity;
+}
 
 func vector_append(value) {
-    if (vector_size >= VECTOR_CAPACITY) {
-        print("Vector capacity exceeded');
-        return;
+    if (_vector_length >= _vector_capacity) {
+        _vector_resize(_vector_capacity * _GROW_FACTOR);
     }
-    set vector_data[vector_size] = value;
-    set vector_size = vector_size + 1;
+    set _vector_data[_vector_length] = value;
+    set _vector_length = _vector_length + 1;
 }
 
 func vector_get(index) {
-    if (index < 0 or index >= vector_size) {
+    if (index < 0 or index >= _vector_length) {
         print("Index out of bounds');
         return none;
     }
-    return vector_data[index];
+    return _vector_data[index];
 }
 
 func vector_pop() {
-    if (vector_size <= 0) {
+    if (_vector_length <= 0) {
         print("Vector is empty');
         return none;
     }
-    set vector_size = vector_size - 1;
-    return vector_data[vector_size];
+    set _vector_length = _vector_length - 1;
+    var result = _vector_data[_vector_length];
+    if (_vector_length <= _vector_capacity / _SHRINK_THRESHOLD and _vector_length > _MIN_CAPACITY) {
+        _vector_resize(_vector_capacity / _SHRINK_FACTOR);
+    }
+    return result;
 }
 
-func vector_size_func() {
-    return vector_size;
-}
-
-func vector_resize(new_size) {
-    if (new_size < 0) {
-        print("Invalid size');
-        return;
-    }
-    if (new_size > VECTOR_CAPACITY) {
-        print("Cannot resize beyond capacity');
-        return;
-    }
-    if (new_size > vector_size) {
-        var i = vector_size;
-        while (i < new_size) {
-            set vector_data[i] = none;
-            set i = i + 1;
-        }
-    }
-    set vector_size = new_size;
+func vector_length() {
+    return _vector_length;
 }
 
 func vector_print() {
-    print("[');
+    var str = "[';
     var i = 0;
-    while (i < vector_size) {
-        print(vector_data[i]);
-        if (i < vector_size - 1) {
-            print(", ');
+    while (i < _vector_length) {
+        set str = str + _vector_data[i];
+        if (i < _vector_length - 1) {
+            set str = str + ", ';
         }
         set i = i + 1;
     }
-    print("]');
+    set str = str + "]';
+    print(str);
 }
 
 print("Creating dynamic vector');
@@ -73,7 +75,7 @@ vector_append(30);
 print("Vector after appends:');
 vector_print();
 
-print("Size: ' + vector_size_func());
+print("Size: ' + vector_length());
 
 print("Getting element at index 1: ' + vector_get(1));
 
@@ -82,12 +84,49 @@ print("Popping last element: ' + vector_pop());
 print("Vector after pop:');
 vector_print();
 
-print("Size after pop: ' + vector_size_func());
+print("Size after pop: ' + vector_length());
 
-print("Resizing to 5 elements:');
-vector_resize(5);
+var i = 1;
+while (i <= 50) {
+    vector_append(i);
+    set i = i + 1;
+}
 
-print("Vector after resize:');
+print("After adding numbers 1 to 50:');
+print("Size: ' + vector_length());
+
+var mid = vector_length() / 2;
+var sum1 = 0;
+var sum2 = 0;
+
+fork {
+    {
+        var i = 0;
+        while (i < mid) {
+            set sum1 = sum1 + vector_get(i);
+            set i = i + 1;
+        }
+    }
+    {
+        var i = mid;
+        while (i < vector_length()) {
+            set sum2 = sum2 + vector_get(i);
+            set i = i + 1;
+        }
+    }
+}
+
+var total_sum = sum1 + sum2;
+print("Parallel sum of all elements: ' + total_sum);
+
+var j = 0;
+while (j < 10) {
+    var popped = vector_pop();
+    print("Popped: ' + popped);
+    set j = j + 1;
+}
+
+print("After popping 10 elements:');
 vector_print();
 
-print("Size after resize: ' + vector_size_func());
+print("Final size: ' + vector_length());
