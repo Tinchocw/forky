@@ -13,10 +13,18 @@ type VarAssignment struct {
 }
 
 func (a VarAssignment) Print(start string) {
-	fmt.Printf("%s%s %s\n", start+string(common.BRANCH_CONNECTOR), common.Colorize("Name:", common.COLOR_YELLOW), common.Colorize(a.Name, common.COLOR_WHITE))
-	fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize("Value:", common.COLOR_YELLOW))
-	start += string(common.SIMPLE_INDENT) + string(common.LAST_CONNECTOR)
-	a.Value.Print(start)
+	conector := string(common.BRANCH_CONNECTOR)
+	if a.Value == nil {
+		conector = string(common.LAST_CONNECTOR)
+	}
+
+	fmt.Printf("%s%s %s\n", start+conector, common.Colorize("Name:", common.COLOR_YELLOW), common.Colorize(a.Name, common.COLOR_WHITE))
+
+	if a.Value != nil {
+		fmt.Printf("%s%s\n", start+string(common.LAST_CONNECTOR), common.Colorize("Value:", common.COLOR_YELLOW))
+		start += string(common.SIMPLE_INDENT) + string(common.LAST_CONNECTOR)
+		a.Value.Print(start)
+	}
 }
 
 func (a VarAssignment) Headline() string {
