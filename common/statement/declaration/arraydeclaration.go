@@ -9,8 +9,8 @@ import (
 
 type ArrayDeclaration struct {
 	Name    string
-	Lengths []*expression.ExpressionNode
-	Value   *expression.ExpressionNode
+	Lengths []expression.Expression
+	Value   expression.Expression
 }
 
 func (ad ArrayDeclaration) Print(start string) {

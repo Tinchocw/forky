@@ -9,8 +9,8 @@ import (
 
 type ArrayAssignment struct {
 	Name    string
-	Indexes []*expression.ExpressionNode
-	Value   *expression.ExpressionNode
+	Indexes []expression.Expression
+	Value   expression.Expression
 }
 
 func (aa ArrayAssignment) Print(start string) {

@@ -9,36 +9,44 @@ import (
 	"github.com/Tinchocw/forky/interpreter/errors"
 )
 
-func resolveExpression(expr expression.ExpressionNode, env *Env) (Value, error) {
-	return resolveLogicalOr(*expr.Root, env)
+func resolveExpression(expr expression.Expression, env *Env) (Value, error) {
+	switch e := expr.(type) {
+	case *expression.LogicalOrNode:
+		return resolveLogicalOr(*e, env)
+	case *expression.LogicalAndNode:
+		return resolveLogicalAnd(*e, env)
+	case *expression.EqualityNode:
+		return resolveEquality(*e, env)
+	case *expression.ComparisonNode:
+		return resolveComparison(*e, env)
+	case *expression.TermNode:
+		return resolveTerm(*e, env)
+	case *expression.FactorNode:
+		return resolveFactor(*e, env)
+	case *expression.UnaryNode:
+		return resolveUnary(*e, env)
+	case *expression.ArrayAccessNode:
+		return resolveArrayAccess(*e, env)
+	case *expression.FunctionCallNode:
+		return resolveFunctionCall(*e, env)
+	case expression.Primary:
+		return resolvePrimary(e, env)
+	default:
+		return nil, fmt.Errorf("unknown expression type")
+	}
 }
 
 func resolveLogicalOr(bor expression.LogicalOrNode, env *Env) (Value, error) {
-	var left Value
-	var err error
-
-	switch bor.Left.(type) {
-	case *expression.LogicalOrNode:
-		left, err = resolveLogicalOr(*bor.Left.(*expression.LogicalOrNode), env)
-	case *expression.LogicalAndNode:
-		left, err = resolveLogicalAnd(*bor.Left.(*expression.LogicalAndNode), env)
-	default:
-		return nil, fmt.Errorf("invalid left operand type for LogicalOr")
-	}
-
+	left, err := resolveExpression(bor.Left, env)
 	if err != nil {
 		return nil, err
-	}
-
-	if bor.Right == nil {
-		return left, nil
 	}
 
 	if left.IsTruthy() {
 		return left, nil
 	}
 
-	right, err := resolveLogicalAnd(*bor.Right, env)
+	right, err := resolveExpression(bor.Right, env)
 	if err != nil {
 		return nil, err
 	}
@@ -47,31 +55,16 @@ func resolveLogicalOr(bor expression.LogicalOrNode, env *Env) (Value, error) {
 }
 
 func resolveLogicalAnd(band expression.LogicalAndNode, env *Env) (Value, error) {
-	var left Value
-	var err error
-
-	switch band.Left.(type) {
-	case *expression.LogicalAndNode:
-		left, err = resolveLogicalAnd(*band.Left.(*expression.LogicalAndNode), env)
-	case *expression.EqualityNode:
-		left, err = resolveEquality(*band.Left.(*expression.EqualityNode), env)
-	default:
-		return nil, fmt.Errorf("invalid left operand type for LogicalAnd")
-	}
-
+	left, err := resolveExpression(band.Left, env)
 	if err != nil {
 		return nil, err
-	}
-
-	if band.Right == nil {
-		return left, nil
 	}
 
 	if !left.IsTruthy() {
 		return left, nil
 	}
 
-	right, err := resolveEquality(*band.Right, env)
+	right, err := resolveExpression(band.Right, env)
 	if err != nil {
 		return nil, err
 	}
@@ -80,27 +73,12 @@ func resolveLogicalAnd(band expression.LogicalAndNode, env *Env) (Value, error) 
 }
 
 func resolveEquality(eq expression.EqualityNode, env *Env) (Value, error) {
-	var left Value
-	var err error
-
-	switch eq.Left.(type) {
-	case *expression.EqualityNode:
-		left, err = resolveEquality(*eq.Left.(*expression.EqualityNode), env)
-	case *expression.ComparisonNode:
-		left, err = resolveComparison(*eq.Left.(*expression.ComparisonNode), env)
-	default:
-		return nil, fmt.Errorf("invalid left operand type for Equality")
-	}
-
+	left, err := resolveExpression(eq.Left, env)
 	if err != nil {
 		return nil, err
 	}
 
-	if eq.Right == nil {
-		return left, nil
-	}
-
-	right, err := resolveComparison(*eq.Right, env)
+	right, err := resolveExpression(eq.Right, env)
 	if err != nil {
 		return nil, err
 	}
@@ -120,27 +98,12 @@ func resolveEquality(eq expression.EqualityNode, env *Env) (Value, error) {
 }
 
 func resolveComparison(cmp expression.ComparisonNode, env *Env) (Value, error) {
-	var left Value
-	var err error
-
-	switch cmp.Left.(type) {
-	case *expression.ComparisonNode:
-		left, err = resolveComparison(*cmp.Left.(*expression.ComparisonNode), env)
-	case *expression.TermNode:
-		left, err = resolveTerm(*cmp.Left.(*expression.TermNode), env)
-	default:
-		return nil, fmt.Errorf("invalid left operand type for Comparison")
-	}
-
+	left, err := resolveExpression(cmp.Left, env)
 	if err != nil {
 		return nil, err
 	}
 
-	if cmp.Right == nil {
-		return left, nil
-	}
-
-	right, err := resolveTerm(*cmp.Right, env)
+	right, err := resolveExpression(cmp.Right, env)
 	if err != nil {
 		return nil, err
 	}
@@ -188,27 +151,12 @@ func resolveComparison(cmp expression.ComparisonNode, env *Env) (Value, error) {
 }
 
 func resolveTerm(term expression.TermNode, env *Env) (Value, error) {
-	var left Value
-	var err error
-
-	switch term.Left.(type) {
-	case *expression.TermNode:
-		left, err = resolveTerm(*term.Left.(*expression.TermNode), env)
-	case *expression.FactorNode:
-		left, err = resolveFactor(*term.Left.(*expression.FactorNode), env)
-	default:
-		return nil, fmt.Errorf("invalid left operand type for Term")
-	}
-
+	left, err := resolveExpression(term.Left, env)
 	if err != nil {
 		return nil, err
 	}
 
-	if term.Right == nil {
-		return left, nil
-	}
-
-	right, err := resolveFactor(*term.Right, env)
+	right, err := resolveExpression(term.Right, env)
 	if err != nil {
 		return nil, err
 	}
@@ -239,27 +187,12 @@ func resolveTerm(term expression.TermNode, env *Env) (Value, error) {
 }
 
 func resolveFactor(factor expression.FactorNode, env *Env) (Value, error) {
-	var left Value
-	var err error
-
-	switch factor.Left.(type) {
-	case *expression.FactorNode:
-		left, err = resolveFactor(*factor.Left.(*expression.FactorNode), env)
-	case *expression.UnaryNode:
-		left, err = resolveUnary(*factor.Left.(*expression.UnaryNode), env)
-	default:
-		return nil, fmt.Errorf("invalid left operand type for Factor")
-	}
-
+	left, err := resolveExpression(factor.Left, env)
 	if err != nil {
 		return nil, err
 	}
 
-	if factor.Right == nil {
-		return left, nil
-	}
-
-	right, err := resolveUnary(*factor.Right, env)
+	right, err := resolveExpression(factor.Right, env)
 	if err != nil {
 		return nil, err
 	}
@@ -288,26 +221,9 @@ func resolveFactor(factor expression.FactorNode, env *Env) (Value, error) {
 }
 
 func resolveUnary(unary expression.UnaryNode, env *Env) (Value, error) {
-	var right Value
-	var err error
-
-	switch unary.Right.(type) {
-	case *expression.UnaryNode:
-		right, err = resolveUnary(*unary.Right.(*expression.UnaryNode), env)
-		if err != nil {
-			return nil, err
-		}
-	case *expression.ArrayAccessNode:
-		right, err = resolveArrayAccess(*unary.Right.(*expression.ArrayAccessNode), env)
-		if err != nil {
-			return nil, err
-		}
-	default:
-		return nil, fmt.Errorf("invalid right operand type for Unary")
-	}
-
-	if unary.Operator == nil {
-		return right, nil
+	right, err := resolveExpression(unary.Right, env)
+	if err != nil {
+		return nil, err
 	}
 
 	switch unary.Operator.Typ {
@@ -329,31 +245,16 @@ func resolveUnary(unary expression.UnaryNode, env *Env) (Value, error) {
 }
 
 func resolveArrayAccess(aa expression.ArrayAccessNode, env *Env) (Value, error) {
-	var left Value
-	var err error
-
-	switch aa.Left.(type) {
-	case *expression.ArrayAccessNode:
-		left, err = resolveArrayAccess(*aa.Left.(*expression.ArrayAccessNode), env)
-	case *expression.FunctionCallNode:
-		left, err = resolveFunctionCall(*aa.Left.(*expression.FunctionCallNode), env)
-	default:
-		return nil, fmt.Errorf("invalid left operand type for ArrayAccess")
-	}
-
+	left, err := resolveExpression(aa.Left, env)
 	if err != nil {
 		return nil, err
-	}
-
-	if aa.Index == nil {
-		return left, nil
 	}
 
 	if left.Type() != VAL_ARRAY {
 		return nil, fmt.Errorf("attempted to index a non-array value")
 	}
 
-	indexValue, err := resolveExpression(*aa.Index, env)
+	indexValue, err := resolveExpression(aa.Index, env)
 	if err != nil {
 		return nil, err
 	}
@@ -374,13 +275,9 @@ func resolveArrayAccess(aa expression.ArrayAccessNode, env *Env) (Value, error) 
 }
 
 func resolveFunctionCall(fc expression.FunctionCallNode, env *Env) (Value, error) {
-	callee, error := resolvePrimary(fc.Callee, env)
-	if error != nil {
-		return nil, error
-	}
-
-	if fc.Arguments == nil {
-		return callee, nil
+	callee, err := resolveExpression(fc.Callee, env)
+	if err != nil {
+		return nil, err
 	}
 
 	if callee.Type() != VAL_FUNCTION {
@@ -395,7 +292,7 @@ func resolveFunctionCall(fc expression.FunctionCallNode, env *Env) (Value, error
 
 	args := make([]Value, 0, len(fc.Arguments))
 	for _, argExpr := range fc.Arguments {
-		argValue, err := resolveExpression(*argExpr, env)
+		argValue, err := resolveExpression(argExpr, env)
 		if err != nil {
 			return nil, err
 		}
@@ -414,46 +311,58 @@ func resolveFunctionCall(fc expression.FunctionCallNode, env *Env) (Value, error
 func resolvePrimary(primary expression.Primary, env *Env) (Value, error) {
 	switch p := primary.(type) {
 	case *expression.TokenLiteralNode:
-		token := p.Token
-		switch token.Typ {
-		case common.NUMBER:
-			num, err := strconv.Atoi(token.Value)
-			if err != nil {
-				return nil, fmt.Errorf("invalid number: %s", token.Value)
-			}
-			return &IntValue{Value: num}, nil
-		case common.LITERAL:
-			return &StringValue{Value: token.Value}, nil
-		case common.TRUE:
-			return &BoolValue{Value: true}, nil
-		case common.FALSE:
-			return &BoolValue{Value: false}, nil
-		case common.NONE:
-			return &NoneValue{}, nil
-		case common.IDENTIFIER:
-			value, err := env.GetVariable(token.Value)
-			if err != nil {
-				return nil, err
-			}
-			return value, nil
-		default:
-			return nil, fmt.Errorf("unknown literal type: %v", token.Typ)
-		}
+		return resolveTokenLiteral(*p, env)
 
 	case *expression.GroupingExpressionNode:
-		return resolveExpression(*p.Expression, env)
+		return resolveExpression(p.Expression, env)
 
 	case *expression.ArrayLiteralNode:
-		elements := make([]Value, 0, len(p.Elements))
-		for _, elemExpr := range p.Elements {
-			elemValue, err := resolveExpression(*elemExpr, env)
-			if err != nil {
-				return nil, err
-			}
-			elements = append(elements, elemValue)
-		}
-		return &ArrayValue{Values: elements}, nil
+		return resolveArrayLiteral(*p, env)
+
 	default:
 		return nil, fmt.Errorf("unknown primary type")
 	}
+}
+
+func resolveTokenLiteral(tl expression.TokenLiteralNode, env *Env) (Value, error) {
+	token := tl.Token
+	switch token.Typ {
+	case common.NUMBER:
+		num, err := strconv.Atoi(token.Value)
+		if err != nil {
+			return nil, fmt.Errorf("invalid number: %s", token.Value)
+		}
+		return &IntValue{Value: num}, nil
+	case common.LITERAL:
+		return &StringValue{Value: token.Value}, nil
+	case common.TRUE:
+		return &BoolValue{Value: true}, nil
+	case common.FALSE:
+		return &BoolValue{Value: false}, nil
+	case common.NONE:
+		return &NoneValue{}, nil
+	case common.IDENTIFIER:
+		value, err := env.GetVariable(token.Value)
+		if err != nil {
+			return nil, err
+		}
+		return value, nil
+	default:
+		return nil, fmt.Errorf("unknown literal type: %v", token.Typ)
+	}
+}
+
+func resolveArrayLiteral(al expression.ArrayLiteralNode, env *Env) (Value, error) {
+	elements := make([]Value, len(al.Elements))
+
+	for i, elemExpr := range al.Elements {
+		elemValue, err := resolveExpression(elemExpr, env)
+		if err != nil {
+			return nil, err
+		}
+		elements[i] = elemValue
+	}
+
+	return &ArrayValue{Values: elements}, nil
+
 }

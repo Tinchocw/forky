@@ -7,7 +7,7 @@ import (
 )
 
 type GroupingExpressionNode struct {
-	Expression *ExpressionNode
+	Expression Expression
 }
 
 func (ge GroupingExpressionNode) Print(start string) {

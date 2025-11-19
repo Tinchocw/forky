@@ -33,10 +33,6 @@ func (p *Parser) peek() common.Token {
 	return p.tokens[p.current]
 }
 
-// func (p *Parser) previous() common.Token {
-// 	return p.tokens[p.current-1]
-// }
-
 func (p *Parser) check(posible_types ...common.TokenType) bool {
 	if p.isAtEnd() {
 		return false
@@ -456,7 +452,7 @@ func (p *Parser) varAssigmentStatement(name common.Token) (assignment.Assignment
 }
 
 func (p *Parser) arrayAssignmentStatement(name common.Token) (assignment.Assignment, error) {
-	indexes := []*expression.ExpressionNode{}
+	indexes := []expression.Expression{}
 
 	for p.match(common.OPEN_BRACKET) {
 		index, err := p.expression()
@@ -546,7 +542,7 @@ func (p *Parser) varDeclarationStatement(name common.Token) (*declaration.VarDec
 }
 
 func (p *Parser) arrayDeclarationStatement(name common.Token) (*declaration.ArrayDeclaration, error) {
-	lengths := []*expression.ExpressionNode{}
+	lengths := []expression.Expression{}
 
 	for p.match(common.OPEN_BRACKET) {
 		length, err := p.expression()
@@ -582,225 +578,169 @@ func (p *Parser) arrayDeclarationStatement(name common.Token) (*declaration.Arra
 
 // EXPRESIONES
 
-func (p *Parser) expression() (*expression.ExpressionNode, error) {
-	root, err := p.logicalOr()
-	if err != nil {
-		return nil, err
-	}
-	return &expression.ExpressionNode{Root: root}, nil
+func (p *Parser) expression() (expression.Expression, error) {
+	return p.logicalOr()
 }
 
-func (p *Parser) logicalOr() (*expression.LogicalOrNode, error) {
+func (p *Parser) logicalOr() (expression.Expression, error) {
 	left, err := p.logicalAnd()
 	if err != nil {
 		return nil, err
 	}
 
-	bor := &expression.LogicalOrNode{Left: left}
-	first := true
-
-	for p.check(common.OR) {
-		if !first {
-			bor = &expression.LogicalOrNode{Left: bor}
-		}
-
-		operator := p.advance()
+	for p.match(common.OR) {
 		right, err := p.logicalAnd()
 		if err != nil {
 			return nil, err
 		}
-		bor.Operator = &operator
-		bor.Right = right
 
-		first = false
+		left = &expression.LogicalOrNode{
+			Left:  left,
+			Right: right,
+		}
 	}
 
-	return bor, nil
+	return left, nil
 }
 
-func (p *Parser) logicalAnd() (*expression.LogicalAndNode, error) {
+func (p *Parser) logicalAnd() (expression.Expression, error) {
 	left, err := p.equality()
 	if err != nil {
 		return nil, err
 	}
 
-	band := &expression.LogicalAndNode{Left: left}
-	first := true
-
-	for p.check(common.AND) {
-		if !first {
-			band = &expression.LogicalAndNode{Left: band}
-		}
-
-		operator := p.advance()
+	for p.match(common.AND) {
 		right, err := p.equality()
 		if err != nil {
 			return nil, err
 		}
 
-		band.Operator = &operator
-		band.Right = right
-
-		first = false
+		left = &expression.LogicalAndNode{
+			Left:  left,
+			Right: right,
+		}
 	}
 
-	return band, nil
+	return left, nil
 }
 
-func (p *Parser) equality() (*expression.EqualityNode, error) {
+func (p *Parser) equality() (expression.Expression, error) {
 	left, err := p.comparison()
 	if err != nil {
 		return nil, err
 	}
 
-	eq := &expression.EqualityNode{Left: left}
-	first := true
-
 	for p.check(common.BANG_EQUAL, common.EQUAL_EQUAL) {
-		if !first {
-			eq = &expression.EqualityNode{Left: eq}
-		}
-
 		operator := p.advance()
 		right, err := p.comparison()
 		if err != nil {
 			return nil, err
 		}
 
-		eq.Operator = &operator
-		eq.Right = right
-
-		first = false
+		left = &expression.EqualityNode{
+			Left:     left,
+			Operator: operator,
+			Right:    right,
+		}
 	}
 
-	return eq, nil
+	return left, nil
 }
 
-func (p *Parser) comparison() (*expression.ComparisonNode, error) {
+func (p *Parser) comparison() (expression.Expression, error) {
 	left, err := p.term()
 	if err != nil {
 		return nil, err
 	}
 
-	comp := &expression.ComparisonNode{Left: left}
-	first := true
-
 	for p.check(common.GREATER, common.GREATER_EQUAL, common.LESS, common.LESS_EQUAL) {
-		if !first {
-			comp = &expression.ComparisonNode{Left: comp}
-		}
-
 		operator := p.advance()
 		right, err := p.term()
 		if err != nil {
 			return nil, err
 		}
 
-		comp.Operator = &operator
-		comp.Right = right
-
-		first = false
+		left = &expression.ComparisonNode{
+			Left:     left,
+			Operator: operator,
+			Right:    right,
+		}
 	}
 
-	return comp, nil
+	return left, nil
 }
 
-func (p *Parser) term() (*expression.TermNode, error) {
+func (p *Parser) term() (expression.Expression, error) {
 	left, err := p.factor()
 	if err != nil {
 		return nil, err
 	}
 
-	t := &expression.TermNode{Left: left}
-	first := true
-
-	for p.check(common.MINUS, common.PLUS) {
-		if !first {
-			t = &expression.TermNode{Left: t}
-		}
-
+	for p.check(common.PLUS, common.MINUS) {
 		operator := p.advance()
 		right, err := p.factor()
 		if err != nil {
 			return nil, err
 		}
-		t.Operator = &operator
-		t.Right = right
 
-		first = false
+		left = &expression.TermNode{
+			Left:     left,
+			Operator: operator,
+			Right:    right,
+		}
 	}
 
-	return t, nil
+	return left, nil
 }
 
-func (p *Parser) factor() (*expression.FactorNode, error) {
+func (p *Parser) factor() (expression.Expression, error) {
 	left, err := p.unary()
 	if err != nil {
 		return nil, err
 	}
 
-	f := &expression.FactorNode{Left: left}
-	first := true
-
 	for p.check(common.SLASH, common.ASTERISK) {
-		if !first {
-			f = &expression.FactorNode{Left: f}
-		}
-
 		operator := p.advance()
 		right, err := p.unary()
 		if err != nil {
 			return nil, err
 		}
-		f.Operator = &operator
-		f.Right = right
 
-		first = false
-	}
-
-	return f, nil
-}
-
-func (p *Parser) unary() (*expression.UnaryNode, error) {
-	u := &expression.UnaryNode{}
-
-	if p.check(common.BANG, common.MINUS, common.PLUS) {
-		operator := p.advance()
-		u.Operator = &operator
-
-		if p.check(common.BANG, common.MINUS, common.PLUS) {
-			rigth, err := p.unary()
-			if err != nil {
-				return nil, err
-			}
-			u.Right = rigth
-			return u, nil
+		left = &expression.FactorNode{
+			Left:     left,
+			Operator: operator,
+			Right:    right,
 		}
 	}
 
-	right, err := p.arrayAccess()
-	if err != nil {
-		return nil, err
-	}
-	u.Right = right
-	return u, nil
+	return left, nil
 }
 
-func (p *Parser) arrayAccess() (*expression.ArrayAccessNode, error) {
+func (p *Parser) unary() (expression.Expression, error) {
+	if p.check(common.BANG, common.MINUS, common.PLUS) {
+		operator := p.advance()
+		right, err := p.unary()
+		if err != nil {
+			return nil, err
+		}
+
+		return &expression.UnaryNode{
+			Operator: operator,
+			Right:    right,
+		}, nil
+	}
+
+	return p.arrayAccess()
+}
+
+func (p *Parser) arrayAccess() (expression.Expression, error) {
 	left, err := p.functionCall()
 	if err != nil {
 		return nil, err
 	}
 
-	aa := &expression.ArrayAccessNode{Left: left}
-	first := true
-
 	for p.match(common.OPEN_BRACKET) {
-		if !first {
-			aa = &expression.ArrayAccessNode{Left: aa}
-		}
-
-		indexExpr, err := p.expression()
+		index, err := p.expression()
 		if err != nil {
 			return nil, err
 		}
@@ -809,27 +749,23 @@ func (p *Parser) arrayAccess() (*expression.ArrayAccessNode, error) {
 			return nil, fmt.Errorf("expected ']' after index expression")
 		}
 
-		aa.Index = indexExpr
-		first = false
+		left = &expression.ArrayAccessNode{
+			Left:  left,
+			Index: index,
+		}
 	}
 
-	return aa, nil
+	return left, nil
 }
 
-func (p *Parser) functionCall() (*expression.FunctionCallNode, error) {
+func (p *Parser) functionCall() (expression.Expression, error) {
 	left, err := p.primary()
 	if err != nil {
 		return nil, err
 	}
 
-	fc := &expression.FunctionCallNode{Callee: left}
-	first := true
-
 	for p.match(common.OPEN_PARENTHESIS) {
-		if !first {
-			fc = &expression.FunctionCallNode{Callee: fc}
-		}
-		args := []*expression.ExpressionNode{}
+		args := []expression.Expression{}
 
 		if !p.match(common.CLOSE_PARENTHESIS) {
 			for {
@@ -844,16 +780,18 @@ func (p *Parser) functionCall() (*expression.FunctionCallNode, error) {
 				}
 
 				if !p.match(common.COMMA) {
-					return nil, fmt.Errorf("expected ',' or ')' after argument")
+					return nil, fmt.Errorf("expected ',' or ')' after function argument")
 				}
 			}
 		}
 
-		fc.Arguments = args
-		first = false
+		left = &expression.FunctionCallNode{
+			Callee:    left,
+			Arguments: args,
+		}
 	}
 
-	return fc, nil
+	return left, nil
 }
 
 func (p *Parser) primary() (expression.Primary, error) {
@@ -863,7 +801,7 @@ func (p *Parser) primary() (expression.Primary, error) {
 
 	if p.check(common.FALSE, common.TRUE, common.NONE, common.NUMBER, common.LITERAL) {
 		token := p.advance()
-		return &expression.TokenLiteralNode{Token: &token}, nil
+		return &expression.TokenLiteralNode{Token: token}, nil
 	}
 
 	if p.match(common.OPEN_PARENTHESIS) {
@@ -880,13 +818,14 @@ func (p *Parser) primary() (expression.Primary, error) {
 	}
 
 	if p.match(common.OPEN_BRACKET) {
-		elements := []*expression.ExpressionNode{}
-		for !p.match(common.CLOSE_BRACKET) && !p.isAtEnd() {
+		elements := []expression.Expression{}
+		for !p.match(common.CLOSE_BRACKET) {
 			element, err := p.expression()
 			if err != nil {
 				return nil, err
 			}
 			elements = append(elements, element)
+
 			if !p.match(common.COMMA) {
 				if p.match(common.CLOSE_BRACKET) {
 					break
@@ -901,7 +840,7 @@ func (p *Parser) primary() (expression.Primary, error) {
 
 	if p.check(common.IDENTIFIER) {
 		identifier := p.advance()
-		return &expression.TokenLiteralNode{Token: &identifier}, nil
+		return &expression.TokenLiteralNode{Token: identifier}, nil
 	}
 
 	return nil, fmt.Errorf("unexpected token: %v", p.peek().String())
