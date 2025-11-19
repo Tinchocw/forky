@@ -174,7 +174,7 @@ print("Size after popping 150 elements: ' + vector_length());
 
 print("Testing error cases');
 print("Trying to get index -1:');
-vector_get(-1);
+vector_get(~1);
 print("Trying to get index out of bounds:');
 vector_get(1000);
 print("Trying to pop from empty vector:');
