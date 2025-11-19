@@ -111,9 +111,9 @@ func resolveEquality(eq expression.EqualityNode, env *Env) (Value, error) {
 
 	switch eq.Operator.Typ {
 	case common.EQUAL_EQUAL:
-		return BoolValue{Value: left.Data() == right.Data()}, nil
+		return &BoolValue{Value: left.Data() == right.Data()}, nil
 	case common.BANG_EQUAL:
-		return BoolValue{Value: left.Data() != right.Data()}, nil
+		return &BoolValue{Value: left.Data() != right.Data()}, nil
 	default:
 		return nil, fmt.Errorf("unknown equality operator: %s", eq.Operator.Value)
 	}
@@ -152,34 +152,34 @@ func resolveComparison(cmp expression.ComparisonNode, env *Env) (Value, error) {
 	switch cmp.Operator.Typ {
 	case common.LESS:
 		if left.Type() == VAL_INT {
-			return BoolValue{Value: left.(IntValue).Value < right.(IntValue).Value}, nil
+			return &BoolValue{Value: left.(*IntValue).Value < right.(*IntValue).Value}, nil
 		}
 		if left.Type() == VAL_STRING {
-			return BoolValue{Value: left.(StringValue).Value < right.(StringValue).Value}, nil
+			return &BoolValue{Value: left.(*StringValue).Value < right.(*StringValue).Value}, nil
 		}
 		return nil, fmt.Errorf("operator '<' not supported for type %s", left.TypeName())
 	case common.LESS_EQUAL:
 		if left.Type() == VAL_INT {
-			return BoolValue{Value: left.(IntValue).Value <= right.(IntValue).Value}, nil
+			return &BoolValue{Value: left.(*IntValue).Value <= right.(*IntValue).Value}, nil
 		}
 		if left.Type() == VAL_STRING {
-			return BoolValue{Value: left.(StringValue).Value <= right.(StringValue).Value}, nil
+			return &BoolValue{Value: left.(*StringValue).Value <= right.(*StringValue).Value}, nil
 		}
 		return nil, fmt.Errorf("operator '<=' not supported for type %s", left.TypeName())
 	case common.GREATER:
 		if left.Type() == VAL_INT {
-			return BoolValue{Value: left.(IntValue).Value > right.(IntValue).Value}, nil
+			return &BoolValue{Value: left.(*IntValue).Value > right.(*IntValue).Value}, nil
 		}
 		if left.Type() == VAL_STRING {
-			return BoolValue{Value: left.(StringValue).Value > right.(StringValue).Value}, nil
+			return &BoolValue{Value: left.(*StringValue).Value > right.(*StringValue).Value}, nil
 		}
 		return nil, fmt.Errorf("operator '>' not supported for type %s", left.TypeName())
 	case common.GREATER_EQUAL:
 		if left.Type() == VAL_INT {
-			return BoolValue{Value: left.(IntValue).Value >= right.(IntValue).Value}, nil
+			return &BoolValue{Value: left.(*IntValue).Value >= right.(*IntValue).Value}, nil
 		}
 		if left.Type() == VAL_STRING {
-			return BoolValue{Value: left.(StringValue).Value >= right.(StringValue).Value}, nil
+			return &BoolValue{Value: left.(*StringValue).Value >= right.(*StringValue).Value}, nil
 		}
 		return nil, fmt.Errorf("operator '>=' not supported for type %s", left.TypeName())
 	default:
@@ -216,21 +216,21 @@ func resolveTerm(term expression.TermNode, env *Env) (Value, error) {
 	switch term.Operator.Typ {
 	case common.PLUS:
 		if left.Type() != right.Type() {
-			return StringValue{Value: left.Content() + right.Content()}, nil
+			return &StringValue{Value: left.Content() + right.Content()}, nil
 		}
 
 		if left.Type() == VAL_INT {
-			return IntValue{Value: left.Data().(int) + right.Data().(int)}, nil
+			return &IntValue{Value: left.Data().(int) + right.Data().(int)}, nil
 		}
 
 		if left.Type() == VAL_STRING {
-			return StringValue{Value: left.Data().(string) + right.Data().(string)}, nil
+			return &StringValue{Value: left.Data().(string) + right.Data().(string)}, nil
 		}
 
 		return nil, fmt.Errorf("operator '+' not supported for type %s and type %s", left.TypeName(), right.TypeName())
 	case common.MINUS:
 		if left.Type() == VAL_INT && right.Type() == VAL_INT {
-			return IntValue{Value: left.Data().(int) - right.Data().(int)}, nil
+			return &IntValue{Value: left.Data().(int) - right.Data().(int)}, nil
 		}
 		return nil, fmt.Errorf("operator '-' not supported for type %s and type %s", left.TypeName(), right.TypeName())
 	default:
@@ -271,7 +271,7 @@ func resolveFactor(factor expression.FactorNode, env *Env) (Value, error) {
 	switch factor.Operator.Typ {
 	case common.ASTERISK:
 		if left.Type() == VAL_INT {
-			return IntValue{Value: left.Data().(int) * right.Data().(int)}, nil
+			return &IntValue{Value: left.Data().(int) * right.Data().(int)}, nil
 		}
 		return nil, fmt.Errorf("operator '*' not supported for type %s", left.TypeName())
 	case common.SLASH:
@@ -279,7 +279,7 @@ func resolveFactor(factor expression.FactorNode, env *Env) (Value, error) {
 			if right.Data().(int) == 0 {
 				return nil, fmt.Errorf("division by zero")
 			}
-			return IntValue{Value: left.Data().(int) / right.Data().(int)}, nil
+			return &IntValue{Value: left.Data().(int) / right.Data().(int)}, nil
 		}
 		return nil, fmt.Errorf("operator '/' not supported for type %s", left.TypeName())
 	default:
@@ -313,11 +313,11 @@ func resolveUnary(unary expression.UnaryNode, env *Env) (Value, error) {
 	switch unary.Operator.Typ {
 	case common.TILDE:
 		if right.Type() == VAL_INT {
-			return IntValue{Value: -right.Data().(int)}, nil
+			return &IntValue{Value: -right.Data().(int)}, nil
 		}
 		return nil, fmt.Errorf("unary '~' not supported for type %s", right.TypeName())
 	case common.BANG:
-		return BoolValue{Value: !right.IsTruthy()}, nil
+		return &BoolValue{Value: !right.IsTruthy()}, nil
 	default:
 		return nil, fmt.Errorf("unknown unary operator: %s", unary.Operator.Value)
 	}
@@ -357,8 +357,8 @@ func resolveArrayAccess(aa expression.ArrayAccessNode, env *Env) (Value, error) 
 		return nil, fmt.Errorf("array index must be an integer")
 	}
 
-	index := indexValue.(IntValue).Value
-	av := left.(ArrayValue)
+	index := indexValue.(*IntValue).Value
+	av := left.(*ArrayValue)
 
 	if index < 0 || index >= len(av.Values) {
 		return nil, fmt.Errorf("array index %d out of bounds", index)
@@ -382,7 +382,7 @@ func resolveFunctionCall(fc expression.FunctionCallNode, env *Env) (Value, error
 		return nil, fmt.Errorf("attempted to call a non-function value")
 	}
 
-	function := callee.(FunctionValue).Function
+	function := callee.(*FunctionValue).Function
 
 	if len(fc.Arguments) != len(function.Parameters) {
 		return nil, fmt.Errorf("expected %d arguments, got %d", len(function.Parameters), len(fc.Arguments))
@@ -416,15 +416,15 @@ func resolvePrimary(primary expression.Primary, env *Env) (Value, error) {
 			if err != nil {
 				return nil, fmt.Errorf("invalid number: %s", token.Value)
 			}
-			return IntValue{Value: num}, nil
+			return &IntValue{Value: num}, nil
 		case common.LITERAL:
-			return StringValue{Value: token.Value}, nil
+			return &StringValue{Value: token.Value}, nil
 		case common.TRUE:
-			return BoolValue{Value: true}, nil
+			return &BoolValue{Value: true}, nil
 		case common.FALSE:
-			return BoolValue{Value: false}, nil
+			return &BoolValue{Value: false}, nil
 		case common.NONE:
-			return NoneValue{}, nil
+			return &NoneValue{}, nil
 		case common.IDENTIFIER:
 			value, err := env.GetVariable(token.Value)
 			if err != nil {
@@ -447,7 +447,7 @@ func resolvePrimary(primary expression.Primary, env *Env) (Value, error) {
 			}
 			elements = append(elements, elemValue)
 		}
-		return ArrayValue{Values: elements}, nil
+		return &ArrayValue{Values: elements}, nil
 	default:
 		return nil, fmt.Errorf("unknown primary type")
 	}

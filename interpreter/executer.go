@@ -70,7 +70,7 @@ func executeBlockStatement(stmt *block.BlockStatement, env *Env) (Value, error) 
 }
 
 func executeVarDeclaration(stmt *declaration.VarDeclaration, env *Env) (Value, error) {
-	var value Value = NoneValue{}
+	var value Value = &NoneValue{}
 
 	if stmt.Value != nil {
 		var err error
@@ -90,7 +90,7 @@ func executeVarDeclaration(stmt *declaration.VarDeclaration, env *Env) (Value, e
 }
 
 func executeArrayDeclaration(stmt *declaration.ArrayDeclaration, env *Env) (Value, error) {
-	lengths := []IntValue{}
+	lengths := []*IntValue{}
 
 	for _, lenExpr := range stmt.Lengths {
 		lenValue, err := resolveExpression(*lenExpr, env)
@@ -102,10 +102,10 @@ func executeArrayDeclaration(stmt *declaration.ArrayDeclaration, env *Env) (Valu
 			return nil, fmt.Errorf("array length must be an integer, got %s", lenValue.TypeName())
 		}
 
-		lengths = append(lengths, lenValue.(IntValue))
+		lengths = append(lengths, lenValue.(*IntValue))
 	}
 
-	var value Value = NoneValue{}
+	var value Value = &NoneValue{}
 
 	if stmt.Value != nil {
 		var err error
@@ -126,7 +126,7 @@ func executeArrayDeclaration(stmt *declaration.ArrayDeclaration, env *Env) (Valu
 	return nil, nil
 }
 
-func createArrayRecursive(lengths []IntValue, cellValue Value) Value {
+func createArrayRecursive(lengths []*IntValue, cellValue Value) Value {
 	if len(lengths) == 0 {
 		return cellValue
 	}
@@ -137,7 +137,7 @@ func createArrayRecursive(lengths []IntValue, cellValue Value) Value {
 		array[i] = createArrayRecursive(lengths[1:], cellValue)
 	}
 
-	return ArrayValue{Values: array}
+	return &ArrayValue{Values: array}
 }
 
 func executeVarAssignment(stmt *assignment.VarAssignment, env *Env) (Value, error) {
@@ -166,7 +166,7 @@ func executeArrayAssignment(stmt *assignment.ArrayAssignment, env *Env) (Value, 
 			return nil, fmt.Errorf("array index must be an integer, got %s", indexValue.TypeName())
 		}
 
-		indexes = append(indexes, int(indexValue.(IntValue).Value))
+		indexes = append(indexes, int(indexValue.(*IntValue).Value))
 	}
 
 	value, err := resolveExpression(*stmt.Value, env)
@@ -227,7 +227,7 @@ func excecuteForkArrayStatement(stmt *extra.ForkArrayStatement, env *Env) (Value
 		return nil, fmt.Errorf("expected array type in fork array statement, got %s", value.TypeName())
 	}
 
-	arrayValue := value.(ArrayValue).Values
+	arrayValue := value.(*ArrayValue).Values
 
 	done := make(chan error)
 
@@ -235,7 +235,7 @@ func excecuteForkArrayStatement(stmt *extra.ForkArrayStatement, env *Env) (Value
 		newEnv := NewEnv(env)
 
 		if stmt.IndexName != nil {
-			err := newEnv.DefineVariable(*stmt.IndexName, IntValue{Value: index})
+			err := newEnv.DefineVariable(*stmt.IndexName, &IntValue{Value: index})
 			if err != nil {
 				return nil, err
 			}
@@ -318,7 +318,7 @@ func executeWhileStatement(stmt *flow.WhileStatement, env *Env) (Value, error) {
 
 func executeFunctionDef(stmt *function.FunctionDef, env *Env) (Value, error) {
 	function := NewFunction(stmt.Parameters, stmt.Body.Statements)
-	err := env.DefineVariable(*stmt.Name, FunctionValue{Function: function})
+	err := env.DefineVariable(*stmt.Name, &FunctionValue{Function: function})
 	if err != nil {
 		return nil, err
 	}
