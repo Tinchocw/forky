@@ -66,6 +66,22 @@ func vector_print() {
     print(str);
 }
 
+func vector_for_each(f) {
+    var i = 0;
+    while (i < _vector_length) {
+        f(_vector_data[i]);
+        set i = i + 1;
+    }
+}
+
+func vector_fork_each(f) {
+    fork _vector_data i, e {
+        if (i < _vector_length) {
+            f(e);
+        }
+    }
+}
+
 print("Creating dynamic vector');
 
 vector_append(10);
@@ -129,4 +145,44 @@ while (j < 10) {
 print("After popping 10 elements:');
 vector_print();
 
+print("Final size: ' + vector_length());
+
+print("Testing for_each with print function');
+func print_elem(e) {
+    print("Element: ' + e);
+}
+vector_for_each(print_elem);
+
+print("Testing fork_each with print function');
+vector_fork_each(print_elem);
+
+print("Testing redimension by adding many elements');
+var k = 0;
+while (k < 200) {
+    vector_append(k * 2);
+    set k = k + 1;
+}
+print("Size after adding 200 elements: ' + vector_length());
+
+print("Testing shrink by popping many elements');
+var l = 0;
+while (l < 150) {
+    vector_pop();
+    set l = l + 1;
+}
+print("Size after popping 150 elements: ' + vector_length());
+
+print("Testing error cases');
+print("Trying to get index -1:');
+vector_get(-1);
+print("Trying to get index out of bounds:');
+vector_get(1000);
+print("Trying to pop from empty vector:');
+while (vector_length() > 0) {
+    vector_pop();
+}
+vector_pop();
+
+print("Final vector state:');
+vector_print();
 print("Final size: ' + vector_length());

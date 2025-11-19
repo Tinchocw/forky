@@ -84,9 +84,10 @@ The usecases folder contains practical examples showing how to implement common 
 
 ### 1. `dynamic_vector.forky`
 - Implementation of a dynamic vector (array list)
-- Methods: append, get, pop, size, resize
+- Methods: append, get, pop, size, resize, for_each, fork_each
 - Error handling for bounds checking
 - Demonstration of encapsulation with functions
+- Sequential and parallel iteration over elements
 
 ### 2. `multi_dim_sums.forky`
 - Parallel computation of sums in multi-dimensional arrays
@@ -130,7 +131,7 @@ make build
 ./forky --mode scanning examples/fundamentals/basic.forky
 
 # Inject an example and continue in REPL for interactive experimentation
-make inject FILE=examples/usecases/dynamic_vector.forky
+make INJECT=true FILE=examples/usecases/dynamic_vector.forky
 ```
 
 The inject mode loads the example code and then starts the REPL, allowing you to interact with the loaded functions and variables. This is particularly useful for the usecases examples like the dynamic vector, where you can test the implemented functions interactively.
