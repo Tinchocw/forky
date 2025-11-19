@@ -1,6 +1,6 @@
 # Forky Interpreter
 
-A concurrent interpreter for the Forky programming language, designed to provide simple fork-join parallelism primitives. The language is designed for ease of use with unique string literal syntax and built-in support for parallel execution.
+A concurrent interpreter for the Forky programming language, designed to provide simple fork-join parallelism primitives. This is an experiment and shouldn't be use in a production enviroment.
 
 ## Overview
 
@@ -10,7 +10,6 @@ Forky is a programming language that combines sequential and parallel execution 
 - **Fork Primitives**: Simple constructs for concurrent execution
 - **Array Support**: Multi-dimensional arrays with intuitive syntax
 - **Functional Programming**: First-class functions with lexical scoping
-- **Unique Syntax**: String literals delimited by `"` and `'`, negative operator `~`
 
 ## Installation
 
@@ -67,7 +66,7 @@ Forky supports several command-line flags to control its behavior:
 
 #### REPL Mode
 
-When run without arguments, Forky starts an interactive Read-Eval-Print Loop (REPL) for experimenting with code. You can also inject a file as initial input using `make INJECT=<filename>` to load statements from a file and then continue interactively.
+When run without arguments, Forky starts an interactive Read-Eval-Print Loop (REPL) for experimenting with code. You can also inject a file as initial input using `make FILE=<filename> INJECT=true` to load statements from a file and then continue interactively.
 
 ```
 Forky - REPL with arrow key support. Ctrl-C or Ctrl-D (on empty line) to exit.
