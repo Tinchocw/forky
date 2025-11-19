@@ -92,7 +92,7 @@ The REPL maintains a history of your commands and supports all Forky language fe
 
 ## Makefile
 
-El proyecto incluye un Makefile para facilitar el uso. Usa `make help` para ver todos los comandos y parámetros disponibles.
+The project includes a Makefile to facilitate usage. Use `make help` to see all available commands and parameters.
 
 ## Language Syntax
 
@@ -154,6 +154,31 @@ set matrix[1][2] = "value';
 ```forky
 var arr = [1, 2, 3];
 var matrix = [[1, 2], [3, 4]];
+```
+
+### Dynamic Vectors
+
+Forky supports dynamic vectors (resizable arrays) through function-based implementations. See `examples/usecases/dynamic_vector.forky` for a complete implementation including:
+
+- **vector_append(value)**: Add element to end, auto-resize if needed
+- **vector_get(index)**: Get element at index with bounds checking
+- **vector_pop()**: Remove and return last element, auto-shrink if needed
+- **vector_length()**: Get current size
+- **vector_for_each(function)**: Apply function to each element sequentially
+- **vector_fork_each(function)**: Apply function to each element in parallel
+
+```forky
+// Example usage
+vector_append(10);
+vector_append(20);
+vector_append(30);
+vector_print();  // [10, 20, 30]
+
+// Sequential iteration
+vector_for_each(func(e) { print("Element: " + e); });
+
+// Parallel iteration
+vector_fork_each(func(e) { print("Parallel: " + e); });
 ```
 
 ### Operators
