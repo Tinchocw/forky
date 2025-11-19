@@ -311,11 +311,16 @@ func resolveUnary(unary expression.UnaryNode, env *Env) (Value, error) {
 	}
 
 	switch unary.Operator.Typ {
-	case common.TILDE:
+	case common.PLUS:
+		if right.Type() == VAL_INT {
+			return &IntValue{Value: right.Data().(int)}, nil
+		}
+		return nil, fmt.Errorf("unary '+' not supported for type %s", right.TypeName())
+	case common.MINUS:
 		if right.Type() == VAL_INT {
 			return &IntValue{Value: -right.Data().(int)}, nil
 		}
-		return nil, fmt.Errorf("unary '~' not supported for type %s", right.TypeName())
+		return nil, fmt.Errorf("unary '-' not supported for type %s", right.TypeName())
 	case common.BANG:
 		return &BoolValue{Value: !right.IsTruthy()}, nil
 	default:

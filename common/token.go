@@ -39,7 +39,7 @@ func isKeywordType(tt TokenType) bool {
 
 func isOperatorType(tt TokenType) bool {
 	switch tt {
-	case PLUS, MINUS, TILDE, ASTERISK, SLASH,
+	case PLUS, MINUS, ASTERISK, SLASH,
 		EQUAL, BANG, LESS, GREATER,
 		EQUAL_EQUAL, BANG_EQUAL, LESS_EQUAL, GREATER_EQUAL,
 		OPEN_PARENTHESIS, CLOSE_PARENTHESIS,
@@ -108,8 +108,6 @@ func (t *Token) FriendlyOperatorName() string {
 		return "MULTIPLY"
 	case SLASH:
 		return "DIVIDE"
-	case TILDE:
-		return "NEGATIVE"
 	case BANG:
 		return "NOT"
 	default:
@@ -123,7 +121,6 @@ const (
 	// SINGLE CHARACTER TOKENS
 	PLUS TokenType = iota + 1
 	MINUS
-	TILDE
 	ASTERISK
 	SLASH
 	EQUAL
@@ -183,7 +180,6 @@ const (
 var tokenTypeNames = [...]string{
 	PLUS:              "PLUS",
 	MINUS:             "MINUS",
-	TILDE:             "TILDE",
 	ASTERISK:          "ASTERISK",
 	SLASH:             "SLASH",
 	EQUAL:             "EQUAL",
@@ -237,7 +233,6 @@ func (t TokenType) String() string {
 const (
 	PLUS_SYMBOL              = '+'
 	MINUS_SYMBOL             = '-'
-	TILDE_SYMBOL             = '~'
 	ASTERISK_SYMBOL          = '*'
 	SLASH_SYMBOL             = '/'
 	EQUAL_SYMBOL             = '='

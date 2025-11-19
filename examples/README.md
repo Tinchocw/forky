@@ -99,19 +99,6 @@ The usecases folder contains practical examples showing how to implement common 
 - Concurrent execution of independent tasks
 - Performance demonstration with parallel blocks
 
-## Syntax Notes
-
-- Variable declarations: `var name = value;`
-- Assignments: `set name = value;`
-- Array assignments: `set arr[index] = value;`
-- Functions: `func name(params) { statements }`
-- Conditionals: `if (condition) { statements } else if (condition) { statements } else { statements }`
-- Loops: `while (condition) { statements }`
-- Parallel execution: `fork { { block1 } { block2 } }`
-- Strings: `"text'` (starts with `"` and ends with `'`)
-- Negation: `~value`
-- All statements end with `;`
-
 ## Running Examples
 
 ```bash

@@ -117,9 +117,6 @@ func (s *scanner) scan() (segment, error) {
 		case common.MINUS_SYMBOL:
 			s.addToken(common.MINUS)
 
-		case common.TILDE_SYMBOL:
-			s.addToken(common.TILDE)
-
 		case common.ASTERISK_SYMBOL:
 			s.addToken(common.ASTERISK)
 

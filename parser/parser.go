@@ -764,11 +764,11 @@ func (p *Parser) factor() (*expression.FactorNode, error) {
 func (p *Parser) unary() (*expression.UnaryNode, error) {
 	u := &expression.UnaryNode{}
 
-	if p.check(common.BANG, common.TILDE) {
+	if p.check(common.BANG, common.MINUS, common.PLUS) {
 		operator := p.advance()
 		u.Operator = &operator
 
-		if p.check(common.BANG, common.TILDE) {
+		if p.check(common.BANG, common.MINUS, common.PLUS) {
 			rigth, err := p.unary()
 			if err != nil {
 				return nil, err

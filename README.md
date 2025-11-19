@@ -190,7 +190,7 @@ vector_fork_each(func(e) { print("Parallel: " + e); });
 - Subtraction: `-`
 - Multiplication: `*`
 - Division: `/`
-- Negation: `~` (unary)
+- Negation: `-` (unary)
 
 #### Comparison
 
@@ -332,7 +332,7 @@ Equality 		->	Comparison ( ( '!=' | '==' ) Comparison )*
 Comparison 		->	Term ( ( '>' | '>=' | '<' | '<=' ) Term )*
 Term 			->	Factor ( ( '-' | '+' ) Factor )*
 Factor 			->	Unary ( ( '/' | '*' ) Unary )*
-Unary 			->	( '!' | '~' ) Unary | ArrAccess
+Unary 			->	( '!' | '-' | '+' ) Unary | ArrAccess
 ArrAccess		->	FunctionCall ( '[' Expression ']' )*
 FunctionCall 	->	Primary ( ( Expression ( ',' Expression )* )? )?
 Primary 		->	IDENTIFIER 				|
