@@ -69,8 +69,10 @@ Forky supports several command-line flags to control its behavior:
 When run without arguments, Forky starts an interactive Read-Eval-Print Loop (REPL) for experimenting with code. You can also inject a file as initial input using `make FILE=<filename> INJECT=true` to load statements from a file and then continue interactively.
 
 ```
-Forky - REPL with arrow key support. Ctrl-C or Ctrl-D (on empty line) to exit.
-Use ↑↓ arrows for history, ←→ for line editing.
+Forky REPL:
+  - Use Ctrl-C or Ctrl-D (on empty line) to exit.
+  - Use ↑↓ arrows for history, ←→ for line editing.
+  - Use tab for completions and suggestions.
 
 > var x = 42;
 > print(x);
@@ -84,8 +86,8 @@ Use ↑↓ arrows for history, ←→ for line editing.
 **REPL Features:**
 - **Interactive execution**: Type Forky statements and see results immediately
 - **Arrow key support**: Use ↑↓ arrows to navigate command history, ←→ for line editing
-- **Multi-line support**: Enter complex statements across multiple lines
 - **Exit commands**: Press Ctrl-C to abort current input, or Ctrl-D (on empty line) to exit
+- **Tab completion**: Press tab to see completions and suggestions
 
 The REPL maintains a history of your commands and supports all Forky language features including functions, variables, and parallel execution.
 

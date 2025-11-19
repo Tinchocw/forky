@@ -25,3 +25,7 @@ func (i *Interpreter) Execute(program statement.Program) (string, error) {
 
 	return value.Content(), nil
 }
+
+func (i *Interpreter) GetGlobalVariables() []string {
+	return i.globalEnv.GetVariables()
+}

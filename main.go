@@ -76,15 +76,19 @@ func main() {
 		}
 	}
 
-	// REPL mode: read from stdin with arrow key support
+	// REPL mode
 	line := liner.NewLiner()
 	defer line.Close()
 
 	line.SetCtrlCAborts(true)
+	line.SetWordCompleter(forky.WordCompleter())
+	line.SetTabCompletionStyle(liner.TabPrints)
 
 	fmt.Println()
-	fmt.Println("Forky - REPL with arrow key support. Ctrl-C or Ctrl-D (on empty line) to exit.")
-	fmt.Println("Use ↑↓ arrows for history, ←→ for line editing.")
+	fmt.Println("Forky REPL:")
+	fmt.Println("  - Use Ctrl-C or Ctrl-D (on empty line) to exit.")
+	fmt.Println("  - Use ↑↓ arrows for history, ←→ for line editing.")
+	fmt.Println("  - Use tab for completions and suggestions.")
 	fmt.Println()
 
 	for {

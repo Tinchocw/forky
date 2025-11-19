@@ -74,3 +74,12 @@ func (e *Env) AssignArrayVariable(name string, indexes []int, val Value) error {
 
 	return nil
 }
+
+func (e *Env) GetVariables() []string {
+	var vars []string
+	e.variables.Range(func(key, value interface{}) bool {
+		vars = append(vars, key.(string))
+		return true
+	})
+	return vars
+}
