@@ -119,62 +119,9 @@ func (t *Token) FriendlyOperatorName() string {
 
 type TokenType int
 
-var tokenTypeNames = [...]string{
-	PLUS:              "PLUS",
-	MINUS:             "MINUS",
-	TILDE:             "TILDE",
-	ASTERISK:          "ASTERISK",
-	SLASH:             "SLASH",
-	EQUAL:             "EQUAL",
-	BANG:              "BANG",
-	LESS:              "LESS",
-	GREATER:           "GREATER",
-	OPEN_PARENTHESIS:  "OPEN_PARENTHESIS",
-	CLOSE_PARENTHESIS: "CLOSE_PARENTHESIS",
-	OPEN_BRACES:       "OPEN_BRACES",
-	CLOSE_BRACES:      "CLOSE_BRACES",
-	OPEN_BRACKET:      "OPEN_BRACKET",
-	CLOSE_BRACKET:     "CLOSE_BRACKET",
-	COMMA:             "COMMA",
-	COLON:             "COLON",
-	SEMICOLON:         "SEMICOLON",
-	EQUAL_EQUAL:       "EQUAL_EQUAL",
-	BANG_EQUAL:        "BANG_EQUAL",
-	LESS_EQUAL:        "LESS_EQUAL",
-	GREATER_EQUAL:     "GREATER_EQUAL",
-	NUMBER:            "NUMBER",
-	LITERAL:           "LITERAL",
-	TRUE:              "TRUE",
-	FALSE:             "FALSE",
-	NONE:              "NONE",
-	IF:                "IF",
-	ELSE:              "ELSE",
-	WHILE:             "WHILE",
-	RETURN:            "RETURN",
-	CONTINUE:          "CONTINUE",
-	BREAK:             "BREAK",
-	IDENTIFIER:        "IDENTIFIER",
-	FUNC:              "FUNC",
-	VAR:               "VAR",
-	SET:               "SET",
-	FORK:              "FORK",
-	STARTED_LITERAL:   "STARTED_LITERAL",
-	ENDED_LITERAL:     "ENDED_LITERAL",
-	OR:                "OR",
-	AND:               "AND",
-	PRINT:             "PRINT",
-}
-
-func (t TokenType) String() string {
-	if int(t) >= 0 && int(t) < len(tokenTypeNames) && tokenTypeNames[t] != "" {
-		return tokenTypeNames[t]
-	}
-	return "UNKNOWN"
-}
-
 const (
 	// SINGLE CHARACTER TOKENS
-	PLUS TokenType = iota
+	PLUS TokenType = iota + 1
 	MINUS
 	TILDE
 	ASTERISK
@@ -232,6 +179,59 @@ const (
 	STARTED_LITERAL
 	ENDED_LITERAL
 )
+
+var tokenTypeNames = [...]string{
+	PLUS:              "PLUS",
+	MINUS:             "MINUS",
+	TILDE:             "TILDE",
+	ASTERISK:          "ASTERISK",
+	SLASH:             "SLASH",
+	EQUAL:             "EQUAL",
+	BANG:              "BANG",
+	LESS:              "LESS",
+	GREATER:           "GREATER",
+	OPEN_PARENTHESIS:  "OPEN_PARENTHESIS",
+	CLOSE_PARENTHESIS: "CLOSE_PARENTHESIS",
+	OPEN_BRACES:       "OPEN_BRACES",
+	CLOSE_BRACES:      "CLOSE_BRACES",
+	OPEN_BRACKET:      "OPEN_BRACKET",
+	CLOSE_BRACKET:     "CLOSE_BRACKET",
+	COMMA:             "COMMA",
+	COLON:             "COLON",
+	SEMICOLON:         "SEMICOLON",
+	EQUAL_EQUAL:       "EQUAL_EQUAL",
+	BANG_EQUAL:        "BANG_EQUAL",
+	LESS_EQUAL:        "LESS_EQUAL",
+	GREATER_EQUAL:     "GREATER_EQUAL",
+	NUMBER:            "NUMBER",
+	LITERAL:           "LITERAL",
+	TRUE:              "TRUE",
+	FALSE:             "FALSE",
+	NONE:              "NONE",
+	IF:                "IF",
+	ELSE:              "ELSE",
+	WHILE:             "WHILE",
+	RETURN:            "RETURN",
+	CONTINUE:          "CONTINUE",
+	BREAK:             "BREAK",
+	IDENTIFIER:        "IDENTIFIER",
+	FUNC:              "FUNC",
+	VAR:               "VAR",
+	SET:               "SET",
+	FORK:              "FORK",
+	STARTED_LITERAL:   "STARTED_LITERAL",
+	ENDED_LITERAL:     "ENDED_LITERAL",
+	OR:                "OR",
+	AND:               "AND",
+	PRINT:             "PRINT",
+}
+
+func (t TokenType) String() string {
+	if int(t) >= 0 && int(t) < len(tokenTypeNames) && tokenTypeNames[t] != "" {
+		return tokenTypeNames[t]
+	}
+	return "UNKNOWN"
+}
 
 // SYMBOLS
 const (
@@ -336,7 +336,7 @@ func PrintTokens(tokens []Token) {
 	fmt.Printf("%s\n", Title("Tokens"))
 
 	for i, token := range tokens {
-		fmt.Printf("%4d: %s\n", i, token.ColorString())
+		PrintToken(i, token)
 	}
 
 	fmt.Printf("%s\n", Title("End of Tokens"))
