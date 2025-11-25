@@ -7,7 +7,7 @@ import (
 )
 
 type ArrayLiteralNode struct {
-	Elements []*ExpressionNode
+	Elements []Expression
 }
 
 func (al ArrayLiteralNode) Print(start string) {

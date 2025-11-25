@@ -5,13 +5,9 @@ import (
 )
 
 type TokenLiteralNode struct {
-	Token *common.Token
+	Token common.Token
 }
 
 func (tl TokenLiteralNode) Print(start string) {
-	if tl.Token != nil {
-		println(start, tl.Token.String())
-	} else {
-		println(start, "<nil>")
-	}
+	println(start, tl.Token.String())
 }

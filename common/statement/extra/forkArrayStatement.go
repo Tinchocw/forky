@@ -9,7 +9,7 @@ import (
 )
 
 type ForkArrayStatement struct {
-	Array     *expression.ExpressionNode
+	Array     expression.Expression
 	IndexName *string
 	ElemName  *string
 	Block     *block.BlockStatement

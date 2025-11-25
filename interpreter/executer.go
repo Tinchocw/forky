@@ -74,7 +74,7 @@ func executeVarDeclaration(stmt *declaration.VarDeclaration, env *Env) (Value, e
 
 	if stmt.Value != nil {
 		var err error
-		value, err = resolveExpression(*stmt.Value, env)
+		value, err = resolveExpression(stmt.Value, env)
 		if err != nil {
 			return nil, err
 		}
@@ -93,7 +93,7 @@ func executeArrayDeclaration(stmt *declaration.ArrayDeclaration, env *Env) (Valu
 	lengths := []*IntValue{}
 
 	for _, lenExpr := range stmt.Lengths {
-		lenValue, err := resolveExpression(*lenExpr, env)
+		lenValue, err := resolveExpression(lenExpr, env)
 		if err != nil {
 			return nil, err
 		}
@@ -109,7 +109,7 @@ func executeArrayDeclaration(stmt *declaration.ArrayDeclaration, env *Env) (Valu
 
 	if stmt.Value != nil {
 		var err error
-		value, err = resolveExpression(*stmt.Value, env)
+		value, err = resolveExpression(stmt.Value, env)
 		if err != nil {
 			return nil, err
 		}
@@ -141,7 +141,7 @@ func createArrayRecursive(lengths []*IntValue, cellValue Value) Value {
 }
 
 func executeVarAssignment(stmt *assignment.VarAssignment, env *Env) (Value, error) {
-	value, err := resolveExpression(*stmt.Value, env)
+	value, err := resolveExpression(stmt.Value, env)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +157,7 @@ func executeVarAssignment(stmt *assignment.VarAssignment, env *Env) (Value, erro
 func executeArrayAssignment(stmt *assignment.ArrayAssignment, env *Env) (Value, error) {
 	indexes := []int{}
 	for _, indexExpr := range stmt.Indexes {
-		indexValue, err := resolveExpression(*indexExpr, env)
+		indexValue, err := resolveExpression(indexExpr, env)
 		if err != nil {
 			return nil, err
 		}
@@ -169,7 +169,7 @@ func executeArrayAssignment(stmt *assignment.ArrayAssignment, env *Env) (Value, 
 		indexes = append(indexes, int(indexValue.(*IntValue).Value))
 	}
 
-	value, err := resolveExpression(*stmt.Value, env)
+	value, err := resolveExpression(stmt.Value, env)
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +188,7 @@ func executePrintStatement(stmt *extra.PrintStatement, env *Env) (Value, error) 
 		return nil, nil
 	}
 
-	value, err := resolveExpression(*stmt.Value, env)
+	value, err := resolveExpression(stmt.Value, env)
 	if err != nil {
 		return nil, err
 	}
@@ -218,7 +218,7 @@ func executeForkBlockStatement(stmt *extra.ForkBlockStatement, env *Env) (Value,
 }
 
 func excecuteForkArrayStatement(stmt *extra.ForkArrayStatement, env *Env) (Value, error) {
-	value, err := resolveExpression(*stmt.Array, env)
+	value, err := resolveExpression(stmt.Array, env)
 	if err != nil {
 		return nil, err
 	}
@@ -264,7 +264,7 @@ func excecuteForkArrayStatement(stmt *extra.ForkArrayStatement, env *Env) (Value
 }
 
 func executeIfStatement(stmt *flow.IfStatement, env *Env) (Value, error) {
-	conditionValue, err := resolveExpression(*stmt.Condition, env)
+	conditionValue, err := resolveExpression(stmt.Condition, env)
 	if err != nil {
 		return nil, err
 	}
@@ -275,7 +275,7 @@ func executeIfStatement(stmt *flow.IfStatement, env *Env) (Value, error) {
 
 	elseIf := stmt.ElseIf
 	for elseIf != nil {
-		condValue, err := resolveExpression(*elseIf.Condition, env)
+		condValue, err := resolveExpression(elseIf.Condition, env)
 		if err != nil {
 			return nil, err
 		}
@@ -294,7 +294,7 @@ func executeIfStatement(stmt *flow.IfStatement, env *Env) (Value, error) {
 
 func executeWhileStatement(stmt *flow.WhileStatement, env *Env) (Value, error) {
 	for {
-		conditionValue, err := resolveExpression(*stmt.Condition, env)
+		conditionValue, err := resolveExpression(stmt.Condition, env)
 		if err != nil {
 			return nil, err
 		}
@@ -326,7 +326,7 @@ func executeFunctionDef(stmt *function.FunctionDef, env *Env) (Value, error) {
 }
 
 func executeExpressionStatement(stmt *statement.ExpressionStatement, env *Env) (Value, error) {
-	value, err := resolveExpression(*stmt.Expression, env)
+	value, err := resolveExpression(stmt.Expression, env)
 	return value, err
 }
 
@@ -335,7 +335,7 @@ func executeReturnStatement(stmt *function.ReturnStatement, env *Env) (Value, er
 		return nil, errors.NewReturnErr()
 	}
 
-	value, err := resolveExpression(*stmt.Value, env)
+	value, err := resolveExpression(stmt.Value, env)
 	if err != nil {
 		return nil, err
 	}

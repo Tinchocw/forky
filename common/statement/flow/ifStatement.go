@@ -9,14 +9,14 @@ import (
 )
 
 type IfStatement struct {
-	Condition *expression.ExpressionNode
+	Condition expression.Expression
 	Body      *block.BlockStatement
 	ElseIf    *ElseIfStatement
 	Else      *ElseStatement
 }
 
 type ElseIfStatement struct {
-	Condition *expression.ExpressionNode
+	Condition expression.Expression
 	Body      *block.BlockStatement
 	ElseIf    *ElseIfStatement
 }
