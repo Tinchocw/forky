@@ -22,7 +22,7 @@ Forky is a programming language that combines sequential and parallel execution 
 ```bash
 git clone https://github.com/Tinchocw/forky.git
 cd forky
-go build -o forky main.go
+go build -o forky
 ```
 
 ### Usage
